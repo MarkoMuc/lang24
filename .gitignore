@@ -1,0 +1,8 @@
+bin/
+.idea/
+*.iml
+lib/antlr-4.13.1-complete.jar
+prg/
+*.class
+*.java-orig
+src/lang24/phase/lexan/gen/
