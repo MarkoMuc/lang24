@@ -1,11 +1,9 @@
 package lang24.phase.memory;
 
 import lang24.common.logger.*;
-import lang24.data.ast.tree.AstNode;
-import lang24.data.ast.tree.AstNodes;
-import lang24.data.ast.tree.defn.AstFunDefn;
-import lang24.data.ast.tree.defn.AstVarDefn;
-import lang24.data.ast.tree.type.AstRecType;
+import lang24.data.ast.tree.defn.*;
+import lang24.data.ast.tree.expr.*;
+import lang24.data.ast.tree.type.*;
 import lang24.data.ast.visitor.*;
 
 /**
@@ -39,7 +37,6 @@ public class MemLogger implements AstNullVisitor<Object, Object> {
 	public Object visit(AstFunDefn funDefn, Object arg) {
 		if (Memory.frames.get(funDefn) == null)
 			return null;
-
 		Memory.frames.get(funDefn).log(logger);
 		return null;
 	}
@@ -59,6 +56,22 @@ public class MemLogger implements AstNullVisitor<Object, Object> {
 		Memory.parAccesses.get(valParDefn).log(logger);
 		return null;
 	}
+
+	// lang24.data.ast.tree.expr:
+
+	@Override
+	public Object visit(AstAtomExpr atomExpr, Object arg) {
+		switch (atomExpr.type) {
+		case STR:
+			Memory.strings.get(atomExpr).log(logger);
+			break;
+		default:
+			break;
+		}
+		return null;
+	}
+
+	// lang24.data.ast.tree.type:
 
 	@Override
 	public Object visit(AstRecType.AstCmpDefn cmpDefn, Object arg) {

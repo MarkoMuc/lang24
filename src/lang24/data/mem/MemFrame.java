@@ -1,7 +1,6 @@
 package lang24.data.mem;
 
 import lang24.common.logger.*;
-import lang24.data.type.*;
 
 /**
  * A stack frame.
