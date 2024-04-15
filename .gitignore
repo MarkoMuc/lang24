@@ -6,3 +6,7 @@ prg/
 *.class
 *.java-orig
 src/lang24/phase/lexan/gen/
+src/lang24/phase/lexan/Lang24Lexer.java
+src/lang24/phase/synan/Lang24Parser.java
+*.interp
+*.tokens
