@@ -14,6 +14,10 @@ import lang24.data.ast.visitor.*;
  * 
  * @author bostjan.slivnik@fri.uni-lj.si
  */
+/*
+	FIXME: Check all throw conditions
+ */
+
 public class LValResolver implements AstFullVisitor<Object, Object> {
 
 	/** Constructs a new lvalue resolver. */
@@ -35,6 +39,7 @@ public class LValResolver implements AstFullVisitor<Object, Object> {
 	@Override
 	public Object visit(AstArrExpr arrExpr, Object arg) {
 		arrExpr.arr.accept(this, null);
+		arrExpr.idx.accept(this, null);
 		Boolean test = SemAn.isLVal.get(arrExpr.arr);
 
 		if(test != null && test){
@@ -51,8 +56,6 @@ public class LValResolver implements AstFullVisitor<Object, Object> {
 		Boolean test = SemAn.isLVal.get(cmpExpr.expr);
 		if(test != null && test){
 			SemAn.isLVal.put(cmpExpr, true);
-		}else {
-			throw new Report.Error(cmpExpr,"L-value struct Error ");
 		}
 		return null;
 	}
@@ -70,9 +73,8 @@ public class LValResolver implements AstFullVisitor<Object, Object> {
 		Boolean test = SemAn.isLVal.get(castExpr.expr);
 		if(test != null && test){
 			SemAn.isLVal.put(castExpr, true);
-		}else {
-			throw new Report.Error(castExpr,"L-value cast Error ");
 		}
+
 		return null;
 	}
 
@@ -83,7 +85,7 @@ public class LValResolver implements AstFullVisitor<Object, Object> {
 		Boolean test = SemAn.isLVal.get(pfxExpr.expr);
 		if(test != null && test){
 			SemAn.isLVal.put(pfxExpr, true);
-		}else {
+		}else if(pfxExpr.oper == AstPfxExpr.Oper.PTR ) {
 			throw new Report.Error(pfxExpr,"L-value prefix Error ");
 		}
 
@@ -92,9 +94,11 @@ public class LValResolver implements AstFullVisitor<Object, Object> {
 
 	@Override
 	public Object visit(AstCallExpr callExpr, Object arg) {
+		// TODO: Add L-val checking
 		for(AstExpr expr : callExpr.args){
 			expr.accept(this, null);
 		}
+
 		return null;
 	}
 
@@ -120,7 +124,6 @@ public class LValResolver implements AstFullVisitor<Object, Object> {
 		return null;
 	}
 
-
 	@Override
 	public Object visit(AstNodes<? extends AstNode> nodes, Object arg) {
 		for(AstNode n: nodes){
@@ -131,6 +134,7 @@ public class LValResolver implements AstFullVisitor<Object, Object> {
 
 	@Override
 	public Object visit(AstFunDefn.AstRefParDefn refParDefn, Object arg) {
+		// FIXME: L-val check
 		SemAn.isLVal.put(refParDefn, true);
 		return null;
 	}

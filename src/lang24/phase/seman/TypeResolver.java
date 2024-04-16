@@ -420,6 +420,7 @@ public class TypeResolver implements AstFullVisitor<SemType, TypeResolver.Contex
 
         try {
             AstDefn cmpDefn = table.fnd(cmpExpr.name);
+			SemAn.definedAt.put(cmpExpr.expr, cmpDefn);
 			type = SemAn.ofType.get(cmpDefn);
         } catch (SymbTable.CannotFndNameException e) {
 			throw new Report.Error(cmpExpr,cmpExpr.name + " component not found.");
@@ -615,9 +616,10 @@ public class TypeResolver implements AstFullVisitor<SemType, TypeResolver.Contex
 		if(type.actualType() instanceof SemVoidType) {
 			throw new Report.Error(refParDefn, refParDefn.name + " is type void.");
 		}
-		SemType ptrType = new SemPointerType(type);
-		SemAn.ofType.put(refParDefn, ptrType);
-		return ptrType;
+		//FIXME: is this correct
+		//SemType ptrType = new SemPointerType(type);
+		SemAn.ofType.put(refParDefn, type);
+		return type;
 	}
 
 	@Override
