@@ -212,7 +212,7 @@ public class MemEvaluator implements AstFullVisitor<Object, MemEvaluator.Carry> 
         }
     }
 
-    private Long SizeOfType(SemType type){
+    public static Long SizeOfType(SemType type){
         Long size = 0L;
 
         if(type.actualType() instanceof SemCharType ||
