@@ -467,24 +467,29 @@ postfix_expr1
 	| { $e = $left; }; catch [RecognitionException e] {ThrowNewExcp(e, "Postfix Expression Error Around Token : ");}
 // |—————OTHER—————|
 other_expr
-returns [AstExpr e]:
-	  constants { $e = $constants.e;}
-	| ID (LPAR RPAR | ) { $e = new AstNameExpr(loc($ID), $ID.text); }
+returns [Location l, AstExpr e]:
+	  constants { $e = $constants.e; $l = $constants.l;}
+	| ID { $l = loc($ID); $e = new AstNameExpr($l, $ID.text);}
 	|
-		{ Vector<AstExpr> args = new Vector(); }
-		ID LPAR
-		expression { args.add($expression.e); }
+		ID
+		{ Vector<AstExpr> args = null;}
+		LPAR
+		{ args = new Vector(); }
+		expression { args.add($expression.e);}
 		(
-			COMMA e2=expression { args.add($e2.e); }
+			COMMA e2=expression { args.add($e2.e);}
 		)*
 		RPAR
 		{
-			$e = new AstCallExpr(loc($ID), $ID.text,
-				new AstNodes<AstExpr>(args));
+		    AstNodes<AstExpr> arguments = null;
+		    if(args != null){
+		        arguments = new AstNodes<AstExpr>(args);
+		    }
+		    $l = loc($ID, $RPAR);
+			$e = new AstCallExpr($l, $ID.text, arguments);
 		}
-	| KSIZEOF LPAR type RPAR { $e = new AstSizeofExpr(loc($LPAR, $RPAR), $type.t);}
-	| LPAR expression RPAR
-	  {$e = $expression.e; }
+	| KSIZEOF LPAR type RPAR { $l = loc($KSIZEOF, $RPAR); $e = new AstSizeofExpr($l, $type.t);}
+	| LPAR expression RPAR {$e = $expression.e; $l = loc($LPAR, $RPAR);}
 	; catch [RecognitionException e] {ThrowNewExcp(e, "Other Expression Error Around Token : ");}
 // |—————————————————————————————————————————OPERATORS—————————————————————————————————————————|
 constants
