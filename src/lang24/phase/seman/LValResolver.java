@@ -14,8 +14,9 @@ import lang24.data.ast.visitor.*;
  * 
  * @author bostjan.slivnik@fri.uni-lj.si
  */
+
 /*
-	FIXME:
+	TODO:
 	 1. Check all throw conditions
  */
 
@@ -58,6 +59,7 @@ public class LValResolver implements AstFullVisitor<Object, Object> {
 		if(test != null && test){
 			SemAn.isLVal.put(cmpExpr, true);
 		}
+
 		return null;
 	}
 
@@ -65,6 +67,7 @@ public class LValResolver implements AstFullVisitor<Object, Object> {
 	public Object visit(AstSfxExpr sfxExpr, Object arg) {
 		sfxExpr.expr.accept(this, null);
 		SemAn.isLVal.put(sfxExpr, true);
+
 		return null;
 	}
 
@@ -77,9 +80,9 @@ public class LValResolver implements AstFullVisitor<Object, Object> {
 
 	@Override
 	public Object visit(AstPfxExpr pfxExpr, Object arg) {
-		//TODO : check if correct
 		pfxExpr.expr.accept(this, null);
 		Boolean test = SemAn.isLVal.get(pfxExpr.expr);
+
 		if(test != null && test){
 			SemAn.isLVal.put(pfxExpr, true);
 		}else if(pfxExpr.oper == AstPfxExpr.Oper.PTR ) {
@@ -91,13 +94,21 @@ public class LValResolver implements AstFullVisitor<Object, Object> {
 
 	@Override
 	public Object visit(AstCallExpr callExpr, Object arg) {
-		// FIXME:
-		//  1. Add L-val checking
-		// 	2. Can this be just callExpr.args.accept()?
-		// 		-> Depends if I want to check L-val here or in type resolver
 		if(callExpr.args != null){
+			AstFunDefn funcDefn = (AstFunDefn) SemAn.definedAt.get(callExpr);
+
+			int i = 0;
+			int max = funcDefn.pars.size();
 			for(AstExpr expr : callExpr.args){
 				expr.accept(this, null);
+
+				if(i < max && funcDefn.pars.get(i) instanceof AstFunDefn.AstRefParDefn){
+					Boolean test = SemAn.isLVal.get(expr);
+					if(test == null || !test){
+						throw new Report.Error(callExpr,"L-value reference parameter error.");
+					}
+				}
+				i++;
 			}
 		}
 		return null;
@@ -135,7 +146,6 @@ public class LValResolver implements AstFullVisitor<Object, Object> {
 
 	@Override
 	public Object visit(AstFunDefn.AstRefParDefn refParDefn, Object arg) {
-		// FIXME: L-val check
 		SemAn.isLVal.put(refParDefn, true);
 		return null;
 	}

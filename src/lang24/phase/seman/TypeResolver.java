@@ -457,14 +457,6 @@ public class TypeResolver implements AstFullVisitor<SemType, TypeResolver.Contex
 		int i = 0;
 		for(AstExpr expr : callExpr.args){
 			SemType t1 = expr.accept(this, null);
-			////FIXME is this needed
-			//if (defn.pars.get(i) instanceof AstFunDefn.AstRefParDefn){
-			//	Boolean test = SemAn.isLVal.get(expr);
-
-			//	if(test == null || !test){
-			//		throw new Report.Error(callExpr,"Expression is not an L-value for RefPar.");
-			//	}
-			//}
 			if(!equiv(t1, ArgTypes.get(i))){
 				throw new Report.Error(callExpr,"Parameter type mismatch.");
 			}
