@@ -24,7 +24,6 @@ import java.util.Vector;
 
 /*
     TODO:
-     -> Fix Call and name
      -> Check depths
      -> Check offsets
      -> Check SEXPR and ESTMT
@@ -136,27 +135,7 @@ public class ImcGenerator implements AstFullVisitor<Object, Stack<MemFrame>> {
     public Object visit(AstNameExpr nameExpr, Stack<MemFrame> arg) {
         AstDefn astDefn = SemAn.definedAt.get(nameExpr);
         ImcExpr imcExpr = null;
-        if(astDefn instanceof AstFunDefn funDefn){
-            MemFrame memFrame = Memory.frames.get(funDefn);
-            ImcExpr imcExpr1 = new ImcTEMP(arg.peek().FP);
 
-            for (int i = 0; i < arg.peek().depth - memFrame.depth + 1; i++) {
-                imcExpr1 = new ImcMEM(imcExpr1);
-            }
-            if(memFrame.depth == 0){
-                imcExpr1 = new ImcCONST(0);
-            }
-
-            Vector<Long> offsets = new Vector<>();
-            Vector<ImcExpr> args = new Vector<>();
-            offsets.add(0L);
-            args.add(imcExpr1);
-
-            ImcCALL imc = new ImcCALL(memFrame.label, offsets, args);
-            ImcGen.exprImc.put(nameExpr, imc);
-
-            return imc;
-        }
         MemAccess memAccess;
         if(astDefn instanceof AstVarDefn astVarDefn){
             memAccess = Memory.varAccesses.get(astVarDefn);
@@ -247,15 +226,17 @@ public class ImcGenerator implements AstFullVisitor<Object, Stack<MemFrame>> {
         offsets.add(0L);
         args.add(imcExpr1);
 
-        for(int i = 0; i < callExpr.args.size(); i++){
-            AstFunDefn.AstParDefn parDefn = funDefn.pars.get(i);
-            MemRelAccess memRelAccess = (MemRelAccess) Memory.parAccesses.get(parDefn);
-            offsets.add(memRelAccess.offset);
-            ImcExpr expr = (ImcExpr) callExpr.args.get(i).accept(this, arg);
-            if(parDefn instanceof AstFunDefn.AstRefParDefn && expr instanceof ImcMEM refPar){
-                expr = refPar.addr;
+        if(callExpr.args != null) {
+            for (int i = 0; i < callExpr.args.size(); i++) {
+                AstFunDefn.AstParDefn parDefn = funDefn.pars.get(i);
+                MemRelAccess memRelAccess = (MemRelAccess) Memory.parAccesses.get(parDefn);
+                offsets.add(memRelAccess.offset);
+                ImcExpr expr = (ImcExpr) callExpr.args.get(i).accept(this, arg);
+                if (parDefn instanceof AstFunDefn.AstRefParDefn && expr instanceof ImcMEM refPar) {
+                    expr = refPar.addr;
+                }
+                args.add(expr);
             }
-            args.add(expr);
         }
 
         ImcCALL imcCALL = new ImcCALL(memFrame.label, offsets, args);
