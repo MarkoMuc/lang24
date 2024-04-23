@@ -219,7 +219,7 @@ public class MemEvaluator implements AstFullVisitor<Object, MemEvaluator.Carry> 
 
         if(type.actualType() instanceof SemCharType ||
                 type.actualType() instanceof SemBoolType){
-            size = 1L;
+            size = 8L;
             return size;
         }
 
