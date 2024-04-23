@@ -11,10 +11,16 @@ import lang24.data.ast.tree.stmt.*;
 import lang24.data.ast.tree.type.*;
 import lang24.data.ast.visitor.*;
 import lang24.data.type.*;
-//TODO this.c = that.c
 /**
  * @author bostjan.slivnik@fri.uni-lj.si
  */
+
+/*
+	FIXME:
+	 1. Case : this.c = that.c
+	 2. FIXME : Recursive types -> How should they work?
+ */
+
 public class TypeResolver implements AstFullVisitor<SemType, TypeResolver.Context> {
 
 	/**
@@ -386,7 +392,6 @@ public class TypeResolver implements AstFullVisitor<SemType, TypeResolver.Contex
 
 		SemType type = null;
 		if(def instanceof AstVarDefn ||
-				def instanceof AstFunDefn ||
 				def instanceof AstFunDefn.AstParDefn){
 			type = SemAn.ofType.get(def);
 		} else if (def instanceof AstTypDefn) {
@@ -436,8 +441,11 @@ public class TypeResolver implements AstFullVisitor<SemType, TypeResolver.Contex
 		SemType FuncType = SemAn.ofType.get(defn);
 		SemAn.ofType.put(callExpr, FuncType);
 
-		Vector<SemType> ArgTypes = new Vector<>();
+		if(defn.pars == null){
+			return FuncType;
+		}
 
+		Vector<SemType> ArgTypes = new Vector<>();
 		for(AstFunDefn.AstParDefn par : defn.pars){
 			ArgTypes.add(SemAn.ofType.get(par));
 		}

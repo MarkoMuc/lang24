@@ -21,6 +21,11 @@ import lang24.phase.seman.SemAn;
  * @author bostjan.slivnik@fri.uni-lj.si
  */
 
+/*
+    TODO:
+     1. Fix the size of a char, including calculating the size
+ */
+
 public class MemEvaluator implements AstFullVisitor<Object, MemEvaluator.Carry> {
 
     HashSet<String> GlobalNames = new HashSet<>();
@@ -156,24 +161,21 @@ public class MemEvaluator implements AstFullVisitor<Object, MemEvaluator.Carry> 
 
     @Override
     public Object visit(AstNameExpr nameExpr, Carry arg) {
-        if(SemAn.definedAt.get(nameExpr) instanceof AstFunDefn){
-            FuncCarry funcCarry = (FuncCarry) arg;
-            if(!(funcCarry.ArgsSize > 8)){
-                funcCarry.ArgsSize = 8;
-            }
-        }
-
+        // FIXME: Is this even needed?
         return null;
     }
 
     @Override
     public Object visit(AstCallExpr callExpr, Carry arg) {
-        callExpr.args.accept(this, arg);
         long ArgsSize = 8L;
 
-        for(AstExpr astExpr : callExpr.args){
-            astExpr.accept(this, arg);
-            ArgsSize += SizeOfType(SemAn.ofType.get(astExpr));
+        if(callExpr.args != null) {
+            callExpr.args.accept(this, arg);
+
+            for (AstExpr astExpr : callExpr.args) {
+                astExpr.accept(this, arg);
+                ArgsSize += SizeOfType(SemAn.ofType.get(astExpr));
+            }
         }
 
         FuncCarry funcCarry = (FuncCarry) arg;

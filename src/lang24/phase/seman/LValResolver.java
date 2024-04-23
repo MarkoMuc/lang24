@@ -15,7 +15,8 @@ import lang24.data.ast.visitor.*;
  * @author bostjan.slivnik@fri.uni-lj.si
  */
 /*
-	FIXME: Check all throw conditions
+	FIXME:
+	 1. Check all throw conditions
  */
 
 public class LValResolver implements AstFullVisitor<Object, Object> {
@@ -94,11 +95,15 @@ public class LValResolver implements AstFullVisitor<Object, Object> {
 
 	@Override
 	public Object visit(AstCallExpr callExpr, Object arg) {
-		// TODO: Add L-val checking
-		for(AstExpr expr : callExpr.args){
-			expr.accept(this, null);
+		// FIXME:
+		//  1. Add L-val checking
+		// 	2. Can this be just callExpr.args.accept()?
+		// 		-> Depends if I want to check L-val here or in type resolver
+		if(callExpr.args != null){
+			for(AstExpr expr : callExpr.args){
+				expr.accept(this, null);
+			}
 		}
-
 		return null;
 	}
 

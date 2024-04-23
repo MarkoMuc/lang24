@@ -16,6 +16,7 @@ import lang24.data.ast.visitor.*;
  * resolver. The results of the name resolver are stored in
  * {@link lang24.phase.seman.SemAn#definedAt}.
  */
+
 public class NameResolver implements AstFullVisitor<Object, NameResolver.Context> {
 
 	/** Constructs a new name resolver. */
@@ -186,15 +187,17 @@ public class NameResolver implements AstFullVisitor<Object, NameResolver.Context
 
 	@Override
 	public Object visit(AstCallExpr callExpr, Context arg) {
+		try {
+			SemAn.definedAt.put(callExpr, symbTable.fnd(callExpr.name));
+		} catch (SymbTable.CannotFndNameException e) {
+			throw new Report.Error(callExpr, "Function "
+					+ callExpr.name + " not found.");
+		}
+
 		if (callExpr.args != null) {
-			try {
-				SemAn.definedAt.put(callExpr, symbTable.fnd(callExpr.name));
-			} catch (SymbTable.CannotFndNameException e) {
-				throw new Report.Error(callExpr, "Function "
-						+ callExpr.name + " not found.");
-			}
 			callExpr.args.accept(this, null);
 		}
+
 		return null;
 	}
 
