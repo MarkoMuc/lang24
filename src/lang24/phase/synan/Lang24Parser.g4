@@ -497,7 +497,25 @@ returns [AstAtomExpr e, Location l]:
     KNONE { $l = loc($KNONE); $e = new AstAtomExpr($l, AstAtomExpr.Type.VOID, $KNONE.text); }
     | KTRUE { $l = loc($KTRUE); $e = new AstAtomExpr($l, AstAtomExpr.Type.BOOL, $KTRUE.text); }
     | KFALSE { $l = loc($KFALSE); $e = new AstAtomExpr($l, AstAtomExpr.Type.BOOL, $KFALSE.text); }
-    | CHARL { $l = loc($CHARL); $e = new AstAtomExpr($l, AstAtomExpr.Type.CHAR, $CHARL.text); }
+    | CHARL
+        {
+        $l = loc($CHARL);
+        String value = $CHARL.text;
+        String newValue = value;
+
+        int fst = value.indexOf('\'');
+        int lst = value.lastIndexOf('\'') == -1 ? value.length() : value.lastIndexOf('\'');
+        newValue = value.substring(fst + 1, lst);
+
+        if(newValue.length() == 2) {
+            newValue = newValue.substring(newValue.indexOf("\\") + 1);
+            if (newValue.indexOf('n') != -1){
+                value = "'\\0A'";
+            }
+        }
+
+        $e = new AstAtomExpr($l, AstAtomExpr.Type.CHAR, value);
+        }
     | STRL { $l = loc($STRL); $e = new AstAtomExpr($l, AstAtomExpr.Type.STR, $STRL.text); }
     | KNIL { $l = loc($KNIL); $e = new AstAtomExpr($l, AstAtomExpr.Type.PTR, $KNIL.text); }
     | intconst { $l = $intconst.l; $e = $intconst.e; }

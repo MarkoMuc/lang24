@@ -437,7 +437,7 @@ public class ImcGenerator implements AstFullVisitor<Object, Stack<MemFrame>> {
             c = value.charAt(0);
         }else if(value.length() == 2){
             value = value.substring(value.indexOf("\\") + 1);
-            c = value.indexOf('n') == -1 ? 0x0A : value.charAt(0);
+            c = value.indexOf('n') == -1 ? value.charAt(0) : 0x0A;
         } else if(value.length() == 3){ // Escape sequence
             c = Integer.parseInt(value.substring(value.indexOf("\\") + 1), 16);
         } else {
