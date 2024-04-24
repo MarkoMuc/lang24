@@ -475,10 +475,12 @@ returns [Location l, AstExpr e]:
 		{ Vector<AstExpr> args = null;}
 		LPAR
 		{ args = new Vector(); }
-		expression { args.add($expression.e);}
 		(
-			COMMA e2=expression { args.add($e2.e);}
-		)*
+            expression { args.add($expression.e);}
+            (
+                COMMA e2=expression { args.add($e2.e);}
+            )*
+		)?
 		RPAR
 		{
 		    AstNodes<AstExpr> arguments = null;

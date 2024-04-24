@@ -96,6 +96,9 @@ public class LValResolver implements AstFullVisitor<Object, Object> {
 	public Object visit(AstCallExpr callExpr, Object arg) {
 		if(callExpr.args != null){
 			AstFunDefn funcDefn = (AstFunDefn) SemAn.definedAt.get(callExpr);
+			if(funcDefn.pars == null){
+				return null;
+			}
 
 			int i = 0;
 			int max = funcDefn.pars.size();
