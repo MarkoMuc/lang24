@@ -54,6 +54,8 @@ public class MemEvaluator implements AstFullVisitor<Object, MemEvaluator.Carry> 
 
     @Override
     public Object visit(AstFunDefn funDefn, Carry arg) {
+        // FIXME:
+        //  1. No function frame for function prototypes
         FuncCarry funcCarry = new FuncCarry();
         MemLabel label = null;
 

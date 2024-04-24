@@ -18,7 +18,8 @@ import lang24.data.type.*;
 /*
 	FIXME:
 	 1. Case : this.c = that.c
-	 2. FIXME : Recursive types -> How should they work?
+	 2. Recursive types -> How should they work?
+	 	-> Maybe a third cycle to solve cyclic types
  */
 
 public class TypeResolver implements AstFullVisitor<SemType, TypeResolver.Context> {
@@ -563,12 +564,13 @@ public class TypeResolver implements AstFullVisitor<SemType, TypeResolver.Contex
 			DefNameType = (SemNameType) SemAn.isType.get(typDefn);
 			type = typDefn.type.accept(this, null);
 			try {
-				if(DefNameType == type) {
+			    if(DefNameType == type) {
 					throw new Report.Error(typDefn, typDefn.name + " is a cyclic type");
 				}
-				if(type instanceof SemNameType) type.actualType();
+				//FIXME: fix this
+				//if(type instanceof SemNameType) type.actualType();
 			}catch (Exception e){
-				throw new Report.Error(typDefn, typDefn.name + " is a cyclic type.");
+				throw new Report.Error(typDefn, typDefn.name + " is a cyclic type error.");
 			}
 
 			if(SemAn.isType.get(typDefn) instanceof SemNameType NameType){
