@@ -27,7 +27,8 @@ import java.util.Vector;
      -> Check depths
      -> Check offsets
      -> Check SEXPR and ESTMT
-     -> Check Name, Call, Comp expr
+     -> Check Comp expr
+     -> Check Cast
  */
 
 public class ImcGenerator implements AstFullVisitor<Object, Stack<MemFrame>> {
@@ -151,7 +152,7 @@ public class ImcGenerator implements AstFullVisitor<Object, Stack<MemFrame>> {
             MemRelAccess local = (MemRelAccess) memAccess;
             ImcExpr expr = new ImcTEMP(arg.peek().FP);
 
-            long depth = arg.peek().depth - local.depth + 1;
+            long depth = arg.peek().depth - local.depth;
             ImcCONST imcCONST = new ImcCONST(local.offset);
 
             for(int i = 0; i < depth; i++){
@@ -212,7 +213,7 @@ public class ImcGenerator implements AstFullVisitor<Object, Stack<MemFrame>> {
         MemFrame memFrame = Memory.frames.get(funDefn);
 
         ImcExpr imcExpr1 = new ImcTEMP(arg.peek().FP);
-        for(int i = 0; i < arg.peek().depth - memFrame.depth + 1; i++){
+        for(int i = 0; i < arg.peek().depth - memFrame.depth; i++){
             imcExpr1 = new ImcMEM(imcExpr1);
         }
 
@@ -450,12 +451,17 @@ public class ImcGenerator implements AstFullVisitor<Object, Stack<MemFrame>> {
     private ImcStmt funcBody(ImcStmt mainStmt){
         if(mainStmt instanceof ImcSTMTS mainSTMTS){
             mainSTMTS.stmts.addFirst(new ImcLABEL(funcContexts.peek().entryL));
-            mainSTMTS.stmts.addLast(new ImcJUMP(funcContexts.peek().exitL));
+            // CHECKME: Pretty sure this doesn't need to be added, we just need a label
+            //mainSTMTS.stmts.addLast(new ImcJUMP(funcContexts.peek().exitL));
+            mainSTMTS.stmts.addLast(new ImcLABEL(funcContexts.peek().exitL));
         } else {
             Vector<ImcStmt> stmtVector = new Vector<>();
             stmtVector.add(new ImcLABEL(funcContexts.peek().entryL));
             stmtVector.add(mainStmt);
-            stmtVector.add(new ImcJUMP(funcContexts.peek().exitL));
+            // CHECKME: Pretty sure this doesn't need to be added, we just need a label
+            //stmtVector.add(new ImcJUMP(funcContexts.peek().exitL));
+
+            stmtVector.add(new ImcLABEL(funcContexts.peek().exitL));
 
             mainStmt = new ImcSTMTS(stmtVector);
         }
