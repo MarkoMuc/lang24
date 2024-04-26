@@ -57,7 +57,7 @@ returns [AstNodes def]:
         { defs.add($function_definition.d); }
     )+
     { $def = new AstNodes(defs); }
-    ; catch [RecognitionException e] {ThrowNewExcp(e, "Declaration Error Around Token: ");}
+    ; catch [RecognitionException e] {ThrowNewExcp(e, "Definition error around token: ");}
 
 //              |——————————————Type declarations——————————————|
 type_definition
@@ -65,7 +65,7 @@ returns [AstTypDefn d, Location l]:
     identifier ASSIGN type
     { $l = loc($identifier.l, $type.l); }
     { $d = new AstTypDefn($l, $identifier.id.name, $type.t); }
-    ; catch [RecognitionException e] {ThrowNewExcp(e, "Type Declaration Error Around Token: ");}
+    ; catch [RecognitionException e] {ThrowNewExcp(e, "Type definition error around token: ");}
 
 // 				|——————————————Variable declarations——————————————|
 variable_definition
@@ -73,7 +73,7 @@ returns [AstVarDefn d, Location l]:
     identifier COLON type
     { $l = loc($identifier.l, $type.l); }
     { $d = new AstVarDefn($l, $identifier.id.name, $type.t); }
-    ; catch [RecognitionException e] {ThrowNewExcp(e, "Variable Declaration Error Around Token: ");}
+    ; catch [RecognitionException e] {ThrowNewExcp(e, "Variable definition error around token: ");}
 
 // 				|——————————————Function declarations——————————————|
 function_definition
@@ -89,7 +89,7 @@ returns [AstFunDefn d, Location l]:
         $d = new AstFunDefn($l, $fun_head.id.name, $fun_head.pars, $fun_head.t,
                 $fun_body.s, $fun_body.def);
     }
-    ; catch [RecognitionException e] {ThrowNewExcp(e, "Function Declaration Error Around Token: ");}
+    ; catch [RecognitionException e] {ThrowNewExcp(e, "Function definition error around token: ");}
 
 
 // 				|——————————————Statement declarations——————————————|
@@ -101,7 +101,7 @@ returns [AstStmt s, Location l]:
     | while_statement { $s = $while_statement.s; $l = $while_statement.l; }
     | return_statement { $s = $return_statement.s; $l = $return_statement.l; }
     | block_statement { $s = $block_statement.s; $l = $block_statement.l; }
-    ; catch [RecognitionException e] {ThrowNewExcp(e, "Statement Error Around Token: ");}
+    ; catch [RecognitionException e] {ThrowNewExcp(e, "Statement error around token: ");}
 
 // 				|——————————————Type declarations——————————————|
 type
@@ -112,7 +112,7 @@ returns [AstType t, Location l]:
     | union_type { $t = $union_type.uni; $l = $union_type.l; }
     | struct_type { $t = $struct_type.str; $l = $struct_type.l; }
     | identifier { $t = $identifier.id; $l = $identifier.l; }
-    ; catch [RecognitionException e] {ThrowNewExcp(e, "Type Error Around Token: ");}
+    ; catch [RecognitionException e] {ThrowNewExcp(e, "Type syntax error around token: ");}
 
 // 				|——————————————Expression declarations——————————————|
 
@@ -188,7 +188,7 @@ returns [AstFunDefn.AstParDefn pars, Location l]:
       { $pars = $ref_par.par; $l = $ref_par.l; }
     | val_par
       { $pars = $val_par.par; $l = $val_par.l; }
-    ; catch [RecognitionException e] {ThrowNewExcp(e, "Parameter Error Around Token: ");}
+    ; catch [RecognitionException e] {ThrowNewExcp(e, "Parameter error around token: ");}
 
 ref_par
 returns [AstFunDefn.AstRefParDefn par, Location l]:
@@ -335,7 +335,7 @@ component
 returns [AstRecType.AstCmpDefn cmp]:
     identifier COLON type
     { $cmp = new AstRecType.AstCmpDefn(loc($identifier.l, $type.l), $identifier.id.name ,$type.t); }
-    ; catch [RecognitionException e] {ThrowNewExcp(e, "Component Error Around Token: ");}
+    ; catch [RecognitionException e] {ThrowNewExcp(e, "Component error around token: ");}
 
 array_type
 returns [AstArrType arr, Location l] :
@@ -368,14 +368,14 @@ disjunctive_expr
 	left2=disjunctive_expr[$left]
 	{ $e = $left2.e; }
 	| { $e = $left; }
-	; catch [RecognitionException e] {ThrowNewExcp(e, "Disjunctive Expression Error Around Token : ");}
+	; catch [RecognitionException e] {ThrowNewExcp(e, "Disjunctive expression error around token: ");}
 
 // |—————CONJUNCTIVE—————|
 conjunctive_expr
 returns [AstExpr e]:
 	relational_expr conjunctive_expr1[$relational_expr.e]
 	{ $e = $conjunctive_expr1.e;}
-	; catch [RecognitionException e] {ThrowNewExcp(e, "Conjunctive Expression Error Around Token : ");}
+	; catch [RecognitionException e] {ThrowNewExcp(e, "Conjunctive expression error around token: ");}
 
 conjunctive_expr1
 [AstExpr left] returns [AstExpr e]:
@@ -384,14 +384,14 @@ conjunctive_expr1
 	left2=conjunctive_expr1[$left]
 	{ $e = $left2.e; }
 	| { $e = $left; }
-	; catch [RecognitionException e] {ThrowNewExcp(e, "Conjunctive Expression Error Around Token : ");}
+	; catch [RecognitionException e] {ThrowNewExcp(e, "Conjunctive expression error around token: ");}
 
 // |—————RELATIONAL—————|
 relational_expr
 returns [AstExpr e]:
 	additive_expr relational_expr1[$additive_expr.e]
 	{ $e = $relational_expr1.e; }
-	; catch [RecognitionException e] {ThrowNewExcp(e, "Relational Expression Error Around Token : ");}
+	; catch [RecognitionException e] {ThrowNewExcp(e, "Relational expression error around token: ");}
 
 relational_expr1
 [AstExpr left] returns [AstExpr e]:
@@ -400,14 +400,14 @@ relational_expr1
 	left2=relational_expr1[$left]
 	{ $e = $left2.e; }
 	| { $e = $left; }
-	; catch [RecognitionException e] {ThrowNewExcp(e, "Relational Expression Error Around Token : ");}
+	; catch [RecognitionException e] {ThrowNewExcp(e, "Relational expression error around token: ");}
 
 // |—————ADDITIVE—————|
 additive_expr
 returns [AstExpr e]:
 	multiplicative_expr additive_expr1[$multiplicative_expr.e]
 	{ $e = $additive_expr1.e; }
-	; catch [RecognitionException e] {ThrowNewExcp(e, "Additive Expression Error Around Token : ");}
+	; catch [RecognitionException e] {ThrowNewExcp(e, "Additive expression error around token: ");}
 
 additive_expr1
 [AstExpr left] returns [AstExpr e]:
@@ -416,13 +416,13 @@ additive_expr1
 	left2=additive_expr1[$left]
 	{ $e = $left2.e; }
 	| { $e = $left; }
-	; catch [RecognitionException e] {ThrowNewExcp(e, "Additive Expression Error Around Token : ");}
+	; catch [RecognitionException e] {ThrowNewExcp(e, "Additive expression error around token: ");}
 // |—————Multiplicative—————|
 multiplicative_expr
 returns [AstExpr e]:
 	prefix_expr multiplicative_expr1[$prefix_expr.e]
 	{ $e = $multiplicative_expr1.e; }
-	; catch [RecognitionException e] {ThrowNewExcp(e, "Multiplicative Expression Error Around Token : ");}
+	; catch [RecognitionException e] {ThrowNewExcp(e, "Multiplicative expression error around token: ");}
 
 multiplicative_expr1
 [AstExpr left] returns [AstExpr e]:
@@ -431,7 +431,7 @@ multiplicative_expr1
 	left2=multiplicative_expr1[$left]
 	{ $e = $left2.e; }
 	| { $e = $left; }
-	; catch [RecognitionException e] {ThrowNewExcp(e, "Multiplicative Expression Error Around Token : ");}
+	; catch [RecognitionException e] {ThrowNewExcp(e, "Multiplicative expression error around token: ");}
 
 // |—————Prefix—————|
 prefix_expr
@@ -441,14 +441,14 @@ returns [AstExpr e]:
 	    | LT type GT left2=prefix_expr { $e = new AstCastExpr(loc($LT), $type.t, $left2.e); }
 	)
 	| postfix_expr { $e = $postfix_expr.e; }
-	; catch [RecognitionException e] {ThrowNewExcp(e, "Prefix Expression Error Around Token : ");}
+	; catch [RecognitionException e] {ThrowNewExcp(e, "Prefix expression error around token: ");}
 
 // |—————Postfix—————|
 postfix_expr
 returns [AstExpr e] :
 	other_expr postfix_expr1[$other_expr.e]
 	{ $e = $postfix_expr1.e;}
-	; catch [RecognitionException e] {ThrowNewExcp(e, "Postfix Expression Error Around Token : ");}
+	; catch [RecognitionException e] {ThrowNewExcp(e, "Postfix expression error around token: ");}
 
 postfix_expr1
 [AstExpr left] returns [AstExpr e] :
@@ -464,7 +464,8 @@ postfix_expr1
 	  { $left = new AstCmpExpr(loc($DOT), $left, $identifier.id.name); }
 	  left2=postfix_expr1[$left]
 	  { $e = $left2.e; }
-	| { $e = $left; }; catch [RecognitionException e] {ThrowNewExcp(e, "Postfix Expression Error Around Token : ");}
+	| { $e = $left; }; catch [RecognitionException e] {ThrowNewExcp(e, "Postfix expression error around token: ");}
+
 // |—————OTHER—————|
 other_expr
 returns [Location l, AstExpr e]:
@@ -491,8 +492,8 @@ returns [Location l, AstExpr e]:
 			$e = new AstCallExpr($l, $ID.text, arguments);
 		}
 	| KSIZEOF LPAR type RPAR { $l = loc($KSIZEOF, $RPAR); $e = new AstSizeofExpr($l, $type.t);}
-	| LPAR expression RPAR {$e = $expression.e; $l = loc($LPAR, $RPAR);}
-	; catch [RecognitionException e] {ThrowNewExcp(e, "Other Expression Error Around Token : ");}
+	| LPAR expression RPAR {  $l = loc($LPAR, $RPAR); $e = $expression.e;}
+	; catch [RecognitionException e] {ThrowNewExcp(e, "Other expression error around token: ");}
 // |—————————————————————————————————————————OPERATORS—————————————————————————————————————————|
 constants
 returns [AstAtomExpr e, Location l]:
