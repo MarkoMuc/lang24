@@ -116,13 +116,10 @@ returns [AstType t, Location l]:
 
 // 				|——————————————Expression declarations——————————————|
 
-
 expression
-returns [AstExpr e] :
-	conjunctive_expr disjunctive_expr[$conjunctive_expr.e]
-	{
-        $e = $disjunctive_expr.e;
-	}
+returns [AstExpr e, Location l] :
+	conjunctive_expr disjunctive_expr[$conjunctive_expr.e, $conjunctive_expr.l]
+	{ $l = $disjunctive_expr.l; $e = $disjunctive_expr.e;}
 	; catch [RecognitionException e] {throw new Report.Error(new Location(e.getOffendingToken().getLine(), e.getOffendingToken().getCharPositionInLine()), "Expression Error Around Token : "+ e.getOffendingToken().getText());}
 // 			|—————————————————————————————————————————SUBRULES—————————————————————————————————————————|
 
@@ -208,15 +205,13 @@ returns [AstFunDefn.AstValParDefn par, Location l]:
 expression_statement
 returns [AstExprStmt s, Location l] :
 	exp=expression SEMI
-	//{ $l = loc($exp.l, $SEMI); $s = new AstExprStmt($l, $exp.e); }
-	{ $l = loc($SEMI); $s = new AstExprStmt($l, $exp.e); }
+	{ $l = loc($exp.l, $SEMI); $s = new AstExprStmt($l, $exp.e); }
 	;
 
 assign_statement
 returns [AstAssignStmt s, Location l] :
 	e1=expression ASSIGN e2=expression SEMI
-	//{ $l = loc($e1.l, $SEMI); }
-	{ $l = loc($ASSIGN, $SEMI); }
+	{ $l = loc($e1.l, $SEMI); }
 	{ $s = new AstAssignStmt($l, $e1.e, $e2.e); }
 	;
 
@@ -362,113 +357,117 @@ returns [AstNameType id, Location l]:
 
 // |—————DISJUNCTIVE—————|
 disjunctive_expr
-[AstExpr left] returns [AstExpr e]:
+[AstExpr left, Location ll] returns [AstExpr e, Location l]:
 	disjunctive_ops right=conjunctive_expr
-	{ $left = new AstBinExpr($disjunctive_ops.l, $disjunctive_ops.ops, $left, $right.e); }
-	left2=disjunctive_expr[$left]
-	{ $e = $left2.e; }
-	| { $e = $left; }
+	{ $l = loc($ll, $right.l); $left = new AstBinExpr($l, $disjunctive_ops.ops, $left, $right.e); }
+	left2=disjunctive_expr[$left, $l]
+	{ $e = $left2.e; $l = $left2.l;}
+	| { $e = $left; $l = $ll;}
 	; catch [RecognitionException e] {ThrowNewExcp(e, "Disjunctive expression error around token: ");}
 
 // |—————CONJUNCTIVE—————|
 conjunctive_expr
-returns [AstExpr e]:
-	relational_expr conjunctive_expr1[$relational_expr.e]
-	{ $e = $conjunctive_expr1.e;}
+returns [AstExpr e, Location l]:
+	relational_expr conjunctive_expr1[$relational_expr.e, $relational_expr.l]
+	{ $e = $conjunctive_expr1.e; $l = $conjunctive_expr1.l;}
 	; catch [RecognitionException e] {ThrowNewExcp(e, "Conjunctive expression error around token: ");}
 
 conjunctive_expr1
-[AstExpr left] returns [AstExpr e]:
+[AstExpr left, Location ll] returns [AstExpr e, Location l]:
 	conjunctive_ops right=relational_expr
-	{ $left = new AstBinExpr($conjunctive_ops.l, $conjunctive_ops.ops, $left, $right.e); }
-	left2=conjunctive_expr1[$left]
-	{ $e = $left2.e; }
-	| { $e = $left; }
+	{ $l = loc($ll, $right.l); $left = new AstBinExpr($l, $conjunctive_ops.ops, $left, $right.e); }
+	left2=conjunctive_expr1[$left, $l]
+	{ $e = $left2.e; $l = $left2.l;}
+	| { $e = $left; $l = $ll;}
 	; catch [RecognitionException e] {ThrowNewExcp(e, "Conjunctive expression error around token: ");}
 
 // |—————RELATIONAL—————|
 relational_expr
-returns [AstExpr e]:
-	additive_expr relational_expr1[$additive_expr.e]
-	{ $e = $relational_expr1.e; }
+returns [AstExpr e, Location l]:
+	additive_expr relational_expr1[$additive_expr.e, $additive_expr.l]
+	{ $e = $relational_expr1.e; $l = $relational_expr1.l;}
 	; catch [RecognitionException e] {ThrowNewExcp(e, "Relational expression error around token: ");}
 
 relational_expr1
-[AstExpr left] returns [AstExpr e]:
+[AstExpr left, Location ll] returns [AstExpr e, Location l]:
 	relational_ops right=additive_expr
-	{ $left = new AstBinExpr($relational_ops.l, $relational_ops.ops, $left, $right.e); }
-	left2=relational_expr1[$left]
-	{ $e = $left2.e; }
-	| { $e = $left; }
+	{ $l = loc($ll, $right.l); $left = new AstBinExpr($l, $relational_ops.ops, $left, $right.e); }
+	left2=relational_expr1[$left, $l]
+	{ $e = $left2.e; $l = $left2.l;}
+	| { $e = $left; $l = $ll;}
 	; catch [RecognitionException e] {ThrowNewExcp(e, "Relational expression error around token: ");}
 
 // |—————ADDITIVE—————|
 additive_expr
-returns [AstExpr e]:
-	multiplicative_expr additive_expr1[$multiplicative_expr.e]
-	{ $e = $additive_expr1.e; }
+returns [AstExpr e, Location l]:
+	multiplicative_expr additive_expr1[$multiplicative_expr.e, $multiplicative_expr.l]
+	{ $e = $additive_expr1.e; $l = $additive_expr1.l;}
 	; catch [RecognitionException e] {ThrowNewExcp(e, "Additive expression error around token: ");}
 
 additive_expr1
-[AstExpr left] returns [AstExpr e]:
+[AstExpr left, Location ll] returns [AstExpr e, Location l]:
 	additive_ops right=multiplicative_expr
-	{ $left = new AstBinExpr($additive_ops.l, $additive_ops.ops, $left, $right.e); }
-	left2=additive_expr1[$left]
-	{ $e = $left2.e; }
-	| { $e = $left; }
+	{ $l = loc($ll, $right.l); $left = new AstBinExpr($l, $additive_ops.ops, $left, $right.e); }
+	left2=additive_expr1[$left, $l]
+	{ $e = $left2.e; $l = $left2.l;}
+	| { $e = $left; $l = $ll;}
 	; catch [RecognitionException e] {ThrowNewExcp(e, "Additive expression error around token: ");}
 // |—————Multiplicative—————|
 multiplicative_expr
-returns [AstExpr e]:
-	prefix_expr multiplicative_expr1[$prefix_expr.e]
-	{ $e = $multiplicative_expr1.e; }
+returns [AstExpr e, Location l]:
+	prefix_expr multiplicative_expr1[$prefix_expr.e, $prefix_expr.l]
+	{ $l = $multiplicative_expr1.l; $e = $multiplicative_expr1.e; }
 	; catch [RecognitionException e] {ThrowNewExcp(e, "Multiplicative expression error around token: ");}
 
 multiplicative_expr1
-[AstExpr left] returns [AstExpr e]:
+[AstExpr left, Location ll] returns [AstExpr e, Location l]:
 	mul_ops right=prefix_expr
-	{ $left = new AstBinExpr($mul_ops.l, $mul_ops.ops, $left, $right.e); }
-	left2=multiplicative_expr1[$left]
-	{ $e = $left2.e; }
-	| { $e = $left; }
+	{ $l = loc($ll, $right.l); $left = new AstBinExpr($l, $mul_ops.ops, $left, $right.e); }
+	left2=multiplicative_expr1[$left, $l]
+	{ $e = $left2.e; $l = $left2.l;}
+	| { $e = $left; $l = $ll;}
 	; catch [RecognitionException e] {ThrowNewExcp(e, "Multiplicative expression error around token: ");}
 
 // |—————Prefix—————|
 prefix_expr
-returns [AstExpr e]:
+returns [AstExpr e, Location l]:
 	(
-	    prefix_ops left2=prefix_expr { $e = new AstPfxExpr($prefix_ops.l, $prefix_ops.ops, $left2.e); }
-	    | LT type GT left2=prefix_expr { $e = new AstCastExpr(loc($LT), $type.t, $left2.e); }
+	    prefix_ops left2=prefix_expr
+	    { $l = loc($prefix_ops.l, $left2.l); $e = new AstPfxExpr($l, $prefix_ops.ops, $left2.e); }
+	    |
+	    LT type GT left2=prefix_expr
+	    { $l = loc($LT, $left2.l); $e = new AstCastExpr($l, $type.t, $left2.e); }
 	)
-	| postfix_expr { $e = $postfix_expr.e; }
+	| postfix_expr { $l = $postfix_expr.l; $e = $postfix_expr.e;}
 	; catch [RecognitionException e] {ThrowNewExcp(e, "Prefix expression error around token: ");}
 
 // |—————Postfix—————|
 postfix_expr
-returns [AstExpr e] :
-	other_expr postfix_expr1[$other_expr.e]
-	{ $e = $postfix_expr1.e;}
+returns [AstExpr e, Location l]:
+	other_expr postfix_expr1[$other_expr.e, $other_expr.l]
+	{ $e = $postfix_expr1.e; $l = $postfix_expr1.l;}
 	; catch [RecognitionException e] {ThrowNewExcp(e, "Postfix expression error around token: ");}
 
 postfix_expr1
-[AstExpr left] returns [AstExpr e] :
+[AstExpr left, Location ll] returns [AstExpr e, Location l]:
 	  LSBRAC expression RSBRAC
-	  { $left = new AstArrExpr(loc($LSBRAC), $left, $expression.e); }
-	  left2=postfix_expr1[$left]
-	  { $e = $left2.e; }
+	  { $l = loc($ll, $RSBRAC); $left = new AstArrExpr($l, $left, $expression.e); }
+	  left2=postfix_expr1[$left, $l]
+	  { $e = $left2.e; $l = $left2.l;}
 	| POW
-	  { $left = new AstSfxExpr(loc($POW), AstSfxExpr.Oper.PTR, $left); }
-	  left2=postfix_expr1[$left]
-	  { $e = $left2.e; }
+	  { $l = loc($ll, $POW); $left = new AstSfxExpr($l, AstSfxExpr.Oper.PTR, $left); }
+	  left2=postfix_expr1[$left, $l]
+	  { $e = $left2.e; $l = $left2.l;}
 	| DOT identifier
-	  { $left = new AstCmpExpr(loc($DOT), $left, $identifier.id.name); }
-	  left2=postfix_expr1[$left]
-	  { $e = $left2.e; }
-	| { $e = $left; }; catch [RecognitionException e] {ThrowNewExcp(e, "Postfix expression error around token: ");}
+	  {$l = loc($ll, $identifier.l); $left = new AstCmpExpr($l, $left, $identifier.id.name); }
+	  left2=postfix_expr1[$left, $l]
+	  { $e = $left2.e; $l = $left2.l;}
+	| { $e = $left; $l = $ll;}
+	; catch [RecognitionException e] {ThrowNewExcp(e, "Postfix expression error around token: ");}
 
 // |—————OTHER—————|
 other_expr
-returns [Location l, AstExpr e]:
+returns [AstExpr e, Location l]:
 	  constants { $e = $constants.e; $l = $constants.l;}
 	| ID { $l = loc($ID); $e = new AstNameExpr($l, $ID.text);}
 	|
