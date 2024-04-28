@@ -302,7 +302,6 @@ public class TypeResolver implements AstFullVisitor<SemType, TypeResolver.Contex
 				}
 			}
 			case EQU, NEQ -> {
-				// TODO : Does equiv already check if the pointers point to same type?
 				if(equiv(FstExprType, SndExprType) && (
 						FstExprType.actualType() instanceof SemBoolType ||
 								FstExprType.actualType() instanceof SemIntType ||
@@ -348,7 +347,6 @@ public class TypeResolver implements AstFullVisitor<SemType, TypeResolver.Contex
 
 	@Override
 	public SemType visit(AstArrExpr arrExpr, Context arg) {
-		// TODO: Lvalue
 		SemType Expr1Type = arrExpr.arr.accept(this, null);
 		SemType Expr2Type = arrExpr.idx.accept(this, null);
 		SemType type = null;
@@ -491,31 +489,24 @@ public class TypeResolver implements AstFullVisitor<SemType, TypeResolver.Contex
 			throw new Report.Error(exprStmt, "Expression statement type error.");
 		}
 
-		SemAn.ofType.put(exprStmt, type.actualType());
+		SemAn.ofType.put(exprStmt, SemVoidType.type);
 
-		return type.actualType();
+		return SemVoidType.type;
 	}
 
 	@Override
 	public SemType visit(AstIfStmt ifStmt, Context arg) {
 		SemType CondType = ifStmt.cond.accept(this, null);
-		SemType ThenType = ifStmt.thenStmt.accept(this, null);
-		SemType ElseType = null;
+		ifStmt.thenStmt.accept(this, null);
 
-		if(CondType.actualType() instanceof SemBoolType){
-			//TODO:Is this needed?
-			//SemAn.ofType.put(ifStmt.cond, CondType.actualType());
-		}else{
+		if(!(CondType.actualType() instanceof SemBoolType)){
 			throw new Report.Error(ifStmt, "If Statement Condition Type Error.");
 		}
 
-		//TODO:Is this needed?
-		//SemAn.ofType.put(ifStmt.thenStmt, ThenType.actualType());
 		if(ifStmt.elseStmt != null){
-			//TODO:Is this needed?
-			ElseType = ifStmt.elseStmt.accept(this, null);
-			//SemAn.ofType.put(ifStmt.elseStmt, ElseType.actualType());
+			ifStmt.elseStmt.accept(this, null);
 		}
+
 		SemAn.ofType.put(ifStmt, SemVoidType.type);
 
 		return SemVoidType.type;
@@ -523,9 +514,8 @@ public class TypeResolver implements AstFullVisitor<SemType, TypeResolver.Contex
 
 	@Override
 	public SemType visit(AstWhileStmt whileStmt, Context arg) {
-		//TODO:DO you need to assign oftype?
 		SemType CondType = whileStmt.cond.accept(this, null);
-		SemType StmtType = whileStmt.stmt.accept(this, null);
+		whileStmt.stmt.accept(this, null);
 
 		if(!(CondType.actualType() instanceof SemBoolType)){
 			throw new Report.Error(whileStmt, "While condition is not type bool.");
@@ -551,6 +541,8 @@ public class TypeResolver implements AstFullVisitor<SemType, TypeResolver.Contex
 		for (AstStmt stmt : blockStmt.stmts){
 			stmt.accept(this, null);
 		}
+		SemAn.ofType.put(blockStmt, SemVoidType.type);
+
 		return SemVoidType.type;
 	}
 
@@ -618,8 +610,7 @@ public class TypeResolver implements AstFullVisitor<SemType, TypeResolver.Contex
 		if(type.actualType() instanceof SemVoidType) {
 			throw new Report.Error(refParDefn, refParDefn.name + " is type void.");
 		}
-		//FIXME: is this correct
-		//SemType ptrType = new SemPointerType(type);
+
 		SemAn.ofType.put(refParDefn, type);
 		return type;
 	}
