@@ -47,7 +47,7 @@ public class LValResolver implements AstFullVisitor<Object, Object> {
 		if(test != null && test){
 			SemAn.isLVal.put(arrExpr, true);
 		}else {
-			throw new Report.Error(arrExpr,"L-value Array Error ");
+			throw new Report.Error(arrExpr,"Array l-val error.");
 		}
 		return null;
 	}
@@ -86,7 +86,7 @@ public class LValResolver implements AstFullVisitor<Object, Object> {
 		if(test != null && test){
 			SemAn.isLVal.put(pfxExpr, true);
 		}else if(pfxExpr.oper == AstPfxExpr.Oper.PTR ) {
-			throw new Report.Error(pfxExpr,"L-value prefix Error ");
+			throw new Report.Error(pfxExpr,"Prefix l-val error.");
 		}
 
 		return null;
@@ -108,7 +108,7 @@ public class LValResolver implements AstFullVisitor<Object, Object> {
 				if(i < max && funcDefn.pars.get(i) instanceof AstFunDefn.AstRefParDefn){
 					Boolean test = SemAn.isLVal.get(expr);
 					if(test == null || !test){
-						throw new Report.Error(callExpr,"L-value reference parameter error.");
+						throw new Report.Error(callExpr,"reference parameter l-val error.");
 					}
 				}
 				i++;
@@ -134,7 +134,7 @@ public class LValResolver implements AstFullVisitor<Object, Object> {
 		Boolean test = SemAn.isLVal.get(assignStmt.dst);
 
 		if(test == null || !test){
-			throw new Report.Error(assignStmt,"L-value Error ");
+			throw new Report.Error(assignStmt,"Assignment l-val error.");
 		}
 		return null;
 	}
