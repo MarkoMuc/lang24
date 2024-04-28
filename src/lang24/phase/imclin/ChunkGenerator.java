@@ -46,9 +46,9 @@ public class ChunkGenerator implements AstFullVisitor<Object, Object> {
 
     //Code Chunk
     @Override
-    public Object visit(AstFunDefn funDecl, Object arg) {
+    public Object visit(AstFunDefn funDefn, Object arg) {
         //Get function frame
-        MemFrame memFrame = Memory.frames.get(funDecl);
+        MemFrame memFrame = Memory.frames.get(funDefn);
 
         //Vector for the statements
         Vector<ImcStmt> imcStmtVector = new Vector<>();
@@ -60,8 +60,12 @@ public class ChunkGenerator implements AstFullVisitor<Object, Object> {
         //Adds entry label for the function body
         imcStmtVector.add(new ImcLABEL(entryLabel));
 
-        if(funDecl.stmt != null) {
-            ImcStmt imcStmt = ImcGen.stmtImc.get(funDecl.stmt);
+        if(funDefn.defns != null){
+            funDefn.defns.accept(this, null);
+        }
+
+        if(funDefn.stmt != null) {
+            ImcStmt imcStmt = ImcGen.stmtImc.get(funDefn.stmt);
             //Canonizes the Stmts
             Vector<ImcStmt> canonized = imcStmt.accept(new StmtCanonizer(), null);
             imcStmtVector.addAll(canonized);
@@ -75,7 +79,7 @@ public class ChunkGenerator implements AstFullVisitor<Object, Object> {
             ImcLin.addCodeChunk(new LinCodeChunk(memFrame, linStmts, entryLabel, exitLabel));
 
             // For declaration stmts
-            funDecl.stmt.accept(this,null);
+            funDefn.stmt.accept(this,null);
         } else {
             //TODO: is this needed?
             // ImcLin.addCodeChunk(new LinCodeChunk(memFrame,imcStmtVector,entryLabel,exitLabel));

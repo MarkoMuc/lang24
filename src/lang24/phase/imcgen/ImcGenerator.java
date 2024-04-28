@@ -18,6 +18,7 @@ import lang24.data.type.SemType;
 import lang24.phase.memory.MemEvaluator;
 import lang24.phase.memory.Memory;
 import lang24.phase.seman.SemAn;
+import lang24.phase.seman.TypeResolver;
 
 import java.util.Stack;
 import java.util.Vector;
@@ -165,7 +166,6 @@ public class ImcGenerator implements AstFullVisitor<Object, Stack<MemFrame>> {
                 imcExpr = new ImcMEM(imcExpr);
             }
         }
-
         ImcGen.exprImc.put(nameExpr, imcExpr);
 
         return imcExpr;
@@ -176,10 +176,13 @@ public class ImcGenerator implements AstFullVisitor<Object, Stack<MemFrame>> {
     public Object visit(AstArrExpr arrExpr, Stack<MemFrame> arg) {
         ImcExpr arr = (ImcExpr) arrExpr.arr.accept(this, arg);
         ImcExpr idx = (ImcExpr) arrExpr.idx.accept(this, arg);
-
         SemArrayType semType = (SemArrayType) SemAn.ofType.get(arrExpr.arr).actualType();
 
-        ImcBINOP imcOffset = new ImcBINOP(ImcBINOP.Oper.MUL, idx, new ImcCONST(semType.size));
+        ImcBINOP imcOffset = new ImcBINOP(ImcBINOP.Oper.MUL, idx, new ImcCONST(MemEvaluator.SizeOfType(semType.elemType)));
+        // CHECKME: is this only done here?
+        if(arr instanceof ImcMEM mem){
+            arr = mem.addr;
+        }
         ImcBINOP imcBin = new ImcBINOP(ImcBINOP.Oper.ADD, arr, imcOffset);
 
         ImcMEM imcMEM = new ImcMEM(imcBin);
