@@ -15,11 +15,6 @@ import lang24.data.ast.visitor.*;
  * @author bostjan.slivnik@fri.uni-lj.si
  */
 
-/*
-	TODO:
-	 1. Check all throw conditions
- */
-
 public class LValResolver implements AstFullVisitor<Object, Object> {
 
 	/** Constructs a new lvalue resolver. */
@@ -27,8 +22,44 @@ public class LValResolver implements AstFullVisitor<Object, Object> {
 	}
 
 	@Override
+	public Object visit(AstNodes<? extends AstNode> nodes, Object arg) {
+		for(AstNode n: nodes){
+			n.accept(this, null);
+		}
+		return null;
+	}
+
+	@Override
+	public Object visit(AstVarDefn varDefn, Object arg) {
+		SemAn.isLVal.put(varDefn, true);
+		return null;
+	}
+
+	@Override
+	public Object visit(AstFunDefn funDefn, Object arg) {
+		// CHECKME: this can be removed right?
+		funDefn.type.accept(this, null);
+		if(funDefn.pars != null) funDefn.pars.accept(this, null);
+		if(funDefn.defns != null) funDefn.defns.accept(this, null);
+		if(funDefn.stmt != null) funDefn.stmt.accept(this, null);
+
+		return null;
+	}
+
+	@Override
+	public Object visit(AstFunDefn.AstRefParDefn refParDefn, Object arg) {
+		SemAn.isLVal.put(refParDefn, true);
+		return null;
+	}
+
+	@Override
+	public Object visit(AstFunDefn.AstValParDefn valParDefn, Object arg) {
+		SemAn.isLVal.put(valParDefn, true);
+		return null;
+	}
+
+	@Override
 	public Object visit(AstNameExpr nameExpr, Object arg) {
-		// Is this get LVal?
 		AstDefn defn = SemAn.definedAt.get(nameExpr);
 		if(defn instanceof AstVarDefn ||
 				defn instanceof AstFunDefn.AstParDefn){
@@ -84,9 +115,10 @@ public class LValResolver implements AstFullVisitor<Object, Object> {
 		Boolean test = SemAn.isLVal.get(pfxExpr.expr);
 
 		if(test != null && test){
+			// CHECKME: Is this correct, or do you just check?
 			SemAn.isLVal.put(pfxExpr, true);
 		}else if(pfxExpr.oper == AstPfxExpr.Oper.PTR ) {
-			throw new Report.Error(pfxExpr,"Prefix l-val error.");
+			throw new Report.Error(pfxExpr,"Pointer l-val error.");
 		}
 
 		return null;
@@ -108,22 +140,12 @@ public class LValResolver implements AstFullVisitor<Object, Object> {
 				if(i < max && funcDefn.pars.get(i) instanceof AstFunDefn.AstRefParDefn){
 					Boolean test = SemAn.isLVal.get(expr);
 					if(test == null || !test){
-						throw new Report.Error(callExpr,"reference parameter l-val error.");
+						throw new Report.Error(callExpr,"Reference parameter l-val error.");
 					}
 				}
 				i++;
 			}
 		}
-		return null;
-	}
-
-	@Override
-	public Object visit(AstFunDefn funDefn, Object arg) {
-		funDefn.type.accept(this, null);
-		if(funDefn.pars != null) funDefn.pars.accept(this, null);
-		if(funDefn.defns != null) funDefn.defns.accept(this, null);
-		if(funDefn.stmt != null) funDefn.stmt.accept(this, null);
-
 		return null;
 	}
 
@@ -139,29 +161,4 @@ public class LValResolver implements AstFullVisitor<Object, Object> {
 		return null;
 	}
 
-	@Override
-	public Object visit(AstNodes<? extends AstNode> nodes, Object arg) {
-		for(AstNode n: nodes){
-			n.accept(this, null);
-		}
-		return null;
-	}
-
-	@Override
-	public Object visit(AstFunDefn.AstRefParDefn refParDefn, Object arg) {
-		SemAn.isLVal.put(refParDefn, true);
-		return null;
-	}
-
-	@Override
-	public Object visit(AstFunDefn.AstValParDefn valParDefn, Object arg) {
-		SemAn.isLVal.put(valParDefn, true);
-		return null;
-	}
-
-	@Override
-	public Object visit(AstVarDefn varDefn, Object arg) {
-		SemAn.isLVal.put(varDefn, true);
-		return null;
-	}
 }
