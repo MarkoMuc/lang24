@@ -70,8 +70,8 @@ public class NameResolver implements AstFullVisitor<Object, NameResolver.Context
                 try {
                     symbTable.ins(typDefn.name, typDefn);
                 } catch (SymbTable.CannotInsNameException e) {
-					throw new Report.Error(typDefn, "Type definition error "
-							+ typDefn.name + " name already in use.");
+					throw new Report.Error(typDefn, "Type "
+							+ typDefn.name + " already defined.");
                 }
             } else if (arg == Context.SND_RUN) {
 				typDefn.type.accept(this, null);
@@ -87,8 +87,8 @@ public class NameResolver implements AstFullVisitor<Object, NameResolver.Context
 				try {
 					symbTable.ins(varDefn.name, varDefn);
 				} catch (SymbTable.CannotInsNameException e) {
-					throw new Report.Error(varDefn, "Variable definition error "
-							+ varDefn.name + " name already in use.");
+					throw new Report.Error(varDefn, "Variable "
+							+ varDefn.name + " already defined.");
 				}
 			} else if (arg == Context.SND_RUN) {
 				varDefn.type.accept(this, null);
@@ -103,8 +103,8 @@ public class NameResolver implements AstFullVisitor<Object, NameResolver.Context
             try {
                 symbTable.ins(funDefn.name, funDefn);
             } catch (SymbTable.CannotInsNameException e) {
-				throw new Report.Error(funDefn, "Function definition error "
-						+ funDefn.name + " name already in use.");
+				throw new Report.Error(funDefn, "Function "
+						+ funDefn.name + " already defined.");
             }
         } else if (arg == Context.SND_RUN) {
 			// Same scope as function
@@ -130,8 +130,8 @@ public class NameResolver implements AstFullVisitor<Object, NameResolver.Context
                 try {
                     symbTable.ins(refParDefn.name, refParDefn);
                 } catch (SymbTable.CannotInsNameException e) {
-					throw new Report.Error(refParDefn, "Ref.Parameter definition error "
-							+ refParDefn.name + " name already in use.");
+					throw new Report.Error(refParDefn, "Parameter name "
+							+ refParDefn.name + " already defined.");
                 }
             } else if (arg == Context.SND_RUN) {
 				refParDefn.type.accept(this, null);
@@ -147,8 +147,8 @@ public class NameResolver implements AstFullVisitor<Object, NameResolver.Context
 				try {
 					symbTable.ins(valParDefn.name, valParDefn);
 				} catch (SymbTable.CannotInsNameException e) {
-					throw new Report.Error(valParDefn, "Val.Parameter definition error "
-							+ valParDefn.name + " name already in use.");
+					throw new Report.Error(valParDefn, "Parameter "
+							+ valParDefn.name + " already defined.");
 				}
 			} else if (arg == Context.SND_RUN) {
 				valParDefn.type.accept(this, null);
@@ -175,8 +175,8 @@ public class NameResolver implements AstFullVisitor<Object, NameResolver.Context
 				try {
 					symbTable.ins(cmpDefn.name, cmpDefn);
 				} catch (SymbTable.CannotInsNameException e) {
-					throw new Report.Error(cmpDefn, "Component definition error "
-							+ cmpDefn.name + " name already in use.");
+					throw new Report.Error(cmpDefn, "Component "
+							+ cmpDefn.name + " already defined.");
 				}
 			} else if (arg == Context.SND_RUN) {
 				cmpDefn.type.accept(this, null);
