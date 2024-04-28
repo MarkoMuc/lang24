@@ -175,7 +175,7 @@ public class TypeResolver implements AstFullVisitor<SemType, TypeResolver.Contex
 					throw new Report.Error(arrType,"Array size must be in range 0 < X < 2^63-1.");
 				}
 			}else {
-				throw new Report.Error(arrType,"Array size must be an integer ");
+				throw new Report.Error(arrType,"Array size must be an integer.");
 			}
 		}else {
 			throw new Report.Error(arrType,"Array size must be an integer constant.");
@@ -290,7 +290,7 @@ public class TypeResolver implements AstFullVisitor<SemType, TypeResolver.Contex
 						SndExprType.actualType() instanceof SemBoolType){
 					type = SemBoolType.type;
 				}else {
-					throw new Report.Error(binExpr, "Binary Bitwise Expression Type Error!");
+					throw new Report.Error(binExpr, "Bitwise expression type error.");
 				}
 			}
 			case ADD, SUB, MUL, DIV, MOD -> {
@@ -298,7 +298,7 @@ public class TypeResolver implements AstFullVisitor<SemType, TypeResolver.Contex
 						SndExprType.actualType() instanceof SemIntType){
 					type = SemIntType.type;
 				}else {
-					throw new Report.Error(binExpr, "Binary Integer Expression Type Error!");
+					throw new Report.Error(binExpr, "Binary expression type error.");
 				}
 			}
 			case EQU, NEQ -> {
@@ -311,7 +311,7 @@ public class TypeResolver implements AstFullVisitor<SemType, TypeResolver.Contex
 						)){
 					type = SemBoolType.type;
 				}else {
-					throw new Report.Error(binExpr, "Equivalence expression type error!");
+					throw new Report.Error(binExpr, "Equivalence expression type error.");
 				}
 			}
 			case LEQ, GEQ, LTH, GTH -> {
@@ -322,7 +322,7 @@ public class TypeResolver implements AstFullVisitor<SemType, TypeResolver.Contex
 				)){
 					type = SemBoolType.type;
 				}else {
-					throw new Report.Error(binExpr, "Value comparison expression type error!");
+					throw new Report.Error(binExpr, "Value comparison expression type error.");
 				}
 			}
 		}
@@ -340,7 +340,7 @@ public class TypeResolver implements AstFullVisitor<SemType, TypeResolver.Contex
 			type = PtrType.baseType;
 			SemAn.ofType.put(sfxExpr, type);
 		}else {
-			throw new Report.Error(sfxExpr, "Type Is Not Compatible with SuffixExpression!");
+			throw new Report.Error(sfxExpr, "Type is not compatible with suffix expression");
 		}
 
 		return type;
@@ -373,13 +373,13 @@ public class TypeResolver implements AstFullVisitor<SemType, TypeResolver.Contex
 		if(!(CastType.actualType() instanceof SemCharType ||
 				CastType.actualType() instanceof SemIntType ||
 				CastType.actualType() instanceof SemPointerType)){
-			throw new Report.Error(castExpr,"Cast Type Error");
+			throw new Report.Error(castExpr,"Cast type error.");
 		}
 
 		if(!(ExprType.actualType() instanceof SemCharType ||
 				ExprType.actualType() instanceof SemIntType ||
 				ExprType.actualType() instanceof SemPointerType)){
-			throw new Report.Error(castExpr,"Cast Type Error");
+			throw new Report.Error(castExpr,"Cast type error.");
 		}
 
 		SemAn.ofType.put(castExpr, CastType.actualType());
@@ -396,7 +396,7 @@ public class TypeResolver implements AstFullVisitor<SemType, TypeResolver.Contex
 				def instanceof AstFunDefn.AstParDefn){
 			type = SemAn.ofType.get(def);
 		} else if (def instanceof AstTypDefn) {
-			throw new Report.Error(nameExpr,"Type as expression error!");
+			throw new Report.Error(nameExpr,"Type as expression error.");
 		}else {
 			type = SemAn.isType.get(def);
 		}
@@ -479,7 +479,7 @@ public class TypeResolver implements AstFullVisitor<SemType, TypeResolver.Contex
 						SrcType.actualType() instanceof SemPointerType)){
 			SemAn.ofType.put(assignStmt, SemVoidType.type);
 		}else{
-			throw new Report.Error(assignStmt, "Assign Statement Type Error!");
+			throw new Report.Error(assignStmt, "Assign statement type error.");
 		}
 		return SemVoidType.type;
 	}
@@ -565,7 +565,7 @@ public class TypeResolver implements AstFullVisitor<SemType, TypeResolver.Contex
 			type = typDefn.type.accept(this, null);
 			try {
 			    if(DefNameType == type) {
-					throw new Report.Error(typDefn, typDefn.name + " is a cyclic type");
+					throw new Report.Error(typDefn, typDefn.name + " is a cyclic type.");
 				}
 				//FIXME: fix this
 				//if(type instanceof SemNameType) type.actualType();
@@ -576,7 +576,7 @@ public class TypeResolver implements AstFullVisitor<SemType, TypeResolver.Contex
 			if(SemAn.isType.get(typDefn) instanceof SemNameType NameType){
 				NameType.define(type);
 			}else {
-				throw new Report.Error(typDefn, "Unexpected type name error");
+				throw new Report.Error(typDefn, "Unexpected type name error.");
 			}
 		}
 		return type;
