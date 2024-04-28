@@ -37,8 +37,6 @@ public class LValResolver implements AstFullVisitor<Object, Object> {
 
 	@Override
 	public Object visit(AstFunDefn funDefn, Object arg) {
-		// CHECKME: this can be removed right?
-		funDefn.type.accept(this, null);
 		if(funDefn.pars != null) funDefn.pars.accept(this, null);
 		if(funDefn.defns != null) funDefn.defns.accept(this, null);
 		if(funDefn.stmt != null) funDefn.stmt.accept(this, null);
@@ -114,11 +112,9 @@ public class LValResolver implements AstFullVisitor<Object, Object> {
 		pfxExpr.expr.accept(this, null);
 		Boolean test = SemAn.isLVal.get(pfxExpr.expr);
 
-		if(test != null && test){
-			// CHECKME: Is this correct, or do you just check?
-			SemAn.isLVal.put(pfxExpr, true);
-		}else if(pfxExpr.oper == AstPfxExpr.Oper.PTR ) {
-			throw new Report.Error(pfxExpr,"Pointer l-val error.");
+		if(pfxExpr.oper == AstPfxExpr.Oper.PTR &&
+				(test == null || !test)){
+			throw new Report.Error(pfxExpr, "Pointer l-val error.");
 		}
 
 		return null;
