@@ -101,13 +101,6 @@ public class LValResolver implements AstFullVisitor<Object, Object> {
 	}
 
 	@Override
-	public Object visit(AstCastExpr castExpr, Object arg) {
-		castExpr.expr.accept(this, null);
-
-		return null;
-	}
-
-	@Override
 	public Object visit(AstPfxExpr pfxExpr, Object arg) {
 		pfxExpr.expr.accept(this, null);
 		Boolean test = SemAn.isLVal.get(pfxExpr.expr);
