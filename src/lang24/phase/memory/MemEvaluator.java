@@ -221,12 +221,17 @@ public class MemEvaluator implements AstFullVisitor<Object, MemEvaluator.Carry> 
 
         if(type.actualType() instanceof SemCharType ||
                 type.actualType() instanceof SemBoolType){
-            size = 8L;
+            size = 1L;
             return size;
         }
 
         if(type.actualType() instanceof SemArrayType arr){
-            size = arr.size * SizeOfType(arr.elemType);
+            long typeSize = SizeOfType(arr.elemType);
+            if(arr.elemType.actualType() instanceof SemCharType ||
+                arr.elemType.actualType() instanceof SemBoolType){
+                typeSize = typeSize + (8 - (typeSize % 8)) % 8;
+            }
+            size = arr.size * typeSize;
             return size;
         }
 
@@ -239,7 +244,6 @@ public class MemEvaluator implements AstFullVisitor<Object, MemEvaluator.Carry> 
         if(type.actualType() instanceof SemStructType structType){
             for (SemType cmpType : structType.cmpTypes) {
                 long typeSize = SizeOfType(cmpType);
-
                 typeSize = typeSize + (8 - (typeSize % 8)) % 8;
 
                 size += typeSize;
@@ -252,7 +256,7 @@ public class MemEvaluator implements AstFullVisitor<Object, MemEvaluator.Carry> 
             // Does this mean its max of all sizes?
             for (SemType cmpType : unionType.cmpTypes) {
                 long typeSize = SizeOfType(cmpType);
-                size = size > typeSize? size : typeSize;
+                size = Math.max(size, typeSize);
             }
             return size;
         }
