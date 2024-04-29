@@ -21,11 +21,6 @@ import lang24.phase.seman.SemAn;
  * @author bostjan.slivnik@fri.uni-lj.si
  */
 
-/*
-    TODO:
-     1. Fix the size of a char, including calculating the size
- */
-
 public class MemEvaluator implements AstFullVisitor<Object, MemEvaluator.Carry> {
 
     HashSet<String> GlobalNames = new HashSet<>();
@@ -37,6 +32,7 @@ public class MemEvaluator implements AstFullVisitor<Object, MemEvaluator.Carry> 
         long size = SizeOfType(type);
         if(arg == null){
             if(GlobalNames.contains(varDefn.name)){
+                // Is this even needed? -> Shadowing in same scope, is this even allowed in our language?
                 Memory.varAccesses.put(varDefn, new MemAbsAccess(size, new MemLabel()));
             }else{
                 GlobalNames.add(varDefn.name);
@@ -100,13 +96,15 @@ public class MemEvaluator implements AstFullVisitor<Object, MemEvaluator.Carry> 
     public Object visit(AstFunDefn.AstRefParDefn refParDefn, Carry arg) {
         refParDefn.type.accept(this, arg);
         SemType type = SemAn.isType.get(refParDefn.type);
-        FuncCarry funcCarry = (FuncCarry) arg;
-        // Refs are pointers
-        funcCarry.ParSize += 8L;
+        long size = SizeOfType(type);
 
-        MemRelAccess memRelAccess = new MemRelAccess(SizeOfType(type),
+        FuncCarry funcCarry = (FuncCarry) arg;
+        funcCarry.ParSize += size;
+
+        MemRelAccess memRelAccess = new MemRelAccess(size,
                 funcCarry.ParSize, funcCarry.depth);
         Memory.parAccesses.put(refParDefn, memRelAccess);
+
         return null;
     }
 
@@ -136,8 +134,9 @@ public class MemEvaluator implements AstFullVisitor<Object, MemEvaluator.Carry> 
             offset = recCarry.CompSize;
         }
 
-        MemRelAccess memRelAccess = new MemRelAccess(SizeOfType(type), offset, arg.depth);
         long size = SizeOfType(type);
+        MemRelAccess memRelAccess = new MemRelAccess(size, offset, arg.depth);
+
         if (recCarry.type == RecCarry.RecType.STR) {
                 size = size + (8 - (size % 8) % 8);
             recCarry.CompSize += size;
@@ -158,12 +157,6 @@ public class MemEvaluator implements AstFullVisitor<Object, MemEvaluator.Carry> 
             MemAbsAccess memAbsAccess = new MemAbsAccess(size, new MemLabel(StrConst), StrConst);
             Memory.strings.put(atomExpr, memAbsAccess);
         }
-        return null;
-    }
-
-    @Override
-    public Object visit(AstNameExpr nameExpr, Carry arg) {
-        // FIXME: Is this even needed?
         return null;
     }
 
@@ -217,7 +210,7 @@ public class MemEvaluator implements AstFullVisitor<Object, MemEvaluator.Carry> 
     }
 
     public static Long SizeOfType(SemType type){
-        Long size = 0L;
+        long size = 0L;
 
         if(type.actualType() instanceof SemCharType ||
                 type.actualType() instanceof SemBoolType){
