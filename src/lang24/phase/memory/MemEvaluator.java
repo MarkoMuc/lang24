@@ -252,10 +252,9 @@ public class MemEvaluator implements AstFullVisitor<Object, MemEvaluator.Carry> 
         }
 
         if(type.actualType() instanceof SemUnionType unionType){
-            //FIXME: union components are all aligned to the base address of a union.
-            // Does this mean its max of all sizes?
             for (SemType cmpType : unionType.cmpTypes) {
                 long typeSize = SizeOfType(cmpType);
+                typeSize = typeSize + (8 - (typeSize % 8)) % 8;
                 size = Math.max(size, typeSize);
             }
             return size;
