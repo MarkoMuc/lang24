@@ -1,12 +1,15 @@
 package lang24.phase.imcgen;
 
 import lang24.common.report.Report;
+import lang24.data.ast.tree.AstNode;
+import lang24.data.ast.tree.AstNodes;
 import lang24.data.ast.tree.defn.AstDefn;
 import lang24.data.ast.tree.defn.AstFunDefn;
 import lang24.data.ast.tree.defn.AstVarDefn;
 import lang24.data.ast.tree.expr.*;
 import lang24.data.ast.tree.stmt.*;
 import lang24.data.ast.tree.type.AstRecType;
+import lang24.data.ast.tree.type.AstType;
 import lang24.data.ast.visitor.AstFullVisitor;
 import lang24.data.imc.code.expr.*;
 import lang24.data.imc.code.stmt.*;
@@ -197,7 +200,7 @@ public class ImcGenerator implements AstFullVisitor<Object, Stack<MemFrame>> {
         // FIXME: Check union vs struct and AstCmpDefn
         ImcMEM imcMEM = (ImcMEM) cmpExpr.expr.accept(this, arg);
 
-        AstRecType.AstCmpDefn cmpDefn = (AstRecType.AstCmpDefn) SemAn.definedAt.get(cmpExpr.expr);
+        AstRecType.AstCmpDefn cmpDefn = (AstRecType.AstCmpDefn) SemAn.definedAt.get(cmpExpr);
         MemRelAccess memRelAccess = (MemRelAccess) Memory.cmpAccesses.get(cmpDefn);
 
         ImcBINOP imcBINOP = new ImcBINOP(ImcBINOP.Oper.ADD, imcMEM.addr, new ImcCONST(memRelAccess.offset));
@@ -427,6 +430,21 @@ public class ImcGenerator implements AstFullVisitor<Object, Stack<MemFrame>> {
         ImcGen.stmtImc.put(retStmt, imcMOVE);
 
         return imcMOVE;
+    }
+
+    @Override
+    public Object visit(AstNodes<? extends AstNode> nodes, Stack<MemFrame> arg) {
+        for(AstNode node : nodes){
+            if(node instanceof AstDefn def){
+                if(def instanceof AstFunDefn fun){
+                    fun.accept(this, arg);
+                }
+            }else{
+                node.accept(this, arg);
+            }
+        }
+
+        return null;
     }
 
     private int createChar(String value){
