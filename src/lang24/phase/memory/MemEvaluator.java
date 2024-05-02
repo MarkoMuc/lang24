@@ -38,6 +38,7 @@ public class MemEvaluator implements AstFullVisitor<Object, MemEvaluator.Carry> 
 
         long size = SizeOfType(type);
         if(arg == null){
+            // CHECKME: I think this isn't needed
             if(GlobalNames.contains(varDefn.name)){
                 // Is this even needed? -> Shadowing in same scope, is this even allowed in our language?
                 Memory.varAccesses.put(varDefn, new MemAbsAccess(size, new MemLabel()));
@@ -62,6 +63,7 @@ public class MemEvaluator implements AstFullVisitor<Object, MemEvaluator.Carry> 
 
         if(arg == null){
             funcCarry.depth = 0;
+            // CHECKME: I think this isn't needed
             if(GlobalNames.contains(funDefn.name)) {
                 label = new MemLabel();
             }else{
