@@ -22,10 +22,9 @@ import lang24.phase.seman.SemAn;
  */
 
 /*
-    FIXME:
-     1. No function frame for function prototypes
     TODO:
-     1. Check global name usage
+     1. No function frame for function prototypes
+        -> Expands to imcgen and function call
  */
 
 public class MemEvaluator implements AstFullVisitor<Object, MemEvaluator.Carry> {
@@ -34,7 +33,6 @@ public class MemEvaluator implements AstFullVisitor<Object, MemEvaluator.Carry> 
 
     @Override
     public Object visit(AstVarDefn varDefn, Carry arg) {
-        // CHECKME: Is this needed?
         varDefn.type.accept(this, arg);
         SemType type = SemAn.isType.get(varDefn.type);
 
@@ -101,7 +99,6 @@ public class MemEvaluator implements AstFullVisitor<Object, MemEvaluator.Carry> 
 
     @Override
     public Object visit(AstFunDefn.AstRefParDefn refParDefn, Carry arg) {
-        // CHECKME: Is this needed?
         refParDefn.type.accept(this, arg);
         SemType type = SemAn.isType.get(refParDefn.type);
         long size = SizeOfType(type);
@@ -118,16 +115,14 @@ public class MemEvaluator implements AstFullVisitor<Object, MemEvaluator.Carry> 
 
     @Override
     public Object visit(AstFunDefn.AstValParDefn valParDefn, Carry arg) {
-        // CHECKME: Is this needed?
-        valParDefn.type.accept(this, arg);
         SemType type = SemAn.isType.get(valParDefn.type);
         long size = SizeOfType(type);
 
         FuncCarry funcCarry = (FuncCarry) arg;
         funcCarry.ParSize += size;
 
-        MemRelAccess memRelAccess = new MemRelAccess(size, funcCarry.ParSize,
-                funcCarry.depth);
+        MemRelAccess memRelAccess = new MemRelAccess(size,
+                funcCarry.ParSize, funcCarry.depth);
         Memory.parAccesses.put(valParDefn, memRelAccess);
 
         return null;
