@@ -15,13 +15,6 @@ import lang24.data.type.*;
  * @author bostjan.slivnik@fri.uni-lj.si
  */
 
-/*
-	FIXME:
-	 1. Case : this.c = that.c
-	 2. Recursive types -> How should they work?
-	 	-> Maybe a third cycle to solve cyclic types
- */
-
 public class TypeResolver implements AstFullVisitor<SemType, TypeResolver.Context> {
 
 	/**
@@ -139,7 +132,6 @@ public class TypeResolver implements AstFullVisitor<SemType, TypeResolver.Contex
 	private Stack<SymbTable> StrTableStack = new Stack<>();
 	private Stack<Vector<SemType>> CmpVecStack= new Stack<>();
 	private Stack<SemType> FuncTypeStack = new Stack<>();
-	private SemNameType DefNameType = null;
 
 	@Override
 	public SemType visit(AstAtomType atomType, Context arg) {
@@ -331,7 +323,6 @@ public class TypeResolver implements AstFullVisitor<SemType, TypeResolver.Contex
 
 	@Override
 	public SemType visit(AstSfxExpr sfxExpr, Context arg) {
-		// TODO: check how this handles pointer to name type?
 		SemType ExprType = sfxExpr.expr.accept(this, null);
 		SemType type = null;
 
@@ -553,22 +544,14 @@ public class TypeResolver implements AstFullVisitor<SemType, TypeResolver.Contex
 			SemNameType NameType = new SemNameType(typDefn.name);
 			SemAn.isType.put(typDefn, NameType);
 		} else if (arg == Context.SECOND) {
-			DefNameType = (SemNameType) SemAn.isType.get(typDefn);
+			SemNameType DefNameType = (SemNameType) SemAn.isType.get(typDefn);
 			type = typDefn.type.accept(this, null);
-			try {
-			    if(DefNameType == type) {
-					throw new Report.Error(typDefn, typDefn.name + " is a cyclic type.");
-				}
-				//FIXME: fix this
-				//if(type instanceof SemNameType) type.actualType();
-			}catch (Exception e){
-				throw new Report.Error(typDefn, typDefn.name + " is a cyclic type error.");
-			}
 
-			if(SemAn.isType.get(typDefn) instanceof SemNameType NameType){
-				NameType.define(type);
-			}else {
-				throw new Report.Error(typDefn, "Unexpected type name error.");
+			DefNameType.define(type);
+		} else if(arg == Context.THIRD){
+			SemNameType DefNameType = (SemNameType) SemAn.isType.get(typDefn);
+			if(CheckTypeRecursion(DefNameType, DefNameType.type())){
+				throw new Report.Error(typDefn, typDefn.name + " is a cyclic type.");
 			}
 		}
 		return type;
@@ -692,5 +675,34 @@ public class TypeResolver implements AstFullVisitor<SemType, TypeResolver.Contex
 			}
 		}
 		return semType;
+	}
+
+
+	private boolean CheckTypeRecursion(SemType main, SemType snd){
+		return CheckTypeRecursion(main, snd, new Vector<>());
+	}
+	private boolean CheckTypeRecursion(SemType main, SemType snd, Vector<SemType> vec){
+		boolean result = false;
+
+		if(snd instanceof SemNameType name){
+			if (main == name || vec.contains(name)){
+				return true;
+			}
+
+			vec.add(name);
+			result = CheckTypeRecursion(main, name.type(), vec);
+		} else if (snd instanceof SemRecordType rec) {
+			for(SemType cmp : rec.cmpTypes){
+				if(CheckTypeRecursion(main, cmp, vec)){
+					return true;
+				}
+			}
+		} else if(snd instanceof SemArrayType arr){
+			if(CheckTypeRecursion(main, arr.elemType, vec)){
+				return true;
+			}
+		}
+
+		return result;
 	}
 }
