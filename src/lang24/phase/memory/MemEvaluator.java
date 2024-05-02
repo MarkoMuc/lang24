@@ -34,8 +34,10 @@ public class MemEvaluator implements AstFullVisitor<Object, MemEvaluator.Carry> 
 
     @Override
     public Object visit(AstVarDefn varDefn, Carry arg) {
+        // CHECKME: Is this needed?
         varDefn.type.accept(this, arg);
         SemType type = SemAn.isType.get(varDefn.type);
+
         long size = SizeOfType(type);
         if(arg == null){
             if(GlobalNames.contains(varDefn.name)){
@@ -99,6 +101,7 @@ public class MemEvaluator implements AstFullVisitor<Object, MemEvaluator.Carry> 
 
     @Override
     public Object visit(AstFunDefn.AstRefParDefn refParDefn, Carry arg) {
+        // CHECKME: Is this needed?
         refParDefn.type.accept(this, arg);
         SemType type = SemAn.isType.get(refParDefn.type);
         long size = SizeOfType(type);
@@ -115,6 +118,7 @@ public class MemEvaluator implements AstFullVisitor<Object, MemEvaluator.Carry> 
 
     @Override
     public Object visit(AstFunDefn.AstValParDefn valParDefn, Carry arg) {
+        // CHECKME: Is this needed?
         valParDefn.type.accept(this, arg);
         SemType type = SemAn.isType.get(valParDefn.type);
         long size = SizeOfType(type);
@@ -134,6 +138,7 @@ public class MemEvaluator implements AstFullVisitor<Object, MemEvaluator.Carry> 
         cmpDefn.type.accept(this, arg);
         SemType type = SemAn.isType.get(cmpDefn.type);
         RecCarry recCarry = (RecCarry) arg;
+
         long offset = 0;
         if(recCarry.type == RecCarry.RecType.STR){
             offset = recCarry.CompSize;
@@ -143,7 +148,7 @@ public class MemEvaluator implements AstFullVisitor<Object, MemEvaluator.Carry> 
         MemRelAccess memRelAccess = new MemRelAccess(size, offset, arg.depth);
 
         if (recCarry.type == RecCarry.RecType.STR) {
-                size = size + (8 - (size % 8) % 8);
+            size = size + (8 - (size % 8)) % 8;
             recCarry.CompSize += size;
         }else {
             recCarry.CompSize = Math.max(size, recCarry.CompSize);
@@ -211,6 +216,7 @@ public class MemEvaluator implements AstFullVisitor<Object, MemEvaluator.Carry> 
         RecCarry(RecType type){
             this.type = type;
             this.depth = -1;
+            this.CompSize = 0;
         }
     }
 
