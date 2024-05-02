@@ -21,6 +21,13 @@ import lang24.phase.seman.SemAn;
  * @author bostjan.slivnik@fri.uni-lj.si
  */
 
+/*
+    FIXME:
+     1. No function frame for function prototypes
+    TODO:
+     1. Check global name usage
+ */
+
 public class MemEvaluator implements AstFullVisitor<Object, MemEvaluator.Carry> {
 
     HashSet<String> GlobalNames = new HashSet<>();
@@ -50,8 +57,6 @@ public class MemEvaluator implements AstFullVisitor<Object, MemEvaluator.Carry> 
 
     @Override
     public Object visit(AstFunDefn funDefn, Carry arg) {
-        // FIXME:
-        //  1. No function frame for function prototypes
         FuncCarry funcCarry = new FuncCarry();
         MemLabel label = null;
 
