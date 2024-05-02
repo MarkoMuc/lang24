@@ -9,19 +9,16 @@ import lang24.data.ast.tree.defn.AstVarDefn;
 import lang24.data.ast.tree.expr.*;
 import lang24.data.ast.tree.stmt.*;
 import lang24.data.ast.tree.type.AstRecType;
-import lang24.data.ast.tree.type.AstType;
 import lang24.data.ast.visitor.AstFullVisitor;
 import lang24.data.imc.code.expr.*;
 import lang24.data.imc.code.stmt.*;
 import lang24.data.mem.*;
 import lang24.data.type.SemArrayType;
 import lang24.data.type.SemCharType;
-import lang24.data.type.SemRecordType;
 import lang24.data.type.SemType;
 import lang24.phase.memory.MemEvaluator;
 import lang24.phase.memory.Memory;
 import lang24.phase.seman.SemAn;
-import lang24.phase.seman.TypeResolver;
 
 import java.util.Stack;
 import java.util.Vector;
@@ -472,15 +469,11 @@ public class ImcGenerator implements AstFullVisitor<Object, Stack<MemFrame>> {
     private ImcStmt funcBody(ImcStmt mainStmt){
         if(mainStmt instanceof ImcSTMTS mainSTMTS){
             mainSTMTS.stmts.addFirst(new ImcLABEL(funcContexts.peek().entryL));
-            // CHECKME: Pretty sure this doesn't need to be added, we just need a label
-            //mainSTMTS.stmts.addLast(new ImcJUMP(funcContexts.peek().exitL));
             mainSTMTS.stmts.addLast(new ImcLABEL(funcContexts.peek().exitL));
         } else {
             Vector<ImcStmt> stmtVector = new Vector<>();
             stmtVector.add(new ImcLABEL(funcContexts.peek().entryL));
             stmtVector.add(mainStmt);
-            // CHECKME: Pretty sure this doesn't need to be added, we just need a label
-            //stmtVector.add(new ImcJUMP(funcContexts.peek().exitL));
 
             stmtVector.add(new ImcLABEL(funcContexts.peek().exitL));
 
