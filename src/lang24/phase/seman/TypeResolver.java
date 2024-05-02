@@ -415,7 +415,7 @@ public class TypeResolver implements AstFullVisitor<SemType, TypeResolver.Contex
 
         try {
             AstDefn cmpDefn = table.fnd(cmpExpr.name);
-			SemAn.definedAt.put(cmpExpr.expr, cmpDefn);
+			SemAn.definedAt.put(cmpExpr, cmpDefn);
 			type = SemAn.ofType.get(cmpDefn);
         } catch (SymbTable.CannotFndNameException e) {
 			throw new Report.Error(cmpExpr,cmpExpr.name + " component not found.");
