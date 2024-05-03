@@ -186,7 +186,6 @@ public class ImcGenerator implements AstFullVisitor<Object, Stack<MemFrame>> {
     // EX9
     @Override
     public Object visit(AstCmpExpr cmpExpr, Stack<MemFrame> arg) {
-        // FIXME: Check union vs struct and AstCmpDefn
         ImcMEM imcMEM = (ImcMEM) cmpExpr.expr.accept(this, arg);
 
         AstRecType.AstCmpDefn cmpDefn = (AstRecType.AstCmpDefn) SemAn.definedAt.get(cmpExpr);
@@ -197,7 +196,7 @@ public class ImcGenerator implements AstFullVisitor<Object, Stack<MemFrame>> {
 
         ImcGen.exprImc.put(cmpExpr, imc);
 
-        return imcMEM;
+        return imc;
     }
 
     // EX10
