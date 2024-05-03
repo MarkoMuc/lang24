@@ -23,19 +23,11 @@ import lang24.phase.seman.SemAn;
 import java.util.Stack;
 import java.util.Vector;
 
-/*
-    TODO:
-     -> Check depths
-     -> Check offsets
-     -> Check SEXPR and ESTMT
-     -> Check Comp expr
-     -> Check Cast
- */
 
 public class ImcGenerator implements AstFullVisitor<Object, Stack<MemFrame>> {
 
     Stack<ImcGenerator.FuncContext> funcContexts = new Stack<>();
-
+    boolean conditionalStatement = false;
     @Override
     public Object visit(AstFunDefn funDefn, Stack<MemFrame> arg) {
         if(arg == null){
@@ -211,7 +203,6 @@ public class ImcGenerator implements AstFullVisitor<Object, Stack<MemFrame>> {
     // EX10
     @Override
     public Object visit(AstCallExpr callExpr, Stack<MemFrame> arg) {
-        // FIXME: Are the offsets correct?
         AstFunDefn funDefn = (AstFunDefn) SemAn.definedAt.get(callExpr);
         MemFrame memFrame = Memory.frames.get(funDefn);
 
@@ -287,7 +278,7 @@ public class ImcGenerator implements AstFullVisitor<Object, Stack<MemFrame>> {
         ImcStmt imcESTMT = new ImcESTMT(imcExpr);
 
         if(first){
-            imcESTMT = funcBody(imcESTMT);
+            imcESTMT = funcBody(imcESTMT, arg.peek().RV);
         }
 
         ImcGen.stmtImc.put(exprStmt, imcESTMT);
@@ -306,7 +297,7 @@ public class ImcGenerator implements AstFullVisitor<Object, Stack<MemFrame>> {
         ImcStmt imcMOVE = new ImcMOVE(expr2, expr1);
 
         if(first){
-            imcMOVE = funcBody(imcMOVE);
+            imcMOVE = funcBody(imcMOVE, arg.peek().RV);
         }
 
         ImcGen.stmtImc.put(assignStmt, imcMOVE);
@@ -320,6 +311,7 @@ public class ImcGenerator implements AstFullVisitor<Object, Stack<MemFrame>> {
         boolean first = funcContexts.peek().first;
         funcContexts.peek().first = false;
 
+        conditionalStatement = true;
         ImcExpr imcExpr = (ImcExpr) ifStmt.cond.accept(this, arg);
         ImcStmt stmt = (ImcStmt) ifStmt.thenStmt.accept(this, arg);
 
@@ -342,9 +334,10 @@ public class ImcGenerator implements AstFullVisitor<Object, Stack<MemFrame>> {
         ImcStmt imcSTMTS = new ImcSTMTS(imcStmts);
 
         if(first){
-            imcSTMTS = funcBody(imcSTMTS);
+            imcSTMTS = funcBody(imcSTMTS, arg.peek().RV);
         }
 
+        conditionalStatement = false;
         ImcGen.stmtImc.put(ifStmt, imcSTMTS);
 
         return imcSTMTS;
@@ -355,6 +348,8 @@ public class ImcGenerator implements AstFullVisitor<Object, Stack<MemFrame>> {
     public Object visit(AstWhileStmt whileStmt, Stack<MemFrame> arg) {
         boolean first = funcContexts.peek().first;
         funcContexts.peek().first = false;
+
+        conditionalStatement = false;
 
         ImcExpr imcExpr = (ImcExpr) whileStmt.cond.accept(this, arg);
         ImcStmt imcStmt = (ImcStmt) whileStmt.stmt.accept(this, arg);
@@ -377,8 +372,10 @@ public class ImcGenerator implements AstFullVisitor<Object, Stack<MemFrame>> {
         ImcStmt imcSTMTS = new ImcSTMTS(imcStmts);
 
         if(first){
-            imcSTMTS = funcBody(imcSTMTS);
+            imcSTMTS = funcBody(imcSTMTS, arg.peek().RV);
         }
+
+        conditionalStatement = false;
         ImcGen.stmtImc.put(whileStmt, imcSTMTS);
 
         return imcSTMTS;
@@ -395,17 +392,12 @@ public class ImcGenerator implements AstFullVisitor<Object, Stack<MemFrame>> {
         for (int i = 0; i < blockStmt.stmts.size(); i++) {
             ImcStmt midStmt = (ImcStmt) blockStmt.stmts.get(i).accept(this, arg);
             imcStmts.add(midStmt);
-            if(blockStmt.stmts.get(i) instanceof AstReturnStmt &&
-                    !(i == blockStmt.stmts.size() - 1 && first)){
-                // Adds early return
-                imcStmts.add(new ImcJUMP(funcContexts.peek().exitL));
-            }
         }
 
         ImcStmt imcSTMTS = new ImcSTMTS(imcStmts);
 
         if(first){
-            imcSTMTS = funcBody(imcSTMTS);
+            imcSTMTS = funcBody(imcSTMTS, arg.peek().RV);
         }
 
         ImcGen.stmtImc.put(blockStmt, imcSTMTS);
@@ -417,16 +409,24 @@ public class ImcGenerator implements AstFullVisitor<Object, Stack<MemFrame>> {
     public Object visit(AstReturnStmt retStmt, Stack<MemFrame> arg) {
         boolean first = funcContexts.peek().first;
         funcContexts.peek().first = false;
+        //CHECKME:Do i need to check if there is a return elsewhere tho?
+        //      -  E.G this is inside an IF or While stmt, so we still need the additional back
+        if(!conditionalStatement) {
+            funcContexts.peek().add_return = false;
+        }
+        Vector<ImcStmt> returnStms = new Vector<>();
 
-        ImcStmt imcMOVE = new ImcMOVE(new ImcTEMP(arg.peek().RV), (ImcExpr) retStmt.expr.accept(this, arg));
+        returnStms.add(new ImcMOVE(new ImcTEMP(arg.peek().RV), (ImcExpr) retStmt.expr.accept(this, arg)));
+        returnStms.add(new ImcJUMP(funcContexts.peek().exitL));
+        ImcStmt imcSTMTS = new ImcSTMTS(returnStms);
 
         if(first){
-            imcMOVE = funcBody(imcMOVE);
+            imcSTMTS = funcBody(imcSTMTS, arg.peek().RV);
         }
 
-        ImcGen.stmtImc.put(retStmt, imcMOVE);
+        ImcGen.stmtImc.put(retStmt, imcSTMTS);
 
-        return imcMOVE;
+        return imcSTMTS;
     }
 
     @Override
@@ -466,7 +466,8 @@ public class ImcGenerator implements AstFullVisitor<Object, Stack<MemFrame>> {
         return c;
     }
 
-    private ImcStmt funcBody(ImcStmt mainStmt){
+    private ImcStmt funcBody(ImcStmt mainStmt, MemTemp RV){
+
         if(mainStmt instanceof ImcSTMTS mainSTMTS){
             mainSTMTS.stmts.addFirst(new ImcLABEL(funcContexts.peek().entryL));
             mainSTMTS.stmts.addLast(new ImcLABEL(funcContexts.peek().exitL));
@@ -480,6 +481,13 @@ public class ImcGenerator implements AstFullVisitor<Object, Stack<MemFrame>> {
             mainStmt = new ImcSTMTS(stmtVector);
         }
 
+        if(funcContexts.peek().add_return) {
+            ImcStmt imcMOVE = new ImcMOVE(new ImcTEMP(RV), new ImcCONST(0));
+            int len = ((ImcSTMTS)mainStmt).stmts.size();
+            ((ImcSTMTS)mainStmt).stmts.add(len - 1, imcMOVE);
+            funcContexts.peek().add_return = false;
+        }
+
         funcContexts.peek().first = false;
 
         return mainStmt;
@@ -489,9 +497,11 @@ public class ImcGenerator implements AstFullVisitor<Object, Stack<MemFrame>> {
         boolean first;
         MemLabel entryL;
         MemLabel exitL;
+        boolean add_return;
 
         FuncContext(MemLabel entryL, MemLabel exitL){
             this.first = true;
+            this.add_return = true;
             this.entryL = entryL;
             this.exitL = exitL;
         }
