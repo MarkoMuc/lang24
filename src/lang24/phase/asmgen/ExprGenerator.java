@@ -209,7 +209,7 @@ public class ExprGenerator implements ImcVisitor<MemTemp, Vector<AsmInstr>> {
         arg.add(new AsmOPER(instr, uses, defs, jumps));
 
         // retval
-        instr = "lw	`d0,(0)sp";
+        instr = "lw	`d0,0(sp)";
         uses = new Vector<MemTemp>();
         defs = new Vector<MemTemp>();
         jumps = new Vector<MemLabel>();
