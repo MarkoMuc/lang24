@@ -1,5 +1,5 @@
 JAVA		= java --enable-preview
-JAVAC		= javac --enable-preview --release 21 -encoding UTF8
+JAVAC		= javac --enable-preview --release 22 -encoding UTF8
 ANTLR           = org.antlr.v4.Tool
 ANTLRDIR	= lib/antlr-4.13.1-complete.jar
 RM		= 'rm' -fr
