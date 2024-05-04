@@ -165,7 +165,7 @@ public class ExprGenerator implements ImcVisitor<MemTemp, Vector<AsmInstr>> {
         uses.add(funArg);
 
         if (offset <= 0xff) {
-            instr = "sw	`s0,"+offset+"(sp)";
+            instr = "sd	`s0,"+offset+"(sp)";
             arg.add(new AsmOPER(instr, uses, defs, jumps));
         } else {
             //CHECKME: find out when you should calculate it with extra commands
@@ -180,7 +180,7 @@ public class ExprGenerator implements ImcVisitor<MemTemp, Vector<AsmInstr>> {
             uses.add(regz);
             arg.add(new AsmOPER(instr, uses, defs, jumps));
 
-            instr = " sw `s0,0(`d0)";
+            instr = "sd `s0,0(`d0)";
             uses.add(funArg);
             defs.add(dest);
             arg.add(new AsmOPER(instr, uses, defs, jumps));
