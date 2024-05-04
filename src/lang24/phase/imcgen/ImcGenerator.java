@@ -65,7 +65,8 @@ public class ImcGenerator implements AstFullVisitor<Object, Stack<MemFrame>> {
         //TODO: bounds check for int -> throw error if too large
         ImcExpr imcConst = switch (atomExpr.type){
             case BOOL -> new ImcCONST(atomExpr.value.equals("true") ? 1 : 0);
-            case VOID, PTR -> new ImcCONST(0);
+            case VOID -> new ImcCONST(-1);
+            case PTR -> new ImcCONST(0);
             case INT -> new ImcCONST(Long.parseLong(atomExpr.value));
             case CHAR -> new ImcCONST(createChar(atomExpr.value));
             case STR -> new ImcNAME(Memory.strings.get(atomExpr).label);
