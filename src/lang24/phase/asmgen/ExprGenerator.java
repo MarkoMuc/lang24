@@ -97,6 +97,7 @@ public class ExprGenerator implements ImcVisitor<MemTemp, Vector<AsmInstr>> {
             arg.addAll(instrs);
         } else if (binOp.oper == ImcBINOP.Oper.GTH) {
             // CHECKME: if the SLT turned the right way
+            //  sext.w but do we need sext.d?
             Vector<AsmInstr> instrs = new Vector<>();
             defs.add(new MemTemp());//d1
             uses.add(new MemTemp());//s0
