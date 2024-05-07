@@ -67,7 +67,7 @@ public class ImcGenerator implements AstFullVisitor<Object, Stack<MemFrame>> {
             case BOOL -> new ImcCONST(atomExpr.value.equals("true") ? 1 : 0);
             case VOID -> new ImcCONST(-1);
             case PTR -> new ImcCONST(0);
-            case INT -> new ImcCONST(Long.parseLong(atomExpr.value));
+            case INT -> new ImcCONST(CheckNParse(atomExpr.value));
             case CHAR -> new ImcCONST(createChar(atomExpr.value));
             case STR -> new ImcNAME(Memory.strings.get(atomExpr).label);
         };
@@ -207,7 +207,7 @@ public class ImcGenerator implements AstFullVisitor<Object, Stack<MemFrame>> {
         MemFrame memFrame = Memory.frames.get(funDefn);
 
         ImcExpr imcExpr1 = new ImcTEMP(arg.peek().FP);
-        for(int i = 0; i < arg.peek().depth - memFrame.depth; i++){
+        for(int i = 0; i < arg.peek().depth - memFrame.depth + 1; i++){
             imcExpr1 = new ImcMEM(imcExpr1);
         }
 
@@ -464,6 +464,14 @@ public class ImcGenerator implements AstFullVisitor<Object, Stack<MemFrame>> {
         }
 
         return c;
+    }
+
+    private long CheckNParse(String value){
+        try{
+            return Long.parseLong(value);
+        }catch (NumberFormatException e){
+            throw new Report.Error("Not a valid number" + value);
+        }
     }
 
     private ImcStmt funcBody(ImcStmt mainStmt, MemTemp RV){
