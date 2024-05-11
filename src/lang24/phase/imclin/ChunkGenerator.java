@@ -23,37 +23,28 @@ public class ChunkGenerator implements AstFullVisitor<Object, Object> {
 
     @Override
     public Object visit(AstVarDefn varDefn, Object arg) {
-        //Data chunk for the variable
         MemAccess access = Memory.varAccesses.get(varDefn);
-        if (access instanceof MemAbsAccess) {
-            ImcLin.addDataChunk(
-                    new LinDataChunk((MemAbsAccess) access));
+        if (access instanceof MemAbsAccess abs) {
+            ImcLin.addDataChunk(new LinDataChunk(abs));
         }
         return null;
     }
 
     @Override
     public Object visit(AstAtomExpr atomExpr, Object arg) {
-        //Data chunk for the string
         if (atomExpr.type == AstAtomExpr.Type.STR) {
             MemAbsAccess memAbsAccess = Memory.strings.get(atomExpr);
-            ImcLin.addDataChunk(
-                    new LinDataChunk(memAbsAccess));
-            return null;
+            ImcLin.addDataChunk(new LinDataChunk(memAbsAccess));
         }
         return null;
     }
 
-    //Code Chunk
     @Override
     public Object visit(AstFunDefn funDefn, Object arg) {
-        //Get function frame
+        //TODO: remove additional end label at the end of the function
+        Vector<ImcStmt> imcStmtVector = new Vector<>();
         MemFrame memFrame = Memory.frames.get(funDefn);
 
-        //Vector for the statements
-        Vector<ImcStmt> imcStmtVector = new Vector<>();
-
-        //Prepares the Entry and Exit label
         MemLabel entryLabel = new MemLabel();
         MemLabel exitLabel = new MemLabel();
 

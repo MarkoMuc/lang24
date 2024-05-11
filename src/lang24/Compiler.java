@@ -6,6 +6,7 @@ import java.nio.file.attribute.*;
 import java.util.*;
 import lang24.common.report.*;
 import lang24.phase.lexan.*;
+import lang24.phase.livean.LiveAn;
 import lang24.phase.synan.*;
 import lang24.phase.abstr.*;
 import lang24.phase.seman.*;
@@ -27,8 +28,8 @@ public class Compiler {
 	}
 
 	/** All valid phases name of the compiler. */
-	private static final Vector<String> phaseNames = new Vector<String>(
-			Arrays.asList("none", "all", "lexan", "synan", "abstr", "seman", "memory", "imcgen", "imclin", "asmgen"));
+	private static final Vector<String> phaseNames = new Vector<String>(Arrays.asList("none", "all", "lexan", "synan",
+			"abstr", "seman", "memory", "imcgen", "imclin", "asmgen", "livean"));
 
 	/** Names of command line options. */
 	private static final HashSet<String> cmdLineOptNames = new HashSet<String>(
@@ -218,6 +219,13 @@ public class Compiler {
 					asmgen.log();
 				}
 				if (cmdLineOptValues.get("--target-phase").equals("amsgen"))
+					break;
+
+				try(LiveAn livean = new LiveAn()){
+					livean.analysis();
+					livean.log();
+				}
+				if (cmdLineOptValues.get("--target-phase").equals("livean"))
 					break;
 
 				break;
