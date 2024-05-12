@@ -46,110 +46,45 @@ public class ExprGenerator implements ImcVisitor<MemTemp, Vector<AsmInstr>> {
             arg.add(new AsmOPER(instr, null, defs, jumps));
         } else if (binOp.oper == ImcBINOP.Oper.EQU) {
             // FIXME: Create function for this etc.
-            Vector<AsmInstr> instrs = new Vector<>();
-            defs.add(new MemTemp());//d1
             uses.add(new MemTemp());//s0
             uses.add(new MemTemp());//s1
 
-            instrs.add( new AsmOPER( "lw `d0,`s0", uses, defs, jumps));
-            instrs.add( new AsmOPER( "mv `d1,`d0", uses, defs, jumps));
-            instrs.add( new AsmOPER( "lw `d0,`s1", uses, defs, jumps));
-
-            instrs.add( new AsmOPER( "sext.w `d1,`d1", uses, defs, jumps));
-            instrs.add( new AsmOPER( "sext.w `d0,`d0", uses, defs, jumps));
-            instrs.add( new AsmOPER( "sub `d0,`d1,`d0", uses, defs, jumps));
-            instrs.add( new AsmOPER( "seqz `d0,`d0", uses, defs, jumps));
-            instrs.add( new AsmOPER( "andi `d0,`d0, 0xff", uses, defs, jumps));
-            arg.addAll(instrs);
+            arg.add( new AsmOPER( "sub `d0,`s0,`s1", uses, defs, jumps));
+            uses = new Vector<>();
+            arg.add( new AsmOPER( "seqz `d0,`d0", uses, defs, jumps));
         } else if (binOp.oper == ImcBINOP.Oper.NEQ) {
-            Vector<AsmInstr> instrs = new Vector<>();
-            defs.add(new MemTemp());//d1
             uses.add(new MemTemp());//s0
             uses.add(new MemTemp());//s1
 
-            instrs.add( new AsmOPER( "lw `d0,`s0", uses, defs, jumps));
-            instrs.add( new AsmOPER( "mv `d1,`d0", uses, defs, jumps));
-            instrs.add( new AsmOPER( "lw `d0,`s1", uses, defs, jumps));
-            instrs.add( new AsmOPER( "sext.w `d1,`d1", uses, defs, jumps));
-            instrs.add( new AsmOPER( "sext.w `d0,`d0", uses, defs, jumps));
-
-            instrs.add( new AsmOPER( "sub `d0,`d1,`d0", uses, defs, jumps));
-            instrs.add( new AsmOPER( "snez `d0,`d0", uses, defs, jumps));
-
-            instrs.add( new AsmOPER( "andi `d0,`d0,`0xff", uses, defs, jumps));
-            arg.addAll(instrs);
+            arg.add( new AsmOPER( "sub `d0,`s1,`s0", uses, defs, jumps));
+            uses = new Vector<>();
+            arg.add( new AsmOPER( "snez `d0,`d0", uses, defs, jumps));
         } else if (binOp.oper == ImcBINOP.Oper.LTH) {
-            Vector<AsmInstr> instrs = new Vector<>();
-            defs.add(new MemTemp());//d1
             uses.add(new MemTemp());//s0
             uses.add(new MemTemp());//s1
 
-            instrs.add( new AsmOPER( "lw `d0,`s0", uses, defs, jumps));
-            instrs.add( new AsmOPER( "mv `d1,`d0", uses, defs, jumps));
-            instrs.add( new AsmOPER( "lw `d0,`s1", uses, defs, jumps));
-            instrs.add( new AsmOPER( "sext.w `d1,`d1", uses, defs, jumps));
-            instrs.add( new AsmOPER( "sext.w `d0,`d0", uses, defs, jumps));
-
-            instrs.add( new AsmOPER( "slt `d0,`d1,`d0", uses, defs, jumps));
-
-            instrs.add( new AsmOPER( "andi `d0,`d0,`0xff", uses, defs, jumps));
-
-            arg.addAll(instrs);
+            arg.add( new AsmOPER( "slt `d0,`s1,`s0", uses, defs, jumps));
         } else if (binOp.oper == ImcBINOP.Oper.GTH) {
             // CHECKME: if the SLT turned the right way
             //  sext.w but do we need sext.d?
-            Vector<AsmInstr> instrs = new Vector<>();
-            defs.add(new MemTemp());//d1
             uses.add(new MemTemp());//s0
             uses.add(new MemTemp());//s1
 
-            instrs.add( new AsmOPER( "lw `d0,`s0", uses, defs, jumps));
-            instrs.add( new AsmOPER( "mv `d1,`d0", uses, defs, jumps));
-            instrs.add( new AsmOPER( "lw `d0,`s1", uses, defs, jumps));
-            instrs.add( new AsmOPER( "sext.w `d1,`d1", uses, defs, jumps));
-            instrs.add( new AsmOPER( "sext.w `d0,`d0", uses, defs, jumps));
-
-            instrs.add( new AsmOPER( "slt `d0,`d0,`d1", uses, defs, jumps));
-
-            instrs.add( new AsmOPER( "andi `d0,`d0,`0xff", uses, defs, jumps));
-
-            arg.addAll(instrs);
+            arg.add( new AsmOPER( "slt `d0,`s0,`s1", uses, defs, jumps));
         } else if (binOp.oper == ImcBINOP.Oper.LEQ) {
-            Vector<AsmInstr> instrs = new Vector<>();
-            defs.add(new MemTemp());//d1
             uses.add(new MemTemp());//s0
             uses.add(new MemTemp());//s1
 
-            instrs.add( new AsmOPER( "lw `d0,`s0", uses, defs, jumps));
-            instrs.add( new AsmOPER( "mv `d1,`d0", uses, defs, jumps));
-            instrs.add( new AsmOPER( "lw `d0,`s1", uses, defs, jumps));
-            instrs.add( new AsmOPER( "sext.w `d1,`d1", uses, defs, jumps));
-            instrs.add( new AsmOPER( "sext.w `d0,`d0", uses, defs, jumps));
-
-            instrs.add( new AsmOPER( "slt `d0,`d0,`d1", uses, defs, jumps));
-            instrs.add( new AsmOPER( "seqz `d0,`d0", uses, defs, jumps));
-
-            instrs.add( new AsmOPER( "andi `d0,`d0,`0xff", uses, defs, jumps));
-
-            arg.addAll(instrs);
+            arg.add( new AsmOPER( "slt `d0,`s0,`s1", uses, defs, jumps));
+            uses = new Vector<>();
+            arg.add( new AsmOPER( "seqz `d0,`d0", uses, defs, jumps));
         } else if (binOp.oper == ImcBINOP.Oper.GEQ) {
-            Vector<AsmInstr> instrs = new Vector<>();
-            defs.add(new MemTemp());//d1
             uses.add(new MemTemp());//s0
             uses.add(new MemTemp());//s1
 
-            instrs.add( new AsmOPER( "lw `d0,`s0", uses, defs, jumps));
-            instrs.add( new AsmOPER( "mv `d1,`d0", uses, defs, jumps));
-            instrs.add( new AsmOPER( "lw `d0,`s1", uses, defs, jumps));
-            instrs.add( new AsmOPER( "sext.w `d1,`d1", uses, defs, jumps));
-            instrs.add( new AsmOPER( "sext.w `d0,`d0", uses, defs, jumps));
-
-            instrs.add( new AsmOPER( "slt `d0,`d1,`d0", uses, defs, jumps));
-            instrs.add( new AsmOPER( "seqz `d0,`d0", uses, defs, jumps));
-
-            instrs.add( new AsmOPER( "andi `d0,`d0,`0xff", uses, defs, jumps));
-
-            arg.addAll(instrs);
+            arg.add( new AsmOPER( "slt `d0,`s1,`s0", uses, defs, jumps));
+            uses = new Vector<>();
+            arg.add( new AsmOPER( "seqz `d0,`d0", uses, defs, jumps));
         } else {
             throw new Report.InternalError();
         }
