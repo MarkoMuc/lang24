@@ -5,6 +5,10 @@ import lang24.data.asm.*;
 import lang24.phase.*;
 import lang24.phase.asmgen.*;
 
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Set;
+
 /**
  * Liveness analysis.
  */
@@ -14,8 +18,127 @@ public class LiveAn extends Phase {
 		super("livean");
 	}
 
+	private HashSet<MemTemp> getNextIn(AsmInstr instr) {
+		HashSet<MemTemp> in = new HashSet<MemTemp>();
+		HashSet<MemTemp> tmp = new HashSet<MemTemp>();
+		tmp.addAll(instr.out());
+		tmp.removeAll(instr.defs());
+		in.addAll(instr.uses());
+		in.addAll(tmp);
+		return in;
+	}
+
+	private HashSet<AsmInstr> getSuccessor(
+			Code code,
+			HashMap<String, AsmLABEL> labels,
+			int index) {
+
+		AsmInstr instr = code.instrs.get(index);
+		HashSet<AsmInstr> succ = new HashSet<AsmInstr>();
+
+		if (instr.jumps().size() == 0) {
+			if (index + 1 >= code.instrs.size()) return null;
+			succ.add(code.instrs.get(index + 1));
+		} else {
+			for (MemLabel l : instr.jumps()) {
+				AsmLABEL label = labels.get(l.name);
+				if (label != null) {
+					succ.add(label);
+				} else {
+					//Report.info("end of function label");
+				}
+			}
+			//if (instr.toString().contains("call")) {
+			//	succ.add(code.instrs.get(index + 1));
+			//}
+		}
+		return succ;
+	}
+
+	private HashSet<MemTemp> getNextOut(AsmInstr instr, Set<AsmInstr> succ) {
+		HashSet<MemTemp> out = new HashSet<MemTemp>();
+		for (AsmInstr s : succ) {
+			out.addAll(s.in());
+		}
+		return out;
+	}
+
+	private boolean checkIfChanged(int[] pin, int[] pout, int[] in, int[] out) {
+		for (int i = 0; i < pin.length; i++) {
+			if (pin[i] != in[i]) return true;
+		}
+		for (int i = 0; i < pout.length; i++) {
+			if (pout[i] != out[i]) return true;
+		}
+		return false;
+	}
+
+	public void analyse(Code code) {
+		int[] prevInSizes = new int[code.instrs.size()];
+		int[] prevOutSizes = new int[code.instrs.size()];
+		int[] inSizes = new int[code.instrs.size()];
+		int[] outSizes = new int[code.instrs.size()];
+
+
+		HashMap<String, AsmLABEL> labels = new HashMap<String, AsmLABEL>();
+		for (AsmInstr instr : code.instrs) {
+			if (instr instanceof AsmOPER) {
+				((AsmOPER) instr).removeAllFromIn();
+				((AsmOPER) instr).removeAllFromOut();
+			}
+			if (instr instanceof AsmLABEL) {
+				labels.put(instr.toString(), (AsmLABEL) instr);
+			}
+		}
+
+		boolean changed = true;
+		while (changed) {
+			for (int i = 0; i < code.instrs.size(); i++) {
+				AsmInstr instr = code.instrs.get(i);
+				HashSet<MemTemp> prevIn = instr.in();
+				HashSet<MemTemp> prevOut = instr.out();
+
+				instr.addInTemps(getNextIn(instr));
+				prevInSizes[i] = inSizes[i];
+				inSizes[i] = instr.in().size();
+
+				HashSet<AsmInstr> successor = getSuccessor(code, labels, i);
+				instr.addOutTemp(getNextOut(instr, successor));
+				prevOutSizes[i] = outSizes[i];
+				outSizes[i] = instr.out().size();
+			}
+			changed = checkIfChanged(prevInSizes, prevOutSizes,
+					inSizes, outSizes);
+		}
+		//for (int i = 0; i < code.instrs.size(); i++) {
+		//	System.out.println("instr: " + code.instrs.get(i));
+		//	System.out.println("next : " + getSuccessor(code, labels, i));
+		//}
+	}
+	/*
+	private void AnalyseCode(Code code){
+		HashSet<MemTemp> in_p = new HashSet<>();
+		HashSet<MemTemp> out_p = new HashSet<>();
+		long size = code.instrs.size();
+
+		for(AsmInstr instr : code.instrs){
+			if(instr instanceof AsmOPER oper){
+				oper.removeAllFromIn();
+				oper.removeAllFromOut();
+			}
+		}
+
+		do{
+			for(AsmInstr instr : code.instrs){
+			}
+		}while(true);
+	}
+*/
 	public void analysis() {
-		// TODO
+		for(Code code : AsmGen.codes){
+			//AnalyseCode(code);
+			analyse(code);
+		}
 	}
 
 	public void log() {
