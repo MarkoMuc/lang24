@@ -1,5 +1,6 @@
 package lang24.phase.livean;
 
+import lang24.common.report.Report;
 import lang24.data.mem.*;
 import lang24.data.asm.*;
 import lang24.phase.*;
@@ -7,7 +8,6 @@ import lang24.phase.asmgen.*;
 
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Set;
 
 /**
  * Liveness analysis.
@@ -18,126 +18,107 @@ public class LiveAn extends Phase {
 		super("livean");
 	}
 
-	private HashSet<MemTemp> getNextIn(AsmInstr instr) {
-		HashSet<MemTemp> in = new HashSet<MemTemp>();
-		HashSet<MemTemp> tmp = new HashSet<MemTemp>();
-		tmp.addAll(instr.out());
-		tmp.removeAll(instr.defs());
-		in.addAll(instr.uses());
-		in.addAll(tmp);
-		return in;
+	private AsmInstr getValidJump(Code code, int idx){
+		int size = code.instrs.size();
+		AsmInstr instr = null;
+
+		while(idx < size){
+			instr = code.instrs.get(idx);
+			if(!(instr instanceof AsmLABEL)){
+				return instr;
+			}
+			idx++;
+		}
+
+		return instr;
 	}
 
-	private HashSet<AsmInstr> getSuccessor(
-			Code code,
-			HashMap<String, AsmLABEL> labels,
-			int index) {
+	private void ProcessOuts(Code code, AsmInstr instr, int idx, HashMap<String, Integer> labels){
+		// Last instruction in the frame
+		if(idx + 1 >= code.instrs.size()){
+			return;
+		}
+		AsmInstr next = code.instrs.get(idx + 1);
+		// Add ins from the successor
+		instr.addOutTemp(next.in());
 
-		AsmInstr instr = code.instrs.get(index);
-		HashSet<AsmInstr> succ = new HashSet<AsmInstr>();
+		//Check possible jumps, calls do not matter, since all regs are saved at entry of the frame
+		if(instr.jumps() != null && !instr.toString().contains("call")){
+			for(MemLabel label : instr.jumps()){
+				Integer labelIdx = labels.get(label.name);
+				if(labelIdx != null){
+					// Get the next instruction, should this go + 1 until a non Label type?
+					// I'm pretty sure we can get label, label situation, so it should work like that
+					// CHECKME: This validation can be saved for future use
+					AsmInstr temp = getValidJump(code, labelIdx);
 
-		if (instr.jumps().size() == 0) {
-			if (index + 1 >= code.instrs.size()) return null;
-			succ.add(code.instrs.get(index + 1));
-		} else {
-			for (MemLabel l : instr.jumps()) {
-				AsmLABEL label = labels.get(l.name);
-				if (label != null) {
-					succ.add(label);
-				} else {
-					//Report.info("end of function label");
+					if (temp != null) {
+						instr.addOutTemp(temp.in());
+					}
+				}else{
+					throw new Report.Error("NO label " + label.name + " found, this shouldn't happen");
 				}
 			}
-			//if (instr.toString().contains("call")) {
-			//	succ.add(code.instrs.get(index + 1));
-			//}
 		}
-		return succ;
 	}
 
-	private HashSet<MemTemp> getNextOut(AsmInstr instr, Set<AsmInstr> succ) {
-		HashSet<MemTemp> out = new HashSet<MemTemp>();
-		for (AsmInstr s : succ) {
-			out.addAll(s.in());
-		}
-		return out;
+	private void ProcessIns(Code code, AsmInstr instr, int idx){
+		instr.addInTemps(new HashSet<>(instr.uses()));
+
+        HashSet<MemTemp> temp = new HashSet<>(instr.out());
+		temp.retainAll(instr.defs());
+		instr.addInTemps(temp);
 	}
 
-	private boolean checkIfChanged(int[] pin, int[] pout, int[] in, int[] out) {
-		for (int i = 0; i < pin.length; i++) {
-			if (pin[i] != in[i]) return true;
-		}
-		for (int i = 0; i < pout.length; i++) {
-			if (pout[i] != out[i]) return true;
-		}
-		return false;
-	}
-
-	public void analyse(Code code) {
-		int[] prevInSizes = new int[code.instrs.size()];
-		int[] prevOutSizes = new int[code.instrs.size()];
-		int[] inSizes = new int[code.instrs.size()];
-		int[] outSizes = new int[code.instrs.size()];
-
-
-		HashMap<String, AsmLABEL> labels = new HashMap<String, AsmLABEL>();
-		for (AsmInstr instr : code.instrs) {
-			if (instr instanceof AsmOPER) {
-				((AsmOPER) instr).removeAllFromIn();
-				((AsmOPER) instr).removeAllFromOut();
-			}
-			if (instr instanceof AsmLABEL) {
-				labels.put(instr.toString(), (AsmLABEL) instr);
-			}
-		}
-
-		boolean changed = true;
-		while (changed) {
-			for (int i = 0; i < code.instrs.size(); i++) {
-				AsmInstr instr = code.instrs.get(i);
-				HashSet<MemTemp> prevIn = instr.in();
-				HashSet<MemTemp> prevOut = instr.out();
-
-				instr.addInTemps(getNextIn(instr));
-				prevInSizes[i] = inSizes[i];
-				inSizes[i] = instr.in().size();
-
-				HashSet<AsmInstr> successor = getSuccessor(code, labels, i);
-				instr.addOutTemp(getNextOut(instr, successor));
-				prevOutSizes[i] = outSizes[i];
-				outSizes[i] = instr.out().size();
-			}
-			changed = checkIfChanged(prevInSizes, prevOutSizes,
-					inSizes, outSizes);
-		}
-		//for (int i = 0; i < code.instrs.size(); i++) {
-		//	System.out.println("instr: " + code.instrs.get(i));
-		//	System.out.println("next : " + getSuccessor(code, labels, i));
-		//}
-	}
-	/*
 	private void AnalyseCode(Code code){
-		HashSet<MemTemp> in_p = new HashSet<>();
-		HashSet<MemTemp> out_p = new HashSet<>();
-		long size = code.instrs.size();
+		// CHECKME: Do we need the string or can we just use the MemLable object directly?
+		int size = code.instrs.size();
+		HashMap<String, Integer> labels = new HashMap<>();
 
-		for(AsmInstr instr : code.instrs){
+		// Make sure ins and outs are clear
+		// CHECKME: this loop could also calculate the validateJumps
+		for(int i = 0; i < size; i++) {
+			AsmInstr instr = code.instrs.get(i);
+
 			if(instr instanceof AsmOPER oper){
 				oper.removeAllFromIn();
 				oper.removeAllFromOut();
 			}
+
+			if(instr instanceof AsmLABEL label){
+				labels.put(label.toString(), i);
+			}
 		}
 
+		long count = 0;
+		boolean KeepItUp = false;
 		do{
-			for(AsmInstr instr : code.instrs){
+			KeepItUp = false;
+			// Top Down
+			// for(int i = 0; i < size; i++) {
+			// Bottom up
+			for(int i = size - 1; i >= 0; i--) {
+				AsmInstr instr = code.instrs.get(i);
+				if(instr instanceof AsmLABEL label) {
+					labels.put(label.toString(), i);
+				}else {
+					count = instr.out().size();
+					ProcessOuts(code, instr, i, labels);
+					// process outs
+					KeepItUp = count != instr.out().size() || KeepItUp;
+
+					count = instr.in().size();
+					ProcessIns(code, instr, i);
+					// process in
+					KeepItUp = count != instr.in().size() || KeepItUp;
+				}
 			}
-		}while(true);
+		}while(KeepItUp);
 	}
-*/
+
 	public void analysis() {
 		for(Code code : AsmGen.codes){
-			//AnalyseCode(code);
-			analyse(code);
+			AnalyseCode(code);
 		}
 	}
 
