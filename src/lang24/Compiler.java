@@ -7,6 +7,7 @@ import java.util.*;
 import lang24.common.report.*;
 import lang24.phase.lexan.*;
 import lang24.phase.livean.LiveAn;
+import lang24.phase.regall.RegAll;
 import lang24.phase.synan.*;
 import lang24.phase.abstr.*;
 import lang24.phase.seman.*;
@@ -29,7 +30,7 @@ public class Compiler {
 
 	/** All valid phases name of the compiler. */
 	private static final Vector<String> phaseNames = new Vector<String>(Arrays.asList("none", "all", "lexan", "synan",
-			"abstr", "seman", "memory", "imcgen", "imclin", "asmgen", "livean"));
+			"abstr", "seman", "memory", "imcgen", "imclin", "asmgen", "livean", "regall"));
 
 	/** Names of command line options. */
 	private static final HashSet<String> cmdLineOptNames = new HashSet<String>(
@@ -226,6 +227,13 @@ public class Compiler {
 					livean.log();
 				}
 				if (cmdLineOptValues.get("--target-phase").equals("livean"))
+					break;
+
+				try(RegAll regAll = new RegAll()){
+					regAll.allocate();
+					regAll.log();
+				}
+				if (cmdLineOptValues.get("--target-phase").equals("regall"))
 					break;
 
 				break;
