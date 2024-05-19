@@ -34,7 +34,7 @@ public class Compiler {
 
 	/** Names of command line options. */
 	private static final HashSet<String> cmdLineOptNames = new HashSet<String>(
-			Arrays.asList("--src-file-name", "--dst-file-name", "--target-phase", "--logged-phase", "--xml", "--xsl"));
+			Arrays.asList("--src-file-name", "--dst-file-name", "--target-phase", "--logged-phase", "--xml", "--xsl", "--num-regs"));
 
 	/** Values of command line options indexed by their command line option name. */
 	private static final HashMap<String, String> cmdLineOptValues = new HashMap<String, String>();
@@ -134,6 +134,17 @@ public class Compiler {
 				cmdLineOptValues.put("--logged-phase", "none");
 
 			// Carry out the compilation phase by phase.
+
+			String nregs = cmdLineOptValues.get("--num-regs");
+			Integer numRegs;
+			if (nregs == null)
+				numRegs = 30;
+			else
+				numRegs = Integer.decode(nregs);
+			if (numRegs < 4)
+				throw new Report.Error("4 is minimal number of registers");
+			Compiler.numRegs = numRegs;
+
 			while (true) {
 
 				if (cmdLineOptValues.get("--target-phase").equals("none"))

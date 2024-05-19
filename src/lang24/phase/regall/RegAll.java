@@ -84,7 +84,7 @@ public class RegAll extends Phase {
 		}
 		Collections.sort(unavailableColors);
 
-		int chosenColor = chooseColor(unavailableColors, 1);
+		int chosenColor = chooseColor(unavailableColors, 0);
 		n.setColor(chosenColor, numRegs);
 		// if next instruction has numRegs outs we have to spill NOW
 		// otherwise we cannot load address into available reg
@@ -142,7 +142,7 @@ public class RegAll extends Phase {
 						new ExprGenerator(),
 						inst
 				);
-				String instrString = "	LDO `d0,`s0,`s1";
+				String instrString = "	lw `d0,`s0,`s1";
 				Vector<MemTemp> uses = new Vector<MemTemp>();
 				Vector<MemTemp> defs = new Vector<MemTemp>();
 				Vector<MemLabel> jumps = new Vector<MemLabel>();
@@ -163,7 +163,7 @@ public class RegAll extends Phase {
 						new ExprGenerator(),
 						inst
 				);
-				String instrString = "	STO `s0,`s1,`s2";
+				String instrString = "	sw `s0,`s1,`s2";
 				Vector<MemTemp> uses = new Vector<MemTemp>();
 				Vector<MemTemp> defs = new Vector<MemTemp>();
 				Vector<MemLabel> jumps = new Vector<MemLabel>();
@@ -182,7 +182,7 @@ public class RegAll extends Phase {
 		// redo from livean
 		LiveAn livean = new LiveAn();
 		livean.analysis();
-		Report.info("spilled: " + n.id());
+		//Report.info("spilled: " + n.id());
 		currentCode = null;
 		this.allocate();
 	}
