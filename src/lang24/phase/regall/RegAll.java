@@ -84,7 +84,7 @@ public class RegAll extends Phase {
 		}
 		Collections.sort(unavailableColors);
 
-		int chosenColor = chooseColor(unavailableColors, 0);
+		int chosenColor = chooseColor(unavailableColors, 1);
 		n.setColor(chosenColor, numRegs);
 		// if next instruction has numRegs outs we have to spill NOW
 		// otherwise we cannot load address into available reg
@@ -223,6 +223,7 @@ public class RegAll extends Phase {
 			Graph tmp = initGraph(code);
 			Graph graph = initGraph(code);
 			simplify(tmp, graph);
+			// TODO:fix this bruh it aint 253
 			tempToReg.put(code.frame.FP, 253);
 		}
 		currentCode = null;

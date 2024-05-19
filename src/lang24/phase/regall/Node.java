@@ -23,8 +23,8 @@ public class Node {
 	}
 
 	public void setColor(int color, int numRegs) {
-		if (color < 0)
-			throw new Report.Error("color cannot be negative");
+		if (color <= 0)
+			throw new Report.Error("color cannot be negative or zero");
 		else if (numRegs <= color) {
 			if (potentialSpill)
 				this.color = numRegs;

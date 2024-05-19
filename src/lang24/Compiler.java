@@ -22,7 +22,7 @@ import lang24.phase.asmgen.*;
  * @author bostjan.slivnik@fri.uni-lj.si
  */
 public class Compiler {
-	public static int numRegs = 32;
+	public static int numRegs = 30;
 	/** (Unused but included to keep javadoc happy.) */
 	private Compiler() {
 		throw new Report.InternalError();
