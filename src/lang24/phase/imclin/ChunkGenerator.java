@@ -49,6 +49,8 @@ public class ChunkGenerator implements AstFullVisitor<Object, Object> {
         MemLabel exitLabel = new MemLabel();
 
         //Adds entry label for the function body
+        //Entry and exit label are already added beforehand in imcgen
+        // TODO: Only add function labels here?
         imcStmtVector.add(new ImcLABEL(entryLabel));
 
         if(funDefn.defns != null){
@@ -57,15 +59,13 @@ public class ChunkGenerator implements AstFullVisitor<Object, Object> {
 
         if(funDefn.stmt != null) {
             ImcStmt imcStmt = ImcGen.stmtImc.get(funDefn.stmt);
-            //Canonizes the Stmts
+
             Vector<ImcStmt> canonized = imcStmt.accept(new StmtCanonizer(), null);
             imcStmtVector.addAll(canonized);
 
-            //Jump to epilogue
             imcStmtVector.add(new ImcJUMP(exitLabel));
 
-            //Linearizes the stmts
-            Vector<ImcStmt> linStmts = linearize(imcStmtVector);
+            Vector<ImcStmt> linStmts = LinImcCALL(imcStmtVector);
 
             ImcLin.addCodeChunk(new LinCodeChunk(memFrame, linStmts, entryLabel, exitLabel));
 
@@ -79,7 +79,7 @@ public class ChunkGenerator implements AstFullVisitor<Object, Object> {
         return null;
     }
 
-    private Vector<ImcStmt> linearize(Vector<ImcStmt> stmts) {
+    private Vector<ImcStmt> LinImcCALL(Vector<ImcStmt> stmts) {
         Vector<ImcStmt> linearStmts = new Vector<ImcStmt>();
         for (int s = 0; s < stmts.size(); s++) {
             ImcStmt stmt = stmts.get(s);
@@ -95,5 +95,6 @@ public class ChunkGenerator implements AstFullVisitor<Object, Object> {
         }
         return linearStmts;
     }
+
     //* Permute
 }

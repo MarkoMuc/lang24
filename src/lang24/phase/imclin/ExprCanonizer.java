@@ -17,7 +17,7 @@ public class ExprCanonizer implements ImcVisitor<ImcExpr, Vector<ImcStmt>> {
 
     @Override
     public ImcExpr visit(ImcBINOP binOp, Vector<ImcStmt> visArg) {
-
+        // Some extra logic for immediate here does not hurt tbh. Or should it be done in the next asm stage
         // Saves values of both expressions into temps
         ImcTEMP fstTemp = new ImcTEMP(new MemTemp());
         ImcExpr fstImc = binOp.fstExpr.accept(this, visArg);
@@ -44,10 +44,14 @@ public class ExprCanonizer implements ImcVisitor<ImcExpr, Vector<ImcStmt>> {
         // Saves args into temps
         if( call.args.size() > 1) {
             for (ImcExpr arg : call.args) {
-                MemTemp argTemp = new MemTemp();
-                visArg.add(new ImcMOVE(
-                        new ImcTEMP(argTemp), arg.accept(this, visArg)));
-                args.add(new ImcTEMP(argTemp));
+                if(arg instanceof ImcCONST imcCONST) {
+                    args.add(imcCONST);
+                }else {
+                    MemTemp argTemp = new MemTemp();
+                    visArg.add(new ImcMOVE(
+                            new ImcTEMP(argTemp), arg.accept(this, visArg)));
+                    args.add(new ImcTEMP(argTemp));
+                }
             }
         }
 
