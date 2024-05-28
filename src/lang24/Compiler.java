@@ -230,7 +230,7 @@ public class Compiler {
 					asmgen.genAsmCodes();
 					asmgen.log();
 				}
-				if (cmdLineOptValues.get("--target-phase").equals("amsgen"))
+				if (cmdLineOptValues.get("--target-phase").equals("asmgen"))
 					break;
 
 				try(LiveAn livean = new LiveAn()){
