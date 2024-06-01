@@ -46,28 +46,23 @@ public class IFGNode {
         return this.connections.size();
     }
 
-    public boolean addConnection(IFGNode node) {
+    public void addConnection(IFGNode node) {
         if (this == node) {
-            return false;
+            return;
         }
-
         if (this.connections.add(node)) {
             node.addConnection(this);
         }
-
-        return true;
     }
 
-    public boolean removeConnection(IFGNode node) {
+    public void removeConnection(IFGNode node) {
         if (this == node) {
-            return false;
+            return;
         }
-
         if (this.connections.remove(node)) {
             node.removeConnection(this);
         }
 
-        return true;
     }
 
     public void setColor(int color, int K){

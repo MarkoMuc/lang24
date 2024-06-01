@@ -6,7 +6,7 @@ import java.util.HashSet;
 import java.util.Vector;
 
 public class InterferenceGraph {
-    private HashSet<IFGNode> nodes;
+    private HashSet<IFGNode> nodes = new HashSet<>();
 
     InterferenceGraph(){
         this.nodes = new HashSet<>();
@@ -19,11 +19,11 @@ public class InterferenceGraph {
     public Integer getSize() { return this.nodes.size();}
 
     public HashSet<IFGNode> getNodes() {
-        return nodes;
+        return this.nodes;
     }
 
     public void addNode(IFGNode node) {
-        for(IFGNode n : nodes){
+        for(IFGNode n : this.nodes){
             if(n.equals(node)){
                 return;
             }
@@ -32,14 +32,14 @@ public class InterferenceGraph {
     }
 
     public void addNodes(Vector<IFGNode> nodes) {
-        for(IFGNode n : nodes){
+        for(IFGNode n : this.nodes){
             this.addNode(n);
         }
     }
 
     public IFGNode findNode(MemTemp temp) {
         for(IFGNode n : this.nodes){
-            if(n.getTemp().equals(temp)){
+            if(n.getTemp() == temp){
                 return n;
             }
         }
@@ -76,7 +76,7 @@ public class InterferenceGraph {
     }
 
     public HashSet<IFGNode> getNodesCopy() {
-        return new HashSet<IFGNode>(nodes);
+        return new HashSet<IFGNode>(this.nodes);
     }
 
 }

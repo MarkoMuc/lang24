@@ -21,7 +21,8 @@ public class RegAll extends Phase {
 	public final HashMap<MemTemp, String> tempToStringReg = new HashMap<>();
 
 	private Stack<IFGNode> nodeStack = new Stack<>();
-	private int numRegs = Compiler.numRegs;
+	//CHECKME: is -2 correct?
+	private int numRegs = Compiler.numRegs - 2;
 	private Code currentCode = null;
 	private RISCVRegisters riscv = new RISCVRegisters();
 
@@ -33,7 +34,7 @@ public class RegAll extends Phase {
 		IFGNode node = tmp.getLowDegreeNode(numRegs);
 		while(node != null){
 			tmp.removeNode(node);
-			nodeStack.push(graph.findNode(node.getTemp()));
+			nodeStack.add(graph.findNode(node.getTemp()));
 			node = tmp.getLowDegreeNode(numRegs);
 		}
 
@@ -46,13 +47,13 @@ public class RegAll extends Phase {
 	}
 
 	public void spill(InterferenceGraph graph, InterferenceGraph tmp){
-		IFGNode node = tmp.getHighDegreeNode(numRegs);
-		tmp.removeNode(node);
-
-		IFGNode reg = graph.findNode(node.getTemp());
-		reg.setPotentialSpill(true);
-		nodeStack.push(reg);
-
+		IFGNode n = tmp.getHighDegreeNode(numRegs);
+		// n cannot be null (either graph empty and spill() is not
+		// called, or it has elements with high enough degree)
+		IFGNode gn = graph.findNode(n.getTemp());
+		gn.setPotentialSpill(true);
+		tmp.removeNode(n);
+		nodeStack.push(gn);
 		simplify(graph, tmp);
 	}
 
@@ -76,40 +77,44 @@ public class RegAll extends Phase {
 	}
 
 	public boolean colorNode(IFGNode node, InterferenceGraph graph){
-		if(node.getTemp() == currentCode.frame.FP){
-			return false;
-		}
+		if (node.getTemp() == currentCode.frame.FP) return false;
+		IFGNode current = graph.findNode(node.getTemp());
+		ArrayList<Integer> unavailableColors =
+				new ArrayList<Integer>(current.degree());
 
-		IFGNode curr = graph.findNode(node.getTemp());
-		ArrayList<Integer> neighbors = new ArrayList<>(curr.degree());
-
-		for(IFGNode n : curr.getConnectionsCopy()){
-			int color = n.getColor();
-			if( color != -1 ){
-				if(!neighbors.contains(color)){
-					neighbors.add(color);
+		for (IFGNode i : current.getConnectionsCopy()) {
+			int c = i.getColor();
+			if (c != -1) {
+				if (!unavailableColors.contains(c)) {
+					unavailableColors.add(c);
 				}
 			}
 		}
-		Collections.sort(neighbors);
+		Collections.sort(unavailableColors);
 
-		//TODO: move form 0 to 1
-		int chosen = chooseColor(neighbors, 1);
-		node.setColor(chosen, numRegs);
-		if(neighbors.size() >= numRegs){
-			return true;
-		}
+		int chosenColor = chooseColor(unavailableColors, 1);
+		node.setColor(chosenColor, numRegs);
+		// if next instruction has numRegs outs we have to spill NOW
+		// otherwise we cannot load address into available reg
+		//if (chosenColor == numRegs) return true;
+		if (unavailableColors.size() >= numRegs) return true;
+		int maxUsedRegs = numRegs - unavailableColors.size();
 		return false;
 	}
 
-	private int chooseColor(ArrayList<Integer> neighbors, int current){
-		if(current >= numRegs){
+	private int chooseColor(ArrayList<Integer> unavailable, int current){
+		if (current >= numRegs){
 			return numRegs;
 		}
-		for(int i = 0; i < neighbors.size(); i++){
-			int neighbor = neighbors.get(i);
-			if(neighbor == current){
-				return chooseColor(neighbors, i + 1);
+
+		if(current == 2){
+			// This is for SP
+			return chooseColor(unavailable, current + 1);
+		}
+		for (int i = 0; i < unavailable.size(); i++) {
+			int uc = unavailable.get(i);
+			if (uc == current) {
+				return chooseColor(unavailable, current + 1);
 			}
 		}
 		return current;
@@ -192,14 +197,11 @@ public class RegAll extends Phase {
 		InterferenceGraph graph = new InterferenceGraph();
 		MemTemp FP = code.frame.FP;
 		for(AsmInstr instr : code.instrs){
-			for(MemTemp temp : instr.uses()){
-				IFGNode node = new IFGNode(temp);
-				graph.addNode(node);
+			for (MemTemp use : instr.uses()) {
+				graph.addNode(new IFGNode(use));
 			}
-
-			for(MemTemp temp : instr.defs()){
-				IFGNode node = new IFGNode(temp);
-				graph.addNode(node);
+			for (MemTemp def : instr.defs()) {
+				graph.addNode(new IFGNode(def));
 			}
 		}
 
@@ -218,21 +220,22 @@ public class RegAll extends Phase {
 		return graph;
 	}
 
-	public void allocateBody(Code code){
-		currentCode = code;
-		InterferenceGraph graph = init(code);
-		InterferenceGraph tmp = new InterferenceGraph(graph.getNodesCopy());
-
-		simplify(graph, tmp);
-		tempToReg.put(code.frame.FP, 31);
-		tempToStringReg.put(code.frame.FP, "FP");
-
-	}
-
 	public void allocate() {
 		for(Code code : AsmGen.codes){
-			allocateBody(code);
-			nodeStack.clear();
+			currentCode = code;
+			InterferenceGraph graph = init(code);
+			InterferenceGraph tmp = init(code);
+			simplify(graph, tmp);
+			tempToReg.put(code.frame.FP, 31);
+			tempToStringReg.put(code.frame.FP, "FP");
+		}
+
+		currentCode = null;
+
+		for(Code code : AsmGen.codes){
+			for(AsmInstr instr : code.instrs){
+				System.out.println(instr.toRegsString(tempToStringReg));
+			}
 		}
 	}
 
