@@ -9,7 +9,6 @@ import lang24.data.asm.*;
 import lang24.phase.*;
 import lang24.phase.asmgen.*;
 import lang24.phase.livean.LiveAn;
-import lang24.phase.regall.RISCVRegisters;
 
 /**
  * Register allocation.
@@ -18,71 +17,65 @@ public class RegAll extends Phase {
 
 	/** Mapping of temporary variables to registers. */
 	public final HashMap<MemTemp, Integer> tempToReg = new HashMap<MemTemp, Integer>();
-	public final HashMap<MemTemp, String> tempToStringReg = new HashMap<>();
 
-	private Stack<IFGNode> nodeStack = new Stack<>();
-	//CHECKME: is -2 correct?
-	private int numRegs = Compiler.numRegs - 2;
-	private Code currentCode = null;
-	private RISCVRegisters riscv = new RISCVRegisters();
+	public final int numRegs = Compiler.numRegs;
+
+	private final Stack<IFGNode> savedIFGNodes = new Stack<IFGNode>();
+	public final HashMap<MemTemp, String> tempToSReg = new HashMap<MemTemp, String>();
+	private final RISCVRegisters riscv = new RISCVRegisters();
 
 	public RegAll() {
 		super("regall");
 	}
 
-	public void simplify(InterferenceGraph graph, InterferenceGraph tmp){
-		IFGNode node = tmp.getLowDegreeNode(numRegs);
-		while(node != null){
-			tmp.removeNode(node);
-			nodeStack.add(graph.findNode(node.getTemp()));
-			node = tmp.getLowDegreeNode(numRegs);
+	private void simplify(InterferenceGraph tmp, InterferenceGraph interferenceGraph) {
+		// Take a temp with degree < numRegs
+		// and push it onto the stack
+		IFGNode n = tmp.getLowDegreeNode(numRegs);
+		while (n != null) {
+			tmp.removeNode(n);
+			savedIFGNodes.add(interferenceGraph.findNode(n.id()));
+			n = tmp.getLowDegreeNode(numRegs);
 		}
 
-		if(tmp.getSize() == 0){
-			build(graph);
-		}else{
-			spill(graph, tmp);
-		}
-
+		if (tmp.size() == 0)
+			select(interferenceGraph);
+		else
+			spill(tmp, interferenceGraph);
 	}
 
-	public void spill(InterferenceGraph graph, InterferenceGraph tmp){
+	private void spill(InterferenceGraph tmp, InterferenceGraph interferenceGraph) {
+		// Take a temp with degree >= numRegs
+		// and push it onto the stack
+		// marking it a "potential spill"
 		IFGNode n = tmp.getHighDegreeNode(numRegs);
 		// n cannot be null (either graph empty and spill() is not
 		// called, or it has elements with high enough degree)
-		IFGNode gn = graph.findNode(n.getTemp());
-		gn.setPotentialSpill(true);
+		IFGNode gn = interferenceGraph.findNode(n.id());
+		gn.markPotentialSpill();
 		tmp.removeNode(n);
-		nodeStack.push(gn);
-		simplify(graph, tmp);
+		savedIFGNodes.push(gn);
+		simplify(tmp, interferenceGraph);
 	}
 
-	//TODO: add more booleans to functions, it simplifies the control flow
-	public void build(InterferenceGraph graph){
-		boolean spill = false;
-		IFGNode node = null;
-		while(!nodeStack.isEmpty() && !spill){
-			node = nodeStack.pop();
-			spill = colorNode(node, graph);
-		}
-
-		if(spill){
-			startOver(node);
-		}else{
-			for(IFGNode n : graph.getNodesCopy()){
-				tempToReg.put(n.getTemp(), n.getColor());
-				tempToStringReg.put(n.getTemp(), riscv.getABI(n.getColor()));
+	private int chooseColor(ArrayList<Integer> unavailable, int current) {
+		if (current >= numRegs) return numRegs;
+		for (int i = 0; i < unavailable.size(); i++) {
+			int uc = unavailable.get(i);
+			if (uc == current) {
+				return chooseColor(unavailable, current + 1);
 			}
 		}
+		return current;
 	}
 
-	public boolean colorNode(IFGNode node, InterferenceGraph graph){
-		if (node.getTemp() == currentCode.frame.FP) return false;
-		IFGNode current = graph.findNode(node.getTemp());
+	private boolean colorNode(IFGNode n, InterferenceGraph interferenceGraph) {
+		if (n.id() == currentCode.frame.FP) return false;
+		IFGNode current = interferenceGraph.findNode(n.id());
 		ArrayList<Integer> unavailableColors =
 				new ArrayList<Integer>(current.degree());
 
-		for (IFGNode i : current.getConnectionsCopy()) {
+		for (IFGNode i : current.connections()) {
 			int c = i.getColor();
 			if (c != -1) {
 				if (!unavailableColors.contains(c)) {
@@ -93,7 +86,7 @@ public class RegAll extends Phase {
 		Collections.sort(unavailableColors);
 
 		int chosenColor = chooseColor(unavailableColors, 1);
-		node.setColor(chosenColor, numRegs);
+		n.setColor(chosenColor, numRegs);
 		// if next instruction has numRegs outs we have to spill NOW
 		// otherwise we cannot load address into available reg
 		//if (chosenColor == numRegs) return true;
@@ -102,26 +95,30 @@ public class RegAll extends Phase {
 		return false;
 	}
 
-	private int chooseColor(ArrayList<Integer> unavailable, int current){
-		if (current >= numRegs){
-			return numRegs;
+	private void select(InterferenceGraph interferenceGraph) {
+		// Take temp from stack and color it
+		// "potential spill" -> {"colored node", "spill"}
+		boolean spillHappened = false;
+		IFGNode n = null;
+		while (!savedIFGNodes.empty() && !spillHappened) {
+			n = savedIFGNodes.pop();
+			spillHappened |= colorNode(n, interferenceGraph);
 		}
-
-		if(current == 2){
-			// This is for SP
-			return chooseColor(unavailable, current + 1);
-		}
-		for (int i = 0; i < unavailable.size(); i++) {
-			int uc = unavailable.get(i);
-			if (uc == current) {
-				return chooseColor(unavailable, current + 1);
+		if (spillHappened) {
+			startOver(n);
+		} else {
+			for (IFGNode i : interferenceGraph.nodes()) {
+				tempToReg.put(i.id(), i.getColor());
+				tempToSReg.put(i.id(), riscv.getABI(i.getColor()));
 			}
 		}
-		return current;
 	}
 
-	public void startOver(IFGNode node){
-		nodeStack.clear();
+	private Code currentCode = null;
+
+	private void startOver(IFGNode n) {
+		// reinitialize
+		while (!savedIFGNodes.empty()) savedIFGNodes.pop();
 
 		// modify code
 		currentCode.tempSize += 8;
@@ -132,9 +129,9 @@ public class RegAll extends Phase {
 
 		for (int i = 0; i < currentCode.instrs.size(); i++) {
 			AsmInstr instr = currentCode.instrs.get(i);
-			if (node.getTemp() == FP) continue;
-			boolean used = instr.uses().contains(node.getTemp());
-			boolean defined = instr.defs().contains(node.getTemp());
+			if (n.id() == FP) continue;
+			boolean used = instr.uses().contains(n.id());
+			boolean defined = instr.defs().contains(n.id());
 
 			// check used first:
 			// imagine ADD $1,$1,10
@@ -153,8 +150,7 @@ public class RegAll extends Phase {
 				Vector<MemLabel> jumps = new Vector<MemLabel>();
 				uses.add(FP);
 				uses.add(offsetReg);
-				defs.add(node.getTemp());
-
+				defs.add(n.id());
 				AsmOPER load = new AsmOPER(
 						instrString, uses, defs, jumps
 				);
@@ -164,7 +160,7 @@ public class RegAll extends Phase {
 			}
 			if (defined) {
 				Vector<AsmInstr> inst = new Vector<AsmInstr>();
-				MemTemp reg = node.getTemp();
+				MemTemp reg = n.id();
 				MemTemp offsetReg = offset.accept(
 						new ExprGenerator(),
 						inst
@@ -193,50 +189,47 @@ public class RegAll extends Phase {
 		this.allocate();
 	}
 
-	public InterferenceGraph init(Code code){
-		InterferenceGraph graph = new InterferenceGraph();
+	// every MemTemp in code is a Vortex
+	// (except FP which already has assigned register 253)
+	// (except SP which already has assigned register 254)
+	// every out in code defines an Edge
+	private InterferenceGraph initGraph(Code code) {
+		InterferenceGraph g = new InterferenceGraph();
 		MemTemp FP = code.frame.FP;
-		for(AsmInstr instr : code.instrs){
+
+		for (AsmInstr instr : code.instrs) {
 			for (MemTemp use : instr.uses()) {
-				graph.addNode(new IFGNode(use));
+				g.addNode(new IFGNode(use));
 			}
 			for (MemTemp def : instr.defs()) {
-				graph.addNode(new IFGNode(def));
+				g.addNode(new IFGNode(def));
 			}
 		}
-
 		for (AsmInstr instr : code.instrs) {
 			for (MemTemp t1 : instr.out()) {
 				for (MemTemp t2 : instr.out()) {
 					if (t1 != t2 && t1 != FP && t2 != FP) {
-						IFGNode n = graph.findNode(t1);
-						IFGNode m = graph.findNode(t2);
+						IFGNode n = g.findNode(t1);
+						IFGNode m = g.findNode(t2);
 						n.addConnection(m);
 					}
 				}
 			}
 		}
-
-		return graph;
+		return g;
 	}
 
 	public void allocate() {
-		for(Code code : AsmGen.codes){
+		for (Code code : AsmGen.codes) {
 			currentCode = code;
-			InterferenceGraph graph = init(code);
-			InterferenceGraph tmp = init(code);
-			simplify(graph, tmp);
-			tempToReg.put(code.frame.FP, 31);
-			tempToStringReg.put(code.frame.FP, "FP");
+			InterferenceGraph tmp = initGraph(code);
+			InterferenceGraph interferenceGraph = initGraph(code);
+			simplify(tmp, interferenceGraph);
+			// TODO:fix this bruh it aint 253
+			tempToReg.put(code.frame.FP, 253);
+			tempToSReg.put(code.frame.FP, "FP");
 		}
-
 		currentCode = null;
-
-		for(Code code : AsmGen.codes){
-			for(AsmInstr instr : code.instrs){
-				System.out.println(instr.toRegsString(tempToStringReg));
-			}
-		}
 	}
 
 	public void log() {
@@ -251,7 +244,7 @@ public class RegAll extends Phase {
 			logger.begElement("instructions");
 			for (AsmInstr instr : code.instrs) {
 				logger.begElement("instruction");
-				logger.addAttribute("code", instr.toRegsString(tempToStringReg));
+				logger.addAttribute("code", instr.toRegsString(tempToSReg));
 				logger.begElement("temps");
 				logger.addAttribute("name", "use");
 				for (MemTemp temp : instr.uses()) {

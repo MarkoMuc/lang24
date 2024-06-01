@@ -1,82 +1,71 @@
 package lang24.phase.regall;
 
-import lang24.data.mem.MemTemp;
-
-import java.util.HashSet;
-import java.util.Vector;
+import lang24.data.mem.*;
+import java.util.*;
 
 public class InterferenceGraph {
-    private HashSet<IFGNode> nodes = new HashSet<>();
 
-    InterferenceGraph(){
-        this.nodes = new HashSet<>();
-    }
+	private HashSet<IFGNode> IFGNodes = new HashSet<IFGNode>();
 
-    InterferenceGraph(HashSet<IFGNode> nodes){
-        this.nodes = nodes;
-    }
+	public void addNode(IFGNode n) {
+		for (IFGNode n2 : this.IFGNodes)
+			if (n2.equals(n)) return;
+		this.IFGNodes.add(n);
+	}
 
-    public Integer getSize() { return this.nodes.size();}
+	public void addNodes(Set<IFGNode> _IFG_nodes) {
+		for (IFGNode n : _IFG_nodes)
+			this.addNode(n);
+	}
 
-    public HashSet<IFGNode> getNodes() {
-        return this.nodes;
-    }
+	public IFGNode findNode(MemTemp temp) {
+		for (IFGNode n : this.IFGNodes)
+			if (n.id() == temp) return n;
+		return null;
+	}
 
-    public void addNode(IFGNode node) {
-        for(IFGNode n : this.nodes){
-            if(n.equals(node)){
-                return;
-            }
-        }
-        this.nodes.add(node);
-    }
+	public void removeNode(IFGNode n) {
+		if (n == null) return;
+		this.IFGNodes.remove(n);
+		for (IFGNode i : n.connections()) {
+			i.delConnection(n);
+		}
+	}
 
-    public void addNodes(Vector<IFGNode> nodes) {
-        for(IFGNode n : this.nodes){
-            this.addNode(n);
-        }
-    }
+	public IFGNode getLowDegreeNode(int maxDegree) {
+		for (IFGNode n : this.IFGNodes)
+			if (n.degree() < maxDegree)
+				return n;
+		return null;
+	}
 
-    public IFGNode findNode(MemTemp temp) {
-        for(IFGNode n : this.nodes){
-            if(n.getTemp() == temp){
-                return n;
-            }
-        }
+	public IFGNode getHighDegreeNode(int minDegree) {
+		for (IFGNode n : this.IFGNodes)
+			if (n.degree() >= minDegree)
+				return n;
+		return null;
+	}
 
-        return null;
-    }
-    
-    public void removeNode(IFGNode node) {
-        if(node == null){
-            return;
-        }
-        this.nodes.remove(node);
-        for(IFGNode n : node.getConnectionsCopy()){
-            n.removeConnection(node);
-        }
-    }
+	public int size() {
+		return this.IFGNodes.size();
+	}
 
-    public IFGNode getLowDegreeNode(int maxDegree) {
-        for (IFGNode node : this.nodes) {
-            if (node.degree() < maxDegree) {
-                return node;
-            }
-        }
-        return null;
-    }
+	public HashSet<IFGNode> nodes() {
+		return new HashSet<IFGNode>(IFGNodes);
+	}
 
-    public IFGNode getHighDegreeNode(int minDegree) {
-        for (IFGNode node : this.nodes) {
-            if (node.degree() >= minDegree) {
-                return node;
-            }
-        }
-        return null;
-    }
+	public void print() {
+		System.out.println("Graph nodes: " + this.IFGNodes.size());
+		for (IFGNode n : this.IFGNodes) {
+			System.out.println("	" + n);
+		}
+	}
 
-    public HashSet<IFGNode> getNodesCopy() {
-        return new HashSet<IFGNode>(this.nodes);
-    }
-
+	public void printMore() {
+		System.out.println("Graph nodes: " + this.IFGNodes.size());
+		for (IFGNode n : this.IFGNodes) {
+			System.out.print("    ");
+			n.print();
+		}
+	}
 }

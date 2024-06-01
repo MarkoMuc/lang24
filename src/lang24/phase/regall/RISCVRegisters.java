@@ -27,6 +27,7 @@ public class RISCVRegisters {
     public Vector<String> getNUMRegisters(){
         return new Vector<>(NUMRegister.values());
     }
+
     private void initABI() {
         Integer i = 0;
         for(String reg : registerABINames){

@@ -167,9 +167,9 @@ public class AsmOPER extends AsmInstr {
 	public String toRegsString(HashMap<MemTemp, String> regs) {
 		String instruction = this.instr;
 		for (int i = 0; i < uses.size(); i++)
-			instruction = instruction.replace("`s" + i, "" + regs.get(uses.get(i)));
+			instruction = instruction.replace("`s" + i, regs.get(uses.get(i)));
 		for (int i = 0; i < defs.size(); i++)
-			instruction = instruction.replace("`d" + i, "" + regs.get(uses.get(i)));
+			instruction = instruction.replace("`d" + i, regs.get(defs.get(i)));
 		return instruction;
 	}
 

@@ -1,100 +1,104 @@
 package lang24.phase.regall;
 
-import lang24.common.report.Report;
-import lang24.data.mem.MemTemp;
-
-import java.util.HashSet;
+import java.util.*;
+import lang24.data.mem.*;
+import lang24.common.report.*;
 
 public class IFGNode {
-    private MemTemp temp;
-    private HashSet<IFGNode> connections;
-    private int color;
-    private boolean potentialSpill;
 
-    IFGNode(MemTemp temp) {
-        this.temp = temp;
-        this.color = -1;
-        this.potentialSpill = false;
-        this.connections = new HashSet<>();
-    }
+	private final MemTemp temp;
+	private final HashSet<IFGNode> connections;
+	private boolean potentialSpill = false;
+	private int color = -1;
 
-    public MemTemp getTemp() {
-        return this.temp;
-    }
+	public IFGNode(MemTemp temp) {
+		this.temp = temp;
+		this.connections = new HashSet<>();
+	}
 
-    public int getColor() {
-        return this.color;
-    }
+	public void setColor(int color, int numRegs) {
+		if (color <= 0)
+			throw new Report.Error("color cannot be negative or zero");
+		else if (numRegs <= color) {
+			if (potentialSpill)
+				this.color = numRegs;
+			else
+				throw new Report.Error(this + "(Tried to spill without potential)");
+		} else {
+			this.color = color;
+		}
+	}
 
-    public HashSet<IFGNode> getConnections() {
-        return this.connections;
-    }
+	public int getColor() {
+		return this.color;
+	}
 
-    public HashSet<IFGNode> getConnectionsCopy() {
-        return new HashSet<>(this.connections);
-    }
+	public void addConnection(IFGNode n) {
+		if (this == n) return;
+		if (this.connections.add(n)) {
+			n.addConnection(this);
+		}
+	}
 
-    public boolean getPotentialSpill() {
-        return this.potentialSpill;
-    }
+	public void addConnections(Set<IFGNode> knownConnections) {
+		for (IFGNode n : knownConnections) {
+			this.addConnection(n);
+		}
+	}
 
-    public void setPotentialSpill(boolean potentialSpill) {
-        this.potentialSpill = potentialSpill;
-    }
+	public void delConnection(IFGNode n) {
+		if (this == n) return;
+		if (this.connections.remove(n)) {
+			n.delConnection(this);
+		}
+	}
 
-    public int degree(){
-        return this.connections.size();
-    }
+	public void delConnections(Set<IFGNode> connectionsToRemove) {
+		for (IFGNode n : connectionsToRemove) {
+			this.delConnection(n);
+		}
+	}
 
-    public void addConnection(IFGNode node) {
-        if (this == node) {
-            return;
-        }
-        if (this.connections.add(node)) {
-            node.addConnection(this);
-        }
-    }
+	public HashSet<IFGNode> connections() {
+		return new HashSet<IFGNode>(this.connections);
+	}
 
-    public void removeConnection(IFGNode node) {
-        if (this == node) {
-            return;
-        }
-        if (this.connections.remove(node)) {
-            node.removeConnection(this);
-        }
+	public void markPotentialSpill() {
+		this.potentialSpill = true;
+	}
 
-    }
+	public MemTemp id() {
+		return this.temp;
+	}
 
-    public void setColor(int color, int K){
-        if(color == 0){
-            throw new Report.Error("Color is zero, this is a reserved register and not valid.");
+	public int degree() {
+		return this.connections.size();
+	}
 
-        }else if(color < 0){
-            throw new Report.Error("Color is negative");
-        } else if(K <= color){
-            if(potentialSpill){
-                this.color = K;
-            }else{
-                throw new Report.Error("Potential spill error on node: " + this);
-            }
-        }else{
-            //TODO: 0 is also illegal for RISC-V
-            this.color = color;
-        }
-    }
+	public void print() {
+		System.out.println(this);
+		for (IFGNode n : this.connections) {
+			System.out.println("	-> " + n);
+		}
+	}
 
-    @Override
-    public String toString() {
-        return "IFGNode: " + this.temp.toString() + "[" + this.color + "]";
-    }
+	public void printSpill() {
+		if (this.potentialSpill)
+			System.out.println(this + " (potential spill)");
+		else
+			System.out.println(this);
+	}
 
-    @Override
-    public boolean equals(Object obj) {
-        if(obj instanceof IFGNode node) {
-            if(node.temp == this.temp) {
-                return true;
-            }
-        }
-        return false;
-    }
+	@Override
+	public String toString() {
+		return "IFGNode: " + this.temp + "[" + this.color + "]";
+	}
+
+	@Override
+	public boolean equals(Object o) {
+		if (o instanceof IFGNode n) {
+            return n.temp == this.temp;
+		}
+		return false;
+	}
 }
