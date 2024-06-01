@@ -34,7 +34,7 @@ public class RegAll extends Phase {
 		IFGNode n = tmp.getLowDegreeNode(numRegs);
 		while (n != null) {
 			tmp.removeNode(n);
-			savedIFGNodes.add(interferenceGraph.findNode(n.id()));
+			savedIFGNodes.add(interferenceGraph.findNode(n.getTemp()));
 			n = tmp.getLowDegreeNode(numRegs);
 		}
 
@@ -51,7 +51,7 @@ public class RegAll extends Phase {
 		IFGNode n = tmp.getHighDegreeNode(numRegs);
 		// n cannot be null (either graph empty and spill() is not
 		// called, or it has elements with high enough degree)
-		IFGNode gn = interferenceGraph.findNode(n.id());
+		IFGNode gn = interferenceGraph.findNode(n.getTemp());
 		gn.markPotentialSpill();
 		tmp.removeNode(n);
 		savedIFGNodes.push(gn);
@@ -70,12 +70,12 @@ public class RegAll extends Phase {
 	}
 
 	private boolean colorNode(IFGNode n, InterferenceGraph interferenceGraph) {
-		if (n.id() == currentCode.frame.FP) return false;
-		IFGNode current = interferenceGraph.findNode(n.id());
+		if (n.getTemp() == currentCode.frame.FP) return false;
+		IFGNode current = interferenceGraph.findNode(n.getTemp());
 		ArrayList<Integer> unavailableColors =
-				new ArrayList<Integer>(current.degree());
+				new ArrayList<Integer>(current.getDegree());
 
-		for (IFGNode i : current.connections()) {
+		for (IFGNode i : current.getConnections()) {
 			int c = i.getColor();
 			if (c != -1) {
 				if (!unavailableColors.contains(c)) {
@@ -108,8 +108,8 @@ public class RegAll extends Phase {
 			startOver(n);
 		} else {
 			for (IFGNode i : interferenceGraph.nodes()) {
-				tempToReg.put(i.id(), i.getColor());
-				tempToSReg.put(i.id(), riscv.getABI(i.getColor()));
+				tempToReg.put(i.getTemp(), i.getColor());
+				tempToSReg.put(i.getTemp(), riscv.getABI(i.getColor()));
 			}
 		}
 	}
@@ -129,9 +129,9 @@ public class RegAll extends Phase {
 
 		for (int i = 0; i < currentCode.instrs.size(); i++) {
 			AsmInstr instr = currentCode.instrs.get(i);
-			if (n.id() == FP) continue;
-			boolean used = instr.uses().contains(n.id());
-			boolean defined = instr.defs().contains(n.id());
+			if (n.getTemp() == FP) continue;
+			boolean used = instr.uses().contains(n.getTemp());
+			boolean defined = instr.defs().contains(n.getTemp());
 
 			// check used first:
 			// imagine ADD $1,$1,10
@@ -150,7 +150,7 @@ public class RegAll extends Phase {
 				Vector<MemLabel> jumps = new Vector<MemLabel>();
 				uses.add(FP);
 				uses.add(offsetReg);
-				defs.add(n.id());
+				defs.add(n.getTemp());
 				AsmOPER load = new AsmOPER(
 						instrString, uses, defs, jumps
 				);
@@ -160,7 +160,7 @@ public class RegAll extends Phase {
 			}
 			if (defined) {
 				Vector<AsmInstr> inst = new Vector<AsmInstr>();
-				MemTemp reg = n.id();
+				MemTemp reg = n.getTemp();
 				MemTemp offsetReg = offset.accept(
 						new ExprGenerator(),
 						inst

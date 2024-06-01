@@ -20,28 +20,28 @@ public class InterferenceGraph {
 
 	public IFGNode findNode(MemTemp temp) {
 		for (IFGNode n : this.IFGNodes)
-			if (n.id() == temp) return n;
+			if (n.getTemp() == temp) return n;
 		return null;
 	}
 
 	public void removeNode(IFGNode n) {
 		if (n == null) return;
 		this.IFGNodes.remove(n);
-		for (IFGNode i : n.connections()) {
-			i.delConnection(n);
+		for (IFGNode i : n.getConnections()) {
+			i.removeConnection(n);
 		}
 	}
 
 	public IFGNode getLowDegreeNode(int maxDegree) {
 		for (IFGNode n : this.IFGNodes)
-			if (n.degree() < maxDegree)
+			if (n.getDegree() < maxDegree)
 				return n;
 		return null;
 	}
 
 	public IFGNode getHighDegreeNode(int minDegree) {
 		for (IFGNode n : this.IFGNodes)
-			if (n.degree() >= minDegree)
+			if (n.getDegree() >= minDegree)
 				return n;
 		return null;
 	}
@@ -54,18 +54,4 @@ public class InterferenceGraph {
 		return new HashSet<IFGNode>(IFGNodes);
 	}
 
-	public void print() {
-		System.out.println("Graph nodes: " + this.IFGNodes.size());
-		for (IFGNode n : this.IFGNodes) {
-			System.out.println("	" + n);
-		}
-	}
-
-	public void printMore() {
-		System.out.println("Graph nodes: " + this.IFGNodes.size());
-		for (IFGNode n : this.IFGNodes) {
-			System.out.print("    ");
-			n.print();
-		}
-	}
 }
