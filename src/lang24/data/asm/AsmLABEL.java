@@ -26,4 +26,8 @@ public class AsmLABEL extends AsmOPER {
 		return label.name;
 	}
 
+	@Override
+	public String toRegsString(HashMap<MemTemp, String> regs) {
+		return label.name;
+	}
 }

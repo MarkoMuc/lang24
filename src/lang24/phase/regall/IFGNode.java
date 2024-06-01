@@ -71,7 +71,10 @@ public class IFGNode {
     }
 
     public void setColor(int color, int K){
-        if(color < 0){
+        if(color == 0){
+            throw new Report.Error("Color is zero, this is a reserved register and not valid.");
+
+        }else if(color < 0){
             throw new Report.Error("Color is negative");
         } else if(K <= color){
             if(potentialSpill){

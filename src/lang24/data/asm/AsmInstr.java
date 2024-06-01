@@ -78,4 +78,11 @@ public abstract class AsmInstr {
 	 */
 	public abstract String toString(HashMap<MemTemp, Integer> regs);
 
+	/**
+	 * Returns a string representing this instruction with registers.
+	 *
+	 * @param regs A mapping of temporaries to registers.
+	 * @return A a string representing this instruction with registers as String not integers.
+	 */
+	public abstract String toRegsString(HashMap<MemTemp, String> regs);
 }

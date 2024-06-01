@@ -12,6 +12,10 @@ public class InterferenceGraph {
         this.nodes = new HashSet<>();
     }
 
+    InterferenceGraph(HashSet<IFGNode> nodes){
+        this.nodes = nodes;
+    }
+
     public Integer getSize() { return this.nodes.size();}
 
     public HashSet<IFGNode> getNodes() {
