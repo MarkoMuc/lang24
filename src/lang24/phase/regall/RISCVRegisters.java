@@ -6,43 +6,6 @@ import java.util.Vector;
 public class RISCVRegisters {
     private static final HashMap<Integer, String> ABIRegister = new HashMap<>();
     private static final HashMap<Integer, String> NUMRegister = new HashMap<>();
-
-    RISCVRegisters() {
-        initABI();
-        initREGS();
-    }
-
-    public String getABI(Integer idx) {
-        return ABIRegister.getOrDefault(idx, "ERROR");
-    }
-
-    public Vector<String> getABIRegisters(){
-        return new Vector<>(ABIRegister.values());
-    }
-
-    public String getNUM(Integer idx) {
-        return ABIRegister.getOrDefault(idx, "ERROR");
-    }
-
-    public Vector<String> getNUMRegisters(){
-        return new Vector<>(NUMRegister.values());
-    }
-
-    private void initABI() {
-        Integer i = 0;
-        for(String reg : registerABINames){
-            ABIRegister.put(i, reg);
-            i++;
-        }
-    }
-    private void initREGS() {
-        Integer i = 0;
-        for(String reg : registerNUMNames){
-            NUMRegister.put(i, reg);
-            i++;
-        }
-    }
-
     private static final String[] registerNUMNames = {
             "x0", // Hard wired zero
             "x1", // Return Address
@@ -65,7 +28,6 @@ public class RISCVRegisters {
             "f18", "f19", "f20", "f21", "f22", "f23", "f24", "f25", "f26", "f27", // FP saved registers
             "f28", "f29", "ft30", "ft31" // FP temporaries
     };
-
     private static final String[] registerABINames = {
             "zero", // Hard wired zero
             "ra", // Return Address
@@ -88,4 +50,41 @@ public class RISCVRegisters {
             "fs2", "fs3", "fs4", "fs5", "fs6", "fs7", "fs8", "fs9", "fs10", "fs11", // FP saved registers
             "ft8", "ft9", "ft10", "ft11" // FP temporaries
     };
+
+    RISCVRegisters() {
+        initABI();
+        initREGS();
+    }
+
+    public String getABI(Integer idx) {
+        return ABIRegister.getOrDefault(idx, "ERROR");
+    }
+
+    public Vector<String> getABIRegisters() {
+        return new Vector<>(ABIRegister.values());
+    }
+
+    public String getNUM(Integer idx) {
+        return ABIRegister.getOrDefault(idx, "ERROR");
+    }
+
+    public Vector<String> getNUMRegisters() {
+        return new Vector<>(NUMRegister.values());
+    }
+
+    private void initABI() {
+        Integer i = 0;
+        for (String reg : registerABINames) {
+            ABIRegister.put(i, reg);
+            i++;
+        }
+    }
+
+    private void initREGS() {
+        Integer i = 0;
+        for (String reg : registerNUMNames) {
+            NUMRegister.put(i, reg);
+            i++;
+        }
+    }
 }
