@@ -19,7 +19,7 @@ public class RegAll extends Phase {
 	public final HashMap<MemTemp, Integer> tempToReg = new HashMap<MemTemp, Integer>();
 
 	public final int numRegs = Compiler.numRegs;
-	private final Stack<IFGNode> savedIFGNodes = new Stack<IFGNode>();
+	private final Stack<IFGNode> savedNodes = new Stack<IFGNode>();
 	public final HashMap<MemTemp, String> tempToSReg = new HashMap<MemTemp, String>();
 	private final RISCVRegisters riscv = new RISCVRegisters();
 
@@ -33,7 +33,7 @@ public class RegAll extends Phase {
 		IFGNode node = tmp.getLowDegreeNode(numRegs);
 		while (node != null) {
 			tmp.removeNode(node);
-			savedIFGNodes.add(graph.findNode(node.getTemp()));
+			savedNodes.push(graph.findNode(node.getTemp()));
 			node = tmp.getLowDegreeNode(numRegs);
 		}
 
@@ -50,7 +50,7 @@ public class RegAll extends Phase {
 
 		IFGNode reg = graph.findNode(node.getTemp());
 		reg.markPotentialSpill();
-		savedIFGNodes.push(reg);
+		savedNodes.push(reg);
 		simplify(graph, tmp);
 	}
 
@@ -100,8 +100,8 @@ public class RegAll extends Phase {
 		boolean spillHappened = false;
 		IFGNode node = null;
 
-		while (!savedIFGNodes.empty() && !spillHappened) {
-			node = savedIFGNodes.pop();
+		while (!savedNodes.empty() && !spillHappened) {
+			node = savedNodes.pop();
 			spillHappened |= colorNode(node, graph);
 		}
 
@@ -116,10 +116,8 @@ public class RegAll extends Phase {
 	}
 
 	private void startOver(IFGNode n) {
-		// reinitialize
-		while (!savedIFGNodes.empty()) savedIFGNodes.pop();
+		savedNodes.clear();
 
-		// modify code
 		currentCode.tempSize += 8;
 		MemTemp FP = currentCode.frame.FP;
 		long locsSize = currentCode.frame.locsSize;
@@ -132,11 +130,6 @@ public class RegAll extends Phase {
 			boolean used = instr.uses().contains(n.getTemp());
 			boolean defined = instr.defs().contains(n.getTemp());
 
-			// check used first:
-			// imagine ADD $1,$1,10
-			// first load $1
-			// then add $1,$1,10
-			// then store $1
 			if (used) {
 				Vector<AsmInstr> inst = new Vector<AsmInstr>();
 				MemTemp offsetReg = offset.accept(
@@ -180,11 +173,10 @@ public class RegAll extends Phase {
 			}
 		}
 
-		// redo from livean
 		LiveAn livean = new LiveAn();
 		livean.analysis();
-		//Report.info("spilled: " + n.id());
 		currentCode = null;
+
 		this.allocate();
 	}
 
