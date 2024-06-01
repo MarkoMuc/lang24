@@ -38,7 +38,7 @@ public class RegAll extends Phase {
 			n = tmp.getLowDegreeNode(numRegs);
 		}
 
-		if (tmp.size() == 0)
+		if (tmp.getSize() == 0)
 			select(interferenceGraph);
 		else
 			spill(tmp, interferenceGraph);
@@ -107,7 +107,7 @@ public class RegAll extends Phase {
 		if (spillHappened) {
 			startOver(n);
 		} else {
-			for (IFGNode i : interferenceGraph.nodes()) {
+			for (IFGNode i : interferenceGraph.getNodes()) {
 				tempToReg.put(i.getTemp(), i.getColor());
 				tempToSReg.put(i.getTemp(), riscv.getABI(i.getColor()));
 			}
