@@ -38,7 +38,7 @@ public class Code {
 	/**
 	 * Creates a new fragment of code.
 	 * 
-	 * @param frame      The funtion's frame.
+	 * @param frame      The function's frame.
 	 * @param entryLabel The label the prologue jumps to.
 	 * @param exitLabel  The label at which the epilogue starts.
 	 * @param instrs     Assembly instructions representing the bofy of the
