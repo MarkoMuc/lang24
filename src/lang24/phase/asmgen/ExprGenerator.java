@@ -24,67 +24,67 @@ public class ExprGenerator implements ImcVisitor<MemTemp, Vector<AsmInstr>> {
         Vector<MemLabel> jumps = new Vector<MemLabel>();
 
         if (binOp.oper == ImcBINOP.Oper.OR) {
-            instr = "	or	`d0,`s0,`s1";
+            instr = "or `d0,`s0,`s1";
             arg.add(new AsmOPER(instr, uses, defs, jumps));
         } else if (binOp.oper == ImcBINOP.Oper.AND) {
-            instr = "	and	`d0,`s0,`s1";
+            instr = "and `d0,`s0,`s1";
             arg.add(new AsmOPER(instr, uses, defs, jumps));
         } else if (binOp.oper == ImcBINOP.Oper.ADD) {
-            instr = "	add	`d0,`s0,`s1";
+            instr = "add `d0,`s0,`s1";
             arg.add(new AsmOPER(instr, uses, defs, jumps));
         } else if (binOp.oper == ImcBINOP.Oper.SUB) {
-            instr = "	sub	`d0,`s0,`s1";
+            instr = "sub `d0,`s0,`s1";
             arg.add(new AsmOPER(instr, uses, defs, jumps));
         } else if (binOp.oper == ImcBINOP.Oper.MUL) {
-            instr = "	mul	`d0,`s0,`s1";
+            instr = "mul `d0,`s0,`s1";
             arg.add(new AsmOPER(instr, uses, defs, jumps));
         } else if (binOp.oper == ImcBINOP.Oper.DIV) {
-            instr = "	div	`d0,`s0,`s1";
+            instr = "div `d0,`s0,`s1";
             arg.add(new AsmOPER(instr, uses, defs, jumps));
         } else if (binOp.oper == ImcBINOP.Oper.MOD) {
-            instr = "   remw `d0,`s0,`s1";
-            arg.add(new AsmOPER(instr, null, defs, jumps));
+            instr = "remw `d0,`s0,`s1";
+            arg.add(new AsmOPER(instr, uses, defs, jumps));
         } else if (binOp.oper == ImcBINOP.Oper.EQU) {
             // FIXME: Create function for this etc.
             uses.add(new MemTemp());//s0
             uses.add(new MemTemp());//s1
 
-            arg.add( new AsmOPER( "     sub `d0,`s0,`s1", uses, defs, jumps));
+            arg.add( new AsmOPER( "sub `d0,`s0,`s1", uses, defs, jumps));
             uses = new Vector<>();
-            arg.add( new AsmOPER( "     seqz `d0,`d0", uses, defs, jumps));
+            arg.add( new AsmOPER( "seqz `d0,`d0", uses, defs, jumps));
         } else if (binOp.oper == ImcBINOP.Oper.NEQ) {
             uses.add(new MemTemp());//s0
             uses.add(new MemTemp());//s1
 
-            arg.add( new AsmOPER( "     sub `d0,`s1,`s0", uses, defs, jumps));
+            arg.add( new AsmOPER( "sub `d0,`s1,`s0", uses, defs, jumps));
             uses = new Vector<>();
-            arg.add( new AsmOPER( "     snez `d0,`d0", uses, defs, jumps));
+            arg.add( new AsmOPER( "snez `d0,`d0", uses, defs, jumps));
         } else if (binOp.oper == ImcBINOP.Oper.LTH) {
             uses.add(new MemTemp());//s0
             uses.add(new MemTemp());//s1
 
-            arg.add( new AsmOPER( "     slt `d0,`s1,`s0", uses, defs, jumps));
+            arg.add( new AsmOPER( "slt `d0, `s1, `s0", uses, defs, jumps));
         } else if (binOp.oper == ImcBINOP.Oper.GTH) {
             // CHECKME: if the SLT turned the right way
             //  sext.w but do we need sext.d?
             uses.add(new MemTemp());//s0
             uses.add(new MemTemp());//s1
 
-            arg.add( new AsmOPER( "     slt `d0,`s0,`s1", uses, defs, jumps));
+            arg.add( new AsmOPER( "slt `d0, `s0, `s1", uses, defs, jumps));
         } else if (binOp.oper == ImcBINOP.Oper.LEQ) {
             uses.add(new MemTemp());//s0
             uses.add(new MemTemp());//s1
 
-            arg.add( new AsmOPER( "     slt `d0,`s0,`s1", uses, defs, jumps));
+            arg.add( new AsmOPER( "slt `d0, `s0, `s1", uses, defs, jumps));
             uses = new Vector<>();
-            arg.add( new AsmOPER( "     seqz `d0,`d0", uses, defs, jumps));
+            arg.add( new AsmOPER( "seqz `d0,`d0", uses, defs, jumps));
         } else if (binOp.oper == ImcBINOP.Oper.GEQ) {
             uses.add(new MemTemp());//s0
             uses.add(new MemTemp());//s1
 
-            arg.add( new AsmOPER( "     slt `d0,`s1,`s0", uses, defs, jumps));
+            arg.add( new AsmOPER( "slt `d0, `s1, `s0", uses, defs, jumps));
             uses = new Vector<>();
-            arg.add( new AsmOPER( "     seqz `d0,`d0", uses, defs, jumps));
+            arg.add( new AsmOPER( "seqz `d0,`d0", uses, defs, jumps));
         } else {
             throw new Report.InternalError();
         }
@@ -101,22 +101,22 @@ public class ExprGenerator implements ImcVisitor<MemTemp, Vector<AsmInstr>> {
         uses.add(funArg);
 
         if (offset <= 0xff) {
-            instr = "   sd	`s0,"+offset+"(sp)";
+            instr = "sd `s0,"+offset+"(sp)";
             arg.add(new AsmOPER(instr, uses, defs, jumps));
         } else {
             //CHECKME: find out when you should calculate it with extra commands
-            instr = "   mv `d0, sp";
+            instr = "mv `d0, sp";
             MemTemp dest = new MemTemp();
             uses.clear();
             defs.add(dest);
             arg.add(new AsmOPER(instr, uses, defs, jumps));
 
-            instr = "   add `d0, `s0";
+            instr = "add `d0, `s0";
             MemTemp regz = (new ImcCONST(offset)).accept(this, arg);
             uses.add(regz);
             arg.add(new AsmOPER(instr, uses, defs, jumps));
 
-            instr = "   sd `s0,0(`d0)";
+            instr = "sd `s0,0(`d0)";
             uses.add(funArg);
             defs.add(dest);
             arg.add(new AsmOPER(instr, uses, defs, jumps));
@@ -140,11 +140,11 @@ public class ExprGenerator implements ImcVisitor<MemTemp, Vector<AsmInstr>> {
         }
         jumps.add(call.label);
 
-        String instr = "    call " + call.label.name;
+        String instr = "call " + call.label.name;
         arg.add(new AsmOPER(instr, uses, defs, jumps));
 
         // retval
-        instr = "   lw	`d0,0(sp)";
+        instr = "lw `d0,0(sp)";
         uses = new Vector<MemTemp>();
         defs = new Vector<MemTemp>();
         jumps = new Vector<MemLabel>();
@@ -164,7 +164,7 @@ public class ExprGenerator implements ImcVisitor<MemTemp, Vector<AsmInstr>> {
         defs.add(reg);
         Vector<MemLabel> jumps = new Vector<MemLabel>();
 
-        instr = "   li `d0," + constant.value;
+        instr = "li `d0, " + constant.value;
         uses.add(reg);
         arg.add(new AsmOPER(instr, uses, defs, jumps));
 
@@ -181,7 +181,7 @@ public class ExprGenerator implements ImcVisitor<MemTemp, Vector<AsmInstr>> {
         uses.add(mem.addr.accept(this, arg));
         defs.add(reg);
 
-        String instr = "    lw  `d0,`s0";
+        String instr = "lw `d0,`s0";
         arg.add(new AsmOPER(instr, uses, defs, jumps));
         return reg;
     }
@@ -195,7 +195,7 @@ public class ExprGenerator implements ImcVisitor<MemTemp, Vector<AsmInstr>> {
 
         defs.add(reg);
 
-        String instr = "    la  `d0," + name.label.name;
+        String instr = "la `d0," + name.label.name;
         arg.add(new AsmOPER(instr, uses, defs, jumps));
         return reg;
     }
@@ -225,10 +225,10 @@ public class ExprGenerator implements ImcVisitor<MemTemp, Vector<AsmInstr>> {
         defs.add(reg);
 
         if (unOp.oper == ImcUNOP.Oper.NOT) {
-            instr = "   not    `d0,`s0";
+            instr = "not `d0,`s0";
             arg.add(new AsmOPER(instr, uses, defs, jumps));
         } else if (unOp.oper == ImcUNOP.Oper.NEG) {
-            instr = "   negw   `d0,`s0";
+            instr = "negw `d0,`s0";
             arg.add(new AsmOPER(instr, uses, defs, jumps));
         }
         return reg;

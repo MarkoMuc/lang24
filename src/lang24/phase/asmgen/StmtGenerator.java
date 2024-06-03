@@ -24,7 +24,7 @@ public class StmtGenerator implements ImcVisitor<Vector<AsmInstr>, Object> {
         jumps.add(cjump.posLabel);
         jumps.add(cjump.negLabel);
 
-        String instr = "    bnez `s0," + cjump.posLabel.name;
+        String instr = "bnez `s0," + cjump.posLabel.name;
         v.add(new AsmOPER(instr, uses, defs, jumps));
         return v;
     }
@@ -46,7 +46,7 @@ public class StmtGenerator implements ImcVisitor<Vector<AsmInstr>, Object> {
 
         jumps.add(jump.label);
 
-        String instr = "    j " + jump.label.name;
+        String instr = "j " + jump.label.name;
         v.add(new AsmOPER(instr, uses, defs, jumps));
         return v;
     }
@@ -77,19 +77,19 @@ public class StmtGenerator implements ImcVisitor<Vector<AsmInstr>, Object> {
 
             //CHECKME: do you need to clear or just use s1 vs s0
             // FIXME: This doesnt actually generate correct RISC-V ASM
-            instr = "   la `d0, `s1";
+            instr = "la `d0, `s1";
             defs.add(regTemp); // d0
             //uses.clear();
             uses.add(dstTemp); // s0
             v.add(new AsmOPER(instr, uses, defs, jumps));
 
-            instr = "   sw	`s0, 0(`d0)";
+            instr = "sw `s0, 0(`d0)";
             //uses.clear();
             //uses.add(srcTemp);// s0
 
             v.add(new AsmOPER(instr, uses, defs, jumps));
         } else { // read
-            instr = "   lw	`d0,`s0";
+            instr = "lw `d0, `s0";
             defs.add(move.dst.accept(eg, v));
             v.add(new AsmMOVE(instr, uses, defs));
         }
