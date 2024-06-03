@@ -5,9 +5,10 @@ import java.nio.file.*;
 import java.nio.file.attribute.*;
 import java.util.*;
 import lang24.common.report.*;
+import lang24.phase.all.*;
 import lang24.phase.lexan.*;
-import lang24.phase.livean.LiveAn;
-import lang24.phase.regall.RegAll;
+import lang24.phase.livean.*;
+import lang24.phase.regall.*;
 import lang24.phase.synan.*;
 import lang24.phase.abstr.*;
 import lang24.phase.seman.*;
@@ -22,7 +23,8 @@ import lang24.phase.asmgen.*;
  * @author bostjan.slivnik@fri.uni-lj.si
  */
 public class Compiler {
-	public static int numRegs = 30;
+	public static int numRegs = RISCVRegisters.GENERAL_REGISTERS;
+
 	/** (Unused but included to keep javadoc happy.) */
 	private Compiler() {
 		throw new Report.InternalError();
@@ -240,12 +242,21 @@ public class Compiler {
 				if (cmdLineOptValues.get("--target-phase").equals("livean"))
 					break;
 
-				try(RegAll regAll = new RegAll()){
-					regAll.allocate();
-					regAll.log();
+				RegAll regAll = null;
+				try(RegAll reg = new RegAll()){
+					reg.allocate();
+					reg.log();
+					regAll = reg;
 				}
+
 				if (cmdLineOptValues.get("--target-phase").equals("regall"))
 					break;
+
+				try(All all = new All()){
+					String path = cmdLineOptValues.get("--dst-file-name");
+					if(path == null) path = cmdLineOptValues.get("--src-file-name");
+					all.allTogether(path, regAll);
+				}
 
 				break;
 			}

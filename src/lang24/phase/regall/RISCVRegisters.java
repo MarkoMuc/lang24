@@ -6,6 +6,10 @@ import java.util.Vector;
 public class RISCVRegisters {
     private static final HashMap<Integer, String> ABIRegister = new HashMap<>();
     private static final HashMap<Integer, String> NUMRegister = new HashMap<>();
+
+    public final static int ALL_REGISTERS = 64;
+    public final static int GENERAL_REGISTERS = 21;
+
     private static final String[] registerNUMNames = {
             "x0", // Hard wired zero
             "x1", // Return Address
@@ -57,7 +61,11 @@ public class RISCVRegisters {
     }
 
     public String getABI(Integer idx) {
-        return ABIRegister.getOrDefault(idx, "ERROR");
+        String ret = ABIRegister.getOrDefault(idx, "ERROR");
+        if(ret.equals("ERROR")) {
+            System.out.println(idx);
+        }
+        return ret;
     }
 
     public Vector<String> getABIRegisters() {

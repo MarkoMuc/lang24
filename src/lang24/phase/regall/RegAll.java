@@ -13,7 +13,7 @@ import lang24.phase.asmgen.ExprGenerator;
 import lang24.phase.livean.LiveAn;
 
 import java.util.*;
-
+//TODO: Make sure that all general are used and not off by 1
 /**
  * Register allocation.
  */
@@ -25,9 +25,12 @@ public class RegAll extends Phase {
     public final HashMap<MemTemp, Integer> tempToReg = new HashMap<MemTemp, Integer>();
 
     public final int numRegs = Compiler.numRegs;
-    public final HashMap<MemTemp, String> tempToSReg = new HashMap<MemTemp, String>();
-    private final Stack<IFGNode> savedNodes = new Stack<IFGNode>();
+    public final HashMap<MemTemp, String> tempToSReg = new HashMap<>();
+    public final HashMap<Code, HashSet<String>> codeToRegs = new HashMap<>();
+    private final Stack<IFGNode> savedNodes = new Stack<>();
     private final RISCVRegisters riscv = new RISCVRegisters();
+    private HashSet<String> usedRegs = null;
+    private final int STARTCOLOR = 11;
 
     private Code currentCode = null;
 
@@ -61,7 +64,7 @@ public class RegAll extends Phase {
     }
 
     private int chooseColor(ArrayList<Integer> neighbors, int current) {
-        if (current >= numRegs) {
+        if (current >= numRegs + STARTCOLOR) {
             return numRegs;
         }
 
@@ -93,7 +96,7 @@ public class RegAll extends Phase {
         }
         Collections.sort(neighbors);
 
-        node.setColor(chooseColor(neighbors, 1), numRegs);
+        node.setColor(chooseColor(neighbors, STARTCOLOR), numRegs + STARTCOLOR);
 
         return neighbors.size() >= numRegs;
     }
@@ -111,6 +114,12 @@ public class RegAll extends Phase {
             startOver(node);
         } else {
             for (IFGNode i : graph.getNodes()) {
+                if(i.getTemp() == currentCode.frame.FP) {
+                    i.setColor(9, STARTCOLOR);
+                }else {
+                    usedRegs.add(riscv.getABI(i.getColor()));
+                }
+
                 tempToReg.put(i.getTemp(), i.getColor());
                 tempToSReg.put(i.getTemp(), riscv.getABI(i.getColor()));
             }
@@ -138,7 +147,7 @@ public class RegAll extends Phase {
                         new ExprGenerator(),
                         inst
                 );
-                String instrString = "	lw `d0,`s0,`s1";
+                String instrString = "lw `d0,`s0,`s1";
                 Vector<MemTemp> uses = new Vector<MemTemp>();
                 Vector<MemTemp> defs = new Vector<MemTemp>();
                 Vector<MemLabel> jumps = new Vector<MemLabel>();
@@ -159,7 +168,7 @@ public class RegAll extends Phase {
                         new ExprGenerator(),
                         inst
                 );
-                String instrString = "	sw `s0,`s1,`s2";
+                String instrString = "sw `s0,`s1,`s2";
                 Vector<MemTemp> uses = new Vector<MemTemp>();
                 Vector<MemTemp> defs = new Vector<MemTemp>();
                 Vector<MemLabel> jumps = new Vector<MemLabel>();
@@ -210,15 +219,27 @@ public class RegAll extends Phase {
 
     public void allocate() {
         for (Code code : AsmGen.codes) {
+            usedRegs = new HashSet<>();
             currentCode = code;
+
             InterferenceGraph tmp = buildIFGraph(code);
             InterferenceGraph graph = buildIFGraph(code);
             simplify(graph, tmp);
+
             // TODO:fix this bruh it aint 253
             tempToReg.put(code.frame.FP, 253);
-            tempToSReg.put(code.frame.FP, "FP");
+            codeToRegs.put(code, usedRegs);
         }
         currentCode = null;
+    }
+
+    public void dumpCode(Vector<Code> codes){
+        for(Code code : codes){
+            System.out.println(code.frame.label.name);
+            for(AsmInstr instr : code.instrs){
+                System.out.println(instr.toString());
+            }
+        }
     }
 
     public void log() {
@@ -233,7 +254,7 @@ public class RegAll extends Phase {
             logger.begElement("instructions");
             for (AsmInstr instr : code.instrs) {
                 logger.begElement("instruction");
-                logger.addAttribute("code", instr.toRegsString(tempToSReg));
+                logger.addAttribute("code", instr.toString(tempToReg));
                 logger.begElement("temps");
                 logger.addAttribute("name", "use");
                 for (MemTemp temp : instr.uses()) {
