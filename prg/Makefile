@@ -4,7 +4,7 @@ XSLTPROC	= xsltproc
 RM              = 'rm' -fr
 
 TARGETPHASE	= all
-LOGGEDPHASE	= all
+LOGGEDPHASE	= regall
 
 .PHONY	: %
 %	: %.lang24
