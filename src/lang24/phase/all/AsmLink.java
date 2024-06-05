@@ -69,13 +69,13 @@ public class AsmLink extends Phase {
                     System.err.println("Couldn't delete " + this.errFile.getAbsolutePath());
                 }
 
-                throw new Report.Error("Linker failed");
+                throw new Report.Error("Linker failed.");
             }
             if (!this.errFile.delete()) {
                 System.err.println("Couldn't delete " + this.errFile.getAbsolutePath());
             }
         } catch (Exception e) {
-            throw new Report.Error("Linker failed");
+            throw new Report.Error("Linker failed.");
         }
     }
 
@@ -112,10 +112,13 @@ public class AsmLink extends Phase {
     }
 
     public void assembleAndLink(String path) {
-        //TODO: delete asm file
         this.errFile = new File("err.temp");
         String lib_path = find_lib();
         String file = assembler(path, lib_path);
         linker(file, lib_path);
+
+        if(!new File(path).delete()){
+            throw new Report.Error("Couldn't delete the temporary asm file " + this.errFile.getAbsolutePath());
+        }
     }
 }
