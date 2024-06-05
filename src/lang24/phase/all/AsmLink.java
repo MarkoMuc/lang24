@@ -13,6 +13,7 @@ import java.util.Scanner;
 /*
     Assembles and links the resulting assembly code.
  */
+@SuppressWarnings("resource")
 public class AsmLink extends Phase {
     private File errFile;
 
@@ -21,7 +22,6 @@ public class AsmLink extends Phase {
     }
 
     private String find_lib() {
-        String lib_path = null;
         int depth = 0;
         try {
             String currWorkDir = new File(".").getCanonicalPath();
