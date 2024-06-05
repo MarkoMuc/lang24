@@ -3,30 +3,29 @@ package lang24.phase.all;
 import lang24.common.report.Report;
 import lang24.phase.Phase;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Scanner;
-import java.util.Vector;
 
 /*
     Assembles and links the resulting assembly code.
  */
 public class AsmLink extends Phase {
     private File errFile;
-    public AsmLink(){
+
+    public AsmLink() {
         super("AsmLink");
     }
 
-    private String find_lib(){
+    private String find_lib() {
         String lib_path = null;
         int depth = 0;
         try {
             String currWorkDir = new File(".").getCanonicalPath();
-            while(depth < 4){
+            while (depth < 4) {
                 Path[] dirs = java.nio.file.Files.walk(Paths.get(currWorkDir))
                         .filter(path -> path.toFile().isDirectory())
                         .filter(path -> path.getFileName().endsWith("lib"))
@@ -42,44 +41,45 @@ public class AsmLink extends Phase {
                 depth++;
                 currWorkDir = new File(currWorkDir).getParent();
             }
-        }catch (Exception e){
+        } catch (Exception e) {
             throw new Report.Error("Error while looking for lib folder");
         }
         return null;
     }
 
-    private void linker(String path, String lib_path){
+    private void linker(String path, String lib_path) {
         ArrayList<String> commands = new ArrayList<>();
         commands.add(String.format("%s/riscv64-unknown-elf-ld", lib_path));
         commands.add(String.format("-o %s", path));
         commands.add(String.format("%s", path));
 
         ProcessBuilder pb = new ProcessBuilder(commands);
-        try{
+        try {
             pb.redirectErrorStream(true);
             pb.redirectOutput(this.errFile);
             int exitCode = pb.start().waitFor();
 
-            if(exitCode != 0){
+            if (exitCode != 0) {
                 Scanner sc = new Scanner(this.errFile);
-                while(sc.hasNextLine()){
+                while (sc.hasNextLine()) {
                     System.out.println(sc.nextLine());
                 }
                 sc.close();
-                if(!this.errFile.delete()){
+                if (!this.errFile.delete()) {
                     System.err.println("Couldn't delete " + this.errFile.getAbsolutePath());
                 }
 
                 throw new Report.Error("Linker failed");
             }
-            if(!this.errFile.delete()){
+            if (!this.errFile.delete()) {
                 System.err.println("Couldn't delete " + this.errFile.getAbsolutePath());
             }
-        }catch (Exception e){
+        } catch (Exception e) {
             throw new Report.Error("Linker failed");
         }
     }
-    private String assembler(String path, String lib_path){
+
+    private String assembler(String path, String lib_path) {
         ArrayList<String> commands = new ArrayList<>();
         commands.add(String.format("%s/riscv64-unknown-elf-as", lib_path));
         commands.add(String.format("-o %s.o", path));
@@ -87,31 +87,31 @@ public class AsmLink extends Phase {
 
         ProcessBuilder pb = new ProcessBuilder(commands);
 
-        try{
+        try {
             pb.redirectErrorStream(true);
             pb.redirectOutput(this.errFile);
             int exitCode = pb.start().waitFor();
 
-            if(exitCode != 0){
+            if (exitCode != 0) {
                 Scanner sc = new Scanner(this.errFile);
-                while(sc.hasNextLine()){
+                while (sc.hasNextLine()) {
                     System.out.println(sc.nextLine());
                 }
                 sc.close();
-                if(!this.errFile.delete()){
+                if (!this.errFile.delete()) {
                     System.err.println("Couldn't delete " + this.errFile.getAbsolutePath());
                 }
 
                 throw new Report.Error("Assembler failed");
             }
-        }catch (Exception e){
+        } catch (Exception e) {
             throw new Report.Error("Assembler failed");
         }
 
         return path + ".o";
     }
 
-    public void assembleAndLink(String path){
+    public void assembleAndLink(String path) {
         //TODO: delete asm file
         this.errFile = new File("err.temp");
         String lib_path = find_lib();
