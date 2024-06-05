@@ -5,8 +5,12 @@ import lang24.phase.Phase;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Scanner;
+import java.util.Vector;
 
 /*
     Assembles and links the resulting assembly code.
@@ -18,6 +22,29 @@ public class AsmLink extends Phase {
     }
 
     private String find_lib(){
+        String lib_path = null;
+        int depth = 0;
+        try {
+            String currWorkDir = new File(".").getCanonicalPath();
+            while(depth < 4){
+                Path[] dirs = java.nio.file.Files.walk(Paths.get(currWorkDir))
+                        .filter(path -> path.toFile().isDirectory())
+                        .filter(path -> path.getFileName().endsWith("lib"))
+                        .toArray(Path[]::new);
+                for (Path dir : dirs) {
+                    if (Files.walk(dir)
+                            .filter(path -> path.getFileName().endsWith("riscv64-unknown-elf-ld") ||
+                                    path.getFileName().endsWith("riscv64-unknown-elf-as"))
+                            .toArray(Path[]::new).length > 0) {
+                        return dir.toFile().getAbsolutePath();
+                    }
+                }
+                depth++;
+                currWorkDir = new File(currWorkDir).getParent();
+            }
+        }catch (Exception e){
+            throw new Report.Error("Error while looking for lib folder");
+        }
         return null;
     }
 
@@ -39,10 +66,15 @@ public class AsmLink extends Phase {
                     System.out.println(sc.nextLine());
                 }
                 sc.close();
-                this.errFile.delete();
+                if(!this.errFile.delete()){
+                    System.err.println("Couldn't delete " + this.errFile.getAbsolutePath());
+                }
+
                 throw new Report.Error("Linker failed");
             }
-            this.errFile.delete();
+            if(!this.errFile.delete()){
+                System.err.println("Couldn't delete " + this.errFile.getAbsolutePath());
+            }
         }catch (Exception e){
             throw new Report.Error("Linker failed");
         }
@@ -66,7 +98,10 @@ public class AsmLink extends Phase {
                     System.out.println(sc.nextLine());
                 }
                 sc.close();
-                this.errFile.delete();
+                if(!this.errFile.delete()){
+                    System.err.println("Couldn't delete " + this.errFile.getAbsolutePath());
+                }
+
                 throw new Report.Error("Assembler failed");
             }
         }catch (Exception e){
