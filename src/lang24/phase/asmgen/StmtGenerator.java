@@ -24,8 +24,9 @@ public class StmtGenerator implements ImcVisitor<Vector<AsmInstr>, Object> {
         jumps.add(cjump.posLabel);
         jumps.add(cjump.negLabel);
 
-        String instr = "bnez `s0," + cjump.posLabel.name;
+        String instr = "bnez `s0, " + cjump.posLabel.name;
         v.add(new AsmOPER(instr, uses, defs, jumps));
+
         return v;
     }
 
@@ -48,6 +49,7 @@ public class StmtGenerator implements ImcVisitor<Vector<AsmInstr>, Object> {
 
         String instr = "j " + jump.label.name;
         v.add(new AsmOPER(instr, uses, defs, jumps));
+
         return v;
     }
 
@@ -55,6 +57,7 @@ public class StmtGenerator implements ImcVisitor<Vector<AsmInstr>, Object> {
     public Vector<AsmInstr> visit(ImcLABEL label, Object arg) {
         Vector<AsmInstr> v = new Vector<AsmInstr>();
         v.add(new AsmLABEL(label.label));
+
         return v;
     }
 
@@ -65,42 +68,36 @@ public class StmtGenerator implements ImcVisitor<Vector<AsmInstr>, Object> {
         Vector<MemTemp> defs = new Vector<MemTemp>();
         Vector<MemTemp> uses = new Vector<MemTemp>();
 
-        String instr = null;
         MemTemp srcTemp = move.src.accept(eg, v);
         uses.add(srcTemp);
 
-        if (move.dst instanceof ImcMEM) { // write
+        if (move.dst instanceof ImcMEM mem) { // write
             //CHECKME: do you need to check if label or reg here?
             Vector<MemLabel> jumps = new Vector<MemLabel>();
-            MemTemp dstTemp = ((ImcMEM) move.dst).addr.accept(eg, v);
-            MemTemp regTemp = new MemTemp();
+            MemTemp dstTemp = mem.addr.accept(eg, v);
 
-            //CHECKME: do you need to clear or just use s1 vs s0
-            // FIXME: This doesnt actually generate correct RISC-V ASM
-            instr = "la `d0, `s1";
-            defs.add(regTemp); // d0
-            //uses.clear();
-            uses.add(dstTemp); // s0
-            v.add(new AsmOPER(instr, uses, defs, jumps));
+            defs.add(dstTemp);
 
-            instr = "sw `s0, 0(`d0)";
+            // instr = "la `d0, `s1";
+            // defs.add(regTemp); // d0
+            // //uses.clear();
+            // uses.add(dstTemp); // s0
+            // v.add(new AsmOPER(instr, uses, defs, jumps));
+
             //uses.clear();
             //uses.add(srcTemp);// s0
 
-            v.add(new AsmOPER(instr, uses, defs, jumps));
+            v.add(new AsmOPER("sd `s0, 0(`d0)", uses, defs, jumps));
         } else { // read
-            instr = "lw `d0, `s0";
             defs.add(move.dst.accept(eg, v));
-            v.add(new AsmMOVE(instr, uses, defs));
+            v.add(new AsmMOVE("mv `d0, `s0", uses, defs));
         }
 
         return v;
     }
 
-    //CHECKME: Is this true??
     @Override
     public Vector<AsmInstr> visit(ImcSTMTS stmts, Object arg) {
-        // imclin removed this
         throw new Report.InternalError();
     }
 
