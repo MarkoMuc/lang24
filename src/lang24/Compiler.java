@@ -32,7 +32,7 @@ public class Compiler {
 
 	/** All valid phases name of the compiler. */
 	private static final Vector<String> phaseNames = new Vector<String>(Arrays.asList("none", "all", "lexan", "synan",
-			"abstr", "seman", "memory", "imcgen", "imclin", "asmgen", "livean", "regall"));
+			"abstr", "seman", "memory", "imcgen", "imclin", "asmgen", "livean", "regall", "asm"));
 
 	/** Names of command line options. */
 	private static final HashSet<String> cmdLineOptNames = new HashSet<String>(
@@ -256,6 +256,16 @@ public class Compiler {
 					String path = cmdLineOptValues.get("--dst-file-name");
 					if(path == null) path = cmdLineOptValues.get("--src-file-name");
 					all.allTogether(path, regAll);
+				}
+
+				if (cmdLineOptValues.get("--target-phase").equals("asm"))
+					break;
+
+				//TODO: remove the assembly out if its not only asm after compiling
+				try(AsmLink asmLink = new AsmLink()){
+					String path = cmdLineOptValues.get("--dst-file-name");
+					if(path == null) path = cmdLineOptValues.get("--src-file-name");
+					asmLink.assembleAndLink(path);
 				}
 
 				break;
