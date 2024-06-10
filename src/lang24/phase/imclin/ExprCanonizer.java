@@ -42,6 +42,7 @@ public class ExprCanonizer implements ImcVisitor<ImcExpr, Vector<ImcStmt>> {
         Vector<ImcExpr> args = new Vector<>();
 
         // Saves args into temps
+        // CHECKME: Why is it more than 1 ??????
         if( call.args.size() > 1) {
             for (ImcExpr arg : call.args) {
                 if(arg instanceof ImcCONST imcCONST) {
@@ -55,7 +56,7 @@ public class ExprCanonizer implements ImcVisitor<ImcExpr, Vector<ImcStmt>> {
             }
         }
 
-        ImcExpr out = call;
+        ImcExpr out = new ImcCALL(call.label, call.offs, args);
         if ( !isEstmt ) {
             // Save result into temp and return it
             ImcTEMP resTemp = new ImcTEMP(new MemTemp());
