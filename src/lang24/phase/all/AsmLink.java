@@ -114,7 +114,7 @@ public class AsmLink extends Phase {
         String lib_path = find_lib();
         assembler(path, lib_path);
         linker(path, lib_path);
-
+        // TODO: Only generate object file
         //if(!new File(path).delete()){
         //    throw new Report.Error("Couldn't delete the temporary asm file " + this.errFile.getAbsolutePath());
         //}
