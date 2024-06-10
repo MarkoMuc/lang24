@@ -13,7 +13,6 @@ import java.util.Scanner;
 /*
     Assembles and links the resulting assembly code.
  */
-@SuppressWarnings("resource")
 public class AsmLink extends Phase {
     private File errFile;
 
@@ -50,8 +49,8 @@ public class AsmLink extends Phase {
     private void linker(String path, String lib_path) {
         ArrayList<String> commands = new ArrayList<>();
         commands.add(String.format("%s/riscv64-unknown-elf-ld", lib_path));
-        commands.add(String.format("-o %s", path));
-        commands.add(String.format("%s", path));
+        commands.add(String.format("-o%s", path));
+        commands.add(String.format("%s.o", path));
 
         ProcessBuilder pb = new ProcessBuilder(commands);
         try {
@@ -79,11 +78,11 @@ public class AsmLink extends Phase {
         }
     }
 
-    private String assembler(String path, String lib_path) {
+    private void assembler(String path, String lib_path) {
         ArrayList<String> commands = new ArrayList<>();
         commands.add(String.format("%s/riscv64-unknown-elf-as", lib_path));
-        commands.add(String.format("-o %s.o", path));
-        commands.add(String.format("%s", path));
+        commands.add(String.format("-o%s.o", path));
+        commands.add(String.format("%s.s", path));
 
         ProcessBuilder pb = new ProcessBuilder(commands);
 
@@ -108,17 +107,16 @@ public class AsmLink extends Phase {
             throw new Report.Error("Assembler failed");
         }
 
-        return path + ".o";
     }
 
     public void assembleAndLink(String path) {
         this.errFile = new File("err.temp");
         String lib_path = find_lib();
-        String file = assembler(path, lib_path);
-        linker(file, lib_path);
+        assembler(path, lib_path);
+        linker(path, lib_path);
 
-        if(!new File(path).delete()){
-            throw new Report.Error("Couldn't delete the temporary asm file " + this.errFile.getAbsolutePath());
-        }
+        //if(!new File(path).delete()){
+        //    throw new Report.Error("Couldn't delete the temporary asm file " + this.errFile.getAbsolutePath());
+        //}
     }
 }
