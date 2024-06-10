@@ -79,6 +79,7 @@ public class StmtGenerator implements ImcVisitor<Vector<AsmInstr>, Object> {
             Vector<MemLabel> jumps = new Vector<>();
             MemTemp dstTemp = mem.addr.accept(eg, v);
 
+            // CHECKME: Is it correct to use defs here, does it even matter?
             defs.add(dstTemp);
 
             v.add(new AsmOPER("sd `s0, 0(`d0)", uses, defs, jumps));

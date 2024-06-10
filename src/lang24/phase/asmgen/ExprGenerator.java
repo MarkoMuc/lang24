@@ -36,7 +36,6 @@ public class ExprGenerator implements ImcVisitor<MemTemp, Vector<AsmInstr>> {
             //          Do you need to use remw? whats the difference?
             case MOD -> arg.add(new AsmOPER("rem `d0, `s0, `s1", uses, defs, jumps));
             case EQU -> {
-                // FIXME: is this again both use and def?
                 arg.add(new AsmOPER("sub `d0, `s0, `s1", uses, defs, jumps));
 
                 uses = new Vector<>();
@@ -165,7 +164,7 @@ public class ExprGenerator implements ImcVisitor<MemTemp, Vector<AsmInstr>> {
         MemTemp reg = new MemTemp();
 
         defs.add(reg);
-
+        // CHECKME: Whats the limit for li?
         instr = String.format("li `d0, %s", constant.value);
 
         arg.add(new AsmOPER(instr, uses, defs, jumps));
@@ -196,6 +195,7 @@ public class ExprGenerator implements ImcVisitor<MemTemp, Vector<AsmInstr>> {
         MemTemp reg = new MemTemp();
 
         defs.add(reg);
+        //CHECKME: Whats the limit/ when should local/global/absolute addressing be used
         //String instr = String.format("lui `d0, %hi(%s)", name.label.name);
         //arg.add(new AsmOper(instr, uses, defs, jumps))
         //instr = String.format("lw `d0, %lo(%s)(`d0)", name.label.name);
