@@ -3,6 +3,7 @@ package lang24.phase.all;
 import lang24.common.report.Report;
 import lang24.data.asm.AsmInstr;
 import lang24.data.asm.AsmLABEL;
+import lang24.data.asm.AsmOPER;
 import lang24.data.asm.Code;
 import lang24.data.lin.LinDataChunk;
 import lang24.data.mem.MemFrame;
@@ -45,10 +46,11 @@ public class All extends Phase {
             return;
         }
 
-        writer.println(".data");
+        writer.println(".section .data");
+        writer.println(".align 2");
 
         for (LinDataChunk chunk : chunks) {
-            String data = null;
+            String data;
             String type = null;
             if (chunk.init == null) {
                 data = String.join(",", Collections.nCopies((int) (chunk.size / 8), "0"));
@@ -64,11 +66,14 @@ public class All extends Phase {
     }
 
     private void entry() {
-        writer.println(".text");
-        writer.println("__start:");
+        writer.println(".section .text");
+        writer.println(".align 2");
+        writer.println(".global _start");
+        writer.println("_start:");
 
         /*Malloc and fill if needed, jump to main*/
         /*BODY*/
+        // TODO: patch in exit(), malloc(), putc(), getc(), putint(), getint(), etc.
         // This is will err if there is no main function
         printInstr("j _main\n");
     }
@@ -109,7 +114,7 @@ public class All extends Phase {
                 String instruction = instr.toRegsString(tempToString);
                 if(instr instanceof AsmLABEL){
                     writer.printf("%s:\n", instruction);
-                }else{
+                } else{
                     printInstr(String.format("%s\n", instruction));
                 }
             }
@@ -135,8 +140,15 @@ public class All extends Phase {
             //TODO: RA only needs to be saved if changed
             printInstr("ret");
 
+
             writer.println();
         }
+        //Add exit
+        //TODO: read this directly from std
+        writer.println("_exit:");
+        printInstr("ld a0, 8(sp)\n");
+        printInstr("li a7, 93\n"); // Exit call
+        printInstr("ecall\n");
     }
 
     private void printInstr(String instr){
@@ -144,8 +156,9 @@ public class All extends Phase {
         writer.printf(instr);
     }
 
+    //TODO: name it something like temp or something idk
     public void allTogether(String path, RegAll regAll) {
-        initWriter(path + ".asm");
+        initWriter(path + ".s");
 
         dataSegment();
         entry();
