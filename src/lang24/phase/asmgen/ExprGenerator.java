@@ -13,9 +13,9 @@ import java.util.Vector;
 public class ExprGenerator implements ImcVisitor<MemTemp, Vector<AsmInstr>> {
     @Override
     public MemTemp visit(ImcBINOP binOp, Vector<AsmInstr> arg) {
-        Vector<MemTemp> uses = new Vector<MemTemp>();
-        Vector<MemTemp> defs = new Vector<MemTemp>();
-        Vector<MemLabel> jumps = new Vector<MemLabel>();
+        Vector<MemTemp> uses = new Vector<>();
+        Vector<MemTemp> defs = new Vector<>();
+        Vector<MemLabel> jumps = new Vector<>();
 
         MemTemp reg = new MemTemp();
         MemTemp fst = binOp.fstExpr.accept(this, arg);
@@ -52,13 +52,8 @@ public class ExprGenerator implements ImcVisitor<MemTemp, Vector<AsmInstr>> {
 
                 arg.add(new AsmOPER("snez `d0, `d0", uses, defs, jumps));
             }
-            case LTH -> {
-                arg.add(new AsmOPER("slt `d0, `s0, `s1", uses, defs, jumps));
-            }
-            case GTH -> {
-                // CHECKME: Is sext even needed since we use all 64 bits?
-                arg.add(new AsmOPER("slt `d0, `s1, `s0", uses, defs, jumps));
-            }
+            case LTH -> arg.add(new AsmOPER("slt `d0, `s0, `s1", uses, defs, jumps));
+            case GTH -> arg.add(new AsmOPER("slt `d0, `s1, `s0", uses, defs, jumps));
             case LEQ -> {
                 arg.add(new AsmOPER("slt `d0, `s1, `s0", uses, defs, jumps));
 
@@ -83,10 +78,10 @@ public class ExprGenerator implements ImcVisitor<MemTemp, Vector<AsmInstr>> {
     private void storeArgument(MemTemp funArg, long offset, Vector<AsmInstr> arg) {
         // FIXME: change char and bool to 1 byte
         // arg size is always 8 bytes (BOOL | CHAR | INT | PTR)
-        Vector<MemTemp> uses = new Vector<MemTemp>();
-        Vector<MemTemp> defs = new Vector<MemTemp>();
-        Vector<MemLabel> jumps = new Vector<MemLabel>();
-        String instr = null;
+        Vector<MemTemp> uses = new Vector<>();
+        Vector<MemTemp> defs = new Vector<>();
+        Vector<MemLabel> jumps = new Vector<>();
+        String instr;
 
         if (offset <= 0xFF) {
             uses.add(funArg);
@@ -131,10 +126,10 @@ public class ExprGenerator implements ImcVisitor<MemTemp, Vector<AsmInstr>> {
 
     @Override
     public MemTemp visit(ImcCALL call, Vector<AsmInstr> arg) {
-        Vector<MemTemp> uses = new Vector<MemTemp>();
-        Vector<MemTemp> defs = new Vector<MemTemp>();
-        Vector<MemLabel> jumps = new Vector<MemLabel>();
-        String instr = null;
+        Vector<MemTemp> uses = new Vector<>();
+        Vector<MemTemp> defs = new Vector<>();
+        Vector<MemLabel> jumps = new Vector<>();
+        String instr;
         MemTemp reg = new MemTemp();
 
         int argsSize = call.args.size();
@@ -149,9 +144,9 @@ public class ExprGenerator implements ImcVisitor<MemTemp, Vector<AsmInstr>> {
         instr = String.format("call %s", call.label.name);
         arg.add(new AsmOPER(instr, uses, defs, jumps));
 
-        uses = new Vector<MemTemp>();
-        defs = new Vector<MemTemp>();
-        jumps = new Vector<MemLabel>();
+        uses = new Vector<>();
+        defs = new Vector<>();
+        jumps = new Vector<>();
 
         defs.add(reg);
 
@@ -163,10 +158,10 @@ public class ExprGenerator implements ImcVisitor<MemTemp, Vector<AsmInstr>> {
 
     @Override
     public MemTemp visit(ImcCONST constant, Vector<AsmInstr> arg) {
-        Vector<MemTemp> uses = new Vector<MemTemp>();
-        Vector<MemTemp> defs = new Vector<MemTemp>();
-        Vector<MemLabel> jumps = new Vector<MemLabel>();
-        String instr = null;
+        Vector<MemTemp> uses = new Vector<>();
+        Vector<MemTemp> defs = new Vector<>();
+        Vector<MemLabel> jumps = new Vector<>();
+        String instr;
         MemTemp reg = new MemTemp();
 
         defs.add(reg);
@@ -180,9 +175,9 @@ public class ExprGenerator implements ImcVisitor<MemTemp, Vector<AsmInstr>> {
 
     @Override
     public MemTemp visit(ImcMEM mem, Vector<AsmInstr> arg) {
-        Vector<MemTemp> uses = new Vector<MemTemp>();
-        Vector<MemTemp> defs = new Vector<MemTemp>();
-        Vector<MemLabel> jumps = new Vector<MemLabel>();
+        Vector<MemTemp> uses = new Vector<>();
+        Vector<MemTemp> defs = new Vector<>();
+        Vector<MemLabel> jumps = new Vector<>();
         MemTemp reg = new MemTemp();
 
         defs.add(reg);
@@ -195,9 +190,9 @@ public class ExprGenerator implements ImcVisitor<MemTemp, Vector<AsmInstr>> {
 
     @Override
     public MemTemp visit(ImcNAME name, Vector<AsmInstr> arg) {
-        Vector<MemTemp> uses = new Vector<MemTemp>();
-        Vector<MemTemp> defs = new Vector<MemTemp>();
-        Vector<MemLabel> jumps = new Vector<MemLabel>();
+        Vector<MemTemp> uses = new Vector<>();
+        Vector<MemTemp> defs = new Vector<>();
+        Vector<MemLabel> jumps = new Vector<>();
         MemTemp reg = new MemTemp();
 
         defs.add(reg);
@@ -219,10 +214,10 @@ public class ExprGenerator implements ImcVisitor<MemTemp, Vector<AsmInstr>> {
 
     @Override
     public MemTemp visit(ImcUNOP unOp, Vector<AsmInstr> arg) {
-        Vector<MemTemp> uses = new Vector<MemTemp>();
-        Vector<MemTemp> defs = new Vector<MemTemp>();
-        Vector<MemLabel> jumps = new Vector<MemLabel>();
-        String instr = null;
+        Vector<MemTemp> uses = new Vector<>();
+        Vector<MemTemp> defs = new Vector<>();
+        Vector<MemLabel> jumps = new Vector<>();
+        String instr;
 
         MemTemp reg = new MemTemp();
         MemTemp sub = unOp.subExpr.accept(this, arg);
