@@ -25,12 +25,14 @@ public class RegAll extends Phase {
     public final HashMap<MemTemp, Integer> tempToReg = new HashMap<MemTemp, Integer>();
 
     public final int numRegs = Compiler.numRegs;
+    public final int numRegsLb = RISCVRegisters.FIRST_GENERAL_REGISTER_NUMBER;
+    public final int numRegsHb = numRegsLb + numRegs;
+
     public final HashMap<MemTemp, String> tempToSReg = new HashMap<>();
     public final HashMap<Code, HashSet<String>> codeToRegs = new HashMap<>();
     private final Stack<IFGNode> savedNodes = new Stack<>();
     private final RISCVRegisters riscv = new RISCVRegisters();
     private HashSet<String> usedRegs = null;
-    private final int STARTCOLOR = 11;
 
     private Code currentCode = null;
 
@@ -64,7 +66,7 @@ public class RegAll extends Phase {
     }
 
     private int chooseColor(ArrayList<Integer> neighbors, int current) {
-        if (current >= numRegs + STARTCOLOR) {
+        if (current >= numRegsHb) {
             return numRegs;
         }
 
@@ -96,7 +98,7 @@ public class RegAll extends Phase {
         }
         Collections.sort(neighbors);
 
-        node.setColor(chooseColor(neighbors, STARTCOLOR), numRegs + STARTCOLOR);
+        node.setColor(chooseColor(neighbors, numRegsLb), numRegsHb);
 
         return neighbors.size() >= numRegs;
     }
@@ -115,7 +117,7 @@ public class RegAll extends Phase {
         } else {
             for (IFGNode i : graph.getNodes()) {
                 if(i.getTemp() == currentCode.frame.FP) {
-                    i.setColor(9, STARTCOLOR);
+                    i.setColor(9, numRegsLb);
                 }else {
                     usedRegs.add(riscv.getABI(i.getColor()));
                 }
@@ -147,7 +149,8 @@ public class RegAll extends Phase {
                         new ExprGenerator(),
                         inst
                 );
-                String instrString = "lw `d0,`s0,`s1";
+                //FIXME: this isnt correct risc-v code
+                String instrString = "ld `d0,`s0,`s1";
                 Vector<MemTemp> uses = new Vector<MemTemp>();
                 Vector<MemTemp> defs = new Vector<MemTemp>();
                 Vector<MemLabel> jumps = new Vector<MemLabel>();
@@ -168,7 +171,7 @@ public class RegAll extends Phase {
                         new ExprGenerator(),
                         inst
                 );
-                String instrString = "sw `s0,`s1,`s2";
+                String instrString = "sd `s0,`s1,`s2";
                 Vector<MemTemp> uses = new Vector<MemTemp>();
                 Vector<MemTemp> defs = new Vector<MemTemp>();
                 Vector<MemLabel> jumps = new Vector<MemLabel>();
@@ -228,6 +231,7 @@ public class RegAll extends Phase {
 
             // TODO:fix this bruh it aint 253
             tempToReg.put(code.frame.FP, 253);
+            tempToSReg.put(code.frame.FP, "fp");
             codeToRegs.put(code, usedRegs);
         }
         currentCode = null;
@@ -254,7 +258,7 @@ public class RegAll extends Phase {
             logger.begElement("instructions");
             for (AsmInstr instr : code.instrs) {
                 logger.begElement("instruction");
-                logger.addAttribute("code", instr.toString(tempToReg));
+                logger.addAttribute("code", instr.toRegsString(tempToSReg));
                 logger.begElement("temps");
                 logger.addAttribute("name", "use");
                 for (MemTemp temp : instr.uses()) {

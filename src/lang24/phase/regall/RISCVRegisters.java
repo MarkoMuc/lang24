@@ -8,7 +8,8 @@ public class RISCVRegisters {
     private static final HashMap<Integer, String> NUMRegister = new HashMap<>();
 
     public final static int ALL_REGISTERS = 64;
-    public final static int GENERAL_REGISTERS = 21;
+    public final static int GENERAL_REGISTERS = 20;
+    public final static int FIRST_GENERAL_REGISTER_NUMBER = 12;
 
     private static final String[] registerNUMNames = {
             "x0", // Hard wired zero
