@@ -89,10 +89,11 @@ public class All extends Phase {
             writer.println(frame.label.name + ":");
 
             //Prologue
-            //CHECKME: dont need to save SP, since current FP is previous SP?
 
             // Save FP and RA
-            offset = frame.locsSize * 8 + 8;
+            // FIXME: This is actually wrong? WHere is SL?
+            // CHECKME: When is direct offset addressing wrong, as in the offset is too large?
+            offset = frame.locsSize + 16;
             printInstr(String.format("sd fp, %d(sp)\n", offset)); // Stores old FP
             printInstr("mv fp, sp\n"); // Moves old SP to current FP
 
@@ -130,6 +131,7 @@ public class All extends Phase {
                 offset = offset - 8;
             }
 
+            // FIXME: Do it SP based
             printInstr(String.format("ld ra, %d(fp)\n", offset)); // Restores RA
             offset = offset - 8;
 
