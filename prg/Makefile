@@ -15,4 +15,5 @@ LOGGEDPHASE	= all
 clean   :
 	$(RM) *~
 	$(RM) *xml *html
+	$(RM) test
 
