@@ -38,36 +38,40 @@ public class ExprGenerator implements ImcVisitor<MemTemp, Vector<AsmInstr>> {
             case EQU -> {
                 arg.add(new AsmOPER("sub `d0, `s0, `s1", uses, defs, jumps));
 
+                defs = new Vector<>();
                 uses = new Vector<>();
                 uses.add(reg);
 
-                arg.add(new AsmOPER("seqz `d0, `d0", uses, defs, jumps));
+                arg.add(new AsmOPER("seqz `s0, `s0", uses, defs, jumps));
             }
             case NEQ -> {
                 arg.add(new AsmOPER("sub `d0, `s0, `s1", uses, defs, jumps));
 
+                defs = new Vector<>();
                 uses = new Vector<>();
                 uses.add(reg);
 
-                arg.add(new AsmOPER("snez `d0, `d0", uses, defs, jumps));
+                arg.add(new AsmOPER("snez `s0, `s0", uses, defs, jumps));
             }
             case LTH -> arg.add(new AsmOPER("slt `d0, `s0, `s1", uses, defs, jumps));
             case GTH -> arg.add(new AsmOPER("slt `d0, `s1, `s0", uses, defs, jumps));
             case LEQ -> {
                 arg.add(new AsmOPER("slt `d0, `s1, `s0", uses, defs, jumps));
 
+                defs = new Vector<>();
                 uses = new Vector<>();
                 uses.add(reg);
 
-                arg.add(new AsmOPER("seqz `d0, `d0", uses, defs, jumps));
+                arg.add(new AsmOPER("seqz `s0, `s0", uses, defs, jumps));
             }
             case GEQ -> {
                 arg.add(new AsmOPER("slt `d0, `s0, `s1", uses, defs, jumps));
 
+                defs = new Vector<>();
                 uses = new Vector<>();
                 uses.add(reg);
 
-                arg.add(new AsmOPER("seqz `d0, `d0", uses, defs, jumps));
+                arg.add(new AsmOPER("seqz `s0, `s0", uses, defs, jumps));
             }
             case null, default -> throw new Report.InternalError();
         }
