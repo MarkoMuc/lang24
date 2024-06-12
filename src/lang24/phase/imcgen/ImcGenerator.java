@@ -416,7 +416,11 @@ public class ImcGenerator implements AstFullVisitor<Object, Stack<MemFrame>> {
         }
         Vector<ImcStmt> returnStms = new Vector<>();
 
-        returnStms.add(new ImcMOVE(new ImcTEMP(arg.peek().RV), (ImcExpr) retStmt.expr.accept(this, arg)));
+        // FIXME: Why do we even have RV? isn't this just FP + 0?
+        //ImcBINOP returnAddr = new ImcBINOP(ImcBINOP.Oper.ADD , new ImcTEMP(arg.peek().FP), new ImcCONST(0));
+        ImcMEM saveTo = new ImcMEM(new ImcTEMP(arg.peek().FP));
+
+        returnStms.add(new ImcMOVE(saveTo, (ImcExpr) retStmt.expr.accept(this, arg)));
         returnStms.add(new ImcJUMP(funcContexts.peek().exitL));
         ImcStmt imcSTMTS = new ImcSTMTS(returnStms);
 
