@@ -139,10 +139,14 @@ public class Compiler {
 
 			String nregs = cmdLineOptValues.get("--num-regs");
 			Integer numRegs;
-			if (nregs == null)
-				numRegs = 30;
-			else
+
+			if (nregs == null) {
+				numRegs = RISCVRegisters.GENERAL_REGISTERS;
+			}else {
 				numRegs = Integer.decode(nregs);
+				numRegs = numRegs > RISCVRegisters.GENERAL_REGISTERS ? RISCVRegisters.GENERAL_REGISTERS : numRegs;
+			}
+
 			if (numRegs < 4)
 				throw new Report.Error("4 is minimal number of registers");
 			Compiler.numRegs = numRegs;
