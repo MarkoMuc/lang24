@@ -145,12 +145,11 @@ public class All extends Phase {
 
             writer.println();
         }
-        //Add exit
-        //TODO: read this directly from std
-        writer.println("_exit:");
-        printInstr("ld a0, 8(sp)\n");
-        printInstr("li a7, 93\n"); // Exit call
-        printInstr("ecall\n");
+        //Add exit if there is no exit yet
+        printInstr("li a0, 1\n");
+        printInstr("sd a0, 0(sp)\n");
+        printInstr("sd a0, 8(sp)\n");
+        printInstr("call _exit\n");
     }
 
     private void printInstr(String instr){

@@ -8,6 +8,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Scanner;
 
 /*
@@ -15,9 +16,24 @@ import java.util.Scanner;
  */
 public class AsmLink extends Phase {
     private File errFile;
+    private final HashSet<String> stdFiles = new HashSet<>();
 
     public AsmLink() {
         super("AsmLink");
+    }
+
+    private void getStd(String lib_path){
+        Path obj_path = Paths.get(lib_path, "obj");
+        try {
+            Path[] paths = java.nio.file.Files.walk(obj_path)
+                    .filter(path -> path.getFileName().toString().endsWith(".o"))
+                    .toArray(Path[]::new);
+            for(Path path : paths){
+                this.stdFiles.add(path.toFile().getAbsolutePath());
+            }
+        }catch (Exception e){
+            throw new Report.Error("Error while looking for std object files which should be in lib/obj " + lib_path);
+        }
     }
 
     private String find_lib() {
@@ -51,6 +67,9 @@ public class AsmLink extends Phase {
         commands.add(String.format("%s/riscv64-unknown-elf-ld", lib_path));
         commands.add(String.format("-o%s", path));
         commands.add(String.format("%s.o", path));
+        for(String std_path : stdFiles){
+            commands.add(String.format("%s", std_path));
+        }
 
         ProcessBuilder pb = new ProcessBuilder(commands);
         try {
@@ -113,6 +132,7 @@ public class AsmLink extends Phase {
         this.errFile = new File("err.temp");
         String lib_path = find_lib();
         assembler(path, lib_path);
+        getStd(lib_path);
         linker(path, lib_path);
         // TODO: Only generate object file
         //if(!new File(path).delete()){
