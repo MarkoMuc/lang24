@@ -433,7 +433,7 @@ public class TypeResolver implements AstFullVisitor<SemType, TypeResolver.Contex
 
 
 		if(defn.pars == null){
-			if(callExpr.args != null){
+			if(callExpr.args != null && callExpr.args.size() > 1) {
 				throw new Report.Error(callExpr,"This function does not accept arguments.");
 			}
 			return FuncType;
