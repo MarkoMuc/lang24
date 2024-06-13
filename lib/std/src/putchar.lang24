@@ -1,0 +1,13 @@
+write(fd : int, buf : ^int, count:int):int # External write call
+
+putchar(c:char):int = {
+	wb = write(
+		1, 		# stdout
+		<^int> ^buf,	# Address of the buffer
+		1);		# Write one char
+	return wb;		# Returns the amount of bytes written
+
+}{
+	wb:int
+	buf:[1]char
+}

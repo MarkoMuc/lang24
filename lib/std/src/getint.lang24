@@ -1,0 +1,15 @@
+getchar():char
+
+getint():int = {
+	c = getchar();
+	integer = 0;
+	while (c >= '0' and c <= '9'):{
+		integer = integer * 10;
+		integer = integer + (<int> c - <int> '0');
+	}
+	return integer;
+
+}{
+	integer:int
+	c:char
+}

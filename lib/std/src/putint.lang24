@@ -1,0 +1,15 @@
+putchar(c:int):void
+
+putint(n:int):void = {
+    if (n < 0) then {
+        putchar('-');
+        n = -n;
+    }
+
+    if (n / 10 != 0) then {
+        putint(n / 10);
+    }
+
+    putchar(<char>(n % 10 + <int>'0'));
+}
+

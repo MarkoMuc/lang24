@@ -5,6 +5,7 @@ out/
 lib/antlr-4.13.1-complete.jar
 lib/riscv64-unknown-elf-as
 lib/riscv64-unknown-elf-ld
+lib/std/obj
 prg/
 *.class
 *.java-orig
