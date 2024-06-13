@@ -91,9 +91,9 @@ public class All extends Phase {
         printInstr(String.format("la a1, %s\n", chunk.label.name));
         printInstr("sd a0, 0(a1)\n");
         if(chunk.label.name.contains("__str")) {
-            String data = chunk.init;
-            for(Character c : data.toCharArray()) {
-                printInstr(String.format("li a1, %d\n", (int)c));
+            Vector<Integer> data = createCharArray(chunk.init);
+            for(Integer c : data) {
+                printInstr(String.format("li a1, %d\n", c));
                 printInstr("sb a1, 0(a0)\n");
                 printInstr("addi a0, a0, 1\n");
             }
@@ -233,5 +233,41 @@ public class All extends Phase {
 
         writer.flush();
         writer.close();
+    }
+
+
+    private Vector<Integer> createCharArray(String value){
+        Vector<Integer> chars = new Vector<>();
+        boolean escape = false;
+        StringBuilder v = new StringBuilder();
+
+        for(char c : value.toCharArray()){
+            if(!escape && c != '\\'){
+                chars.add((int)c);
+            }else{
+                if(escape){
+                    if(c == '\\'){
+                        chars.add((int)'\\');
+                        escape = false;
+                    }else if(c == 'n'){
+                        chars.add((int)'\n');
+                        escape = false;
+                    }else if(c >= 'A' && c <= 'F'){
+                        v.append(c);
+                        if(v.length() == 2){
+                            chars.add(Integer.parseInt(v.toString(), 16));
+                            v.setLength(0);
+                            escape = false;
+                        }
+                    }
+                }else{
+                    escape = true;
+                }
+            }
+
+
+        }
+
+        return chars;
     }
 }
