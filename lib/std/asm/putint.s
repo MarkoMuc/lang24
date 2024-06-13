@@ -1,20 +1,26 @@
 .section .text
 .global _putint
 _putint:
-	sd fp, 16(sp)
+	addi sp, sp, -8
+	sd fp, 0(sp)
 	mv fp, sp
-	sd ra, 24(fp)
-	sd a2, 32(fp)
-	sd a3, 40(fp)
-	sd a4, 48(fp)
-	add sp, fp, 48
+	addi fp, fp, 8
+	addi sp, sp, -8
+	sd ra, 0(sp)
+	addi sp, sp, -8
+	sd a2, 0(sp)
+	addi sp, sp, -8
+	sd a3, 0(sp)
+	addi sp, sp, -8
+	sd a4, 0(sp)
+	addi sp, sp, -16
 	j L18
 L18:
 L4:
-	mv a3, fp
-	li a2, 8
-	mv a2, a2
-	add a2, a3, a2
+	mv a2, fp
+	li a3, 8
+	mv a3, a3
+	add a2, a2, a3
 	mv a2, a2
 	ld a2, 0(a2)
 	mv a3, a2
@@ -32,16 +38,16 @@ L6:
 	sd a2, 8(sp)
 	call _putchar
 	ld a2, 0(sp)
-	mv a2, fp
-	li a3, 8
-	mv a3, a3
-	add a2, a2, a3
-	mv a2, a2
-	mv a4, a2
 	mv a3, fp
 	li a2, 8
 	mv a2, a2
 	add a2, a3, a2
+	mv a2, a2
+	mv a4, a2
+	mv a2, fp
+	li a3, 8
+	mv a3, a3
+	add a2, a2, a3
 	mv a2, a2
 	ld a2, 0(a2)
 	negw a2, a2
@@ -55,10 +61,10 @@ L8:
 	add a2, a3, a2
 	mv a2, a2
 	ld a2, 0(a2)
+	mv a3, a2
+	li a2, 10
 	mv a2, a2
-	li a3, 10
-	mv a3, a3
-	div a2, a2, a3
+	div a2, a3, a2
 	mv a2, a2
 	mv a3, a2
 	li a2, 0
@@ -81,10 +87,10 @@ L9:
 	mv a2, a2
 	div a2, a3, a2
 	mv a2, a2
-	mv a2, a2
-	li a3, 0
-	sd a3, 0(sp)
-	sd a2, 8(sp)
+	mv a3, a2
+	li a2, 0
+	sd a2, 0(sp)
+	sd a3, 8(sp)
 	call _putint
 	ld a2, 0(sp)
 	j L11
@@ -96,25 +102,25 @@ L11:
 	add a2, a2, a3
 	mv a2, a2
 	ld a2, 0(a2)
-	mv a3, a2
-	li a2, 10
 	mv a2, a2
-	rem a2, a3, a2
+	li a3, 10
+	mv a3, a3
+	rem a2, a2, a3
 	mv a2, a2
 	mv a3, a2
 	li a2, 48
 	mv a2, a2
 	add a2, a3, a2
 	mv a2, a2
+	mv a3, a2
+	li a2, 256
 	mv a2, a2
-	li a3, 256
-	mv a3, a3
-	rem a2, a2, a3
+	rem a2, a3, a2
 	mv a2, a2
-	mv a2, a2
-	li a3, 0
-	sd a3, 0(sp)
-	sd a2, 8(sp)
+	mv a3, a2
+	li a2, 0
+	sd a2, 0(sp)
+	sd a3, 8(sp)
 	call _putchar
 	ld a2, 0(sp)
 	li a2, 0
@@ -122,10 +128,15 @@ L11:
 L5:
 	j L19
 L19:
-	ld a4, 48(fp)
-	ld a3, 40(fp)
-	ld a2, 32(fp)
-	ld ra, 24(fp)
-	mv sp, fp
-	ld fp, 16(sp)
+	addi sp, sp, 16
+	ld a4, 0(sp)
+	addi sp, sp, 8
+	ld a3, 0(sp)
+	addi sp, sp, 8
+	ld a2, 0(sp)
+	addi sp, sp, 8
+	ld ra, 0(sp)
+	addi sp, sp, 8
+	ld fp, 0(sp)
+	addi sp, sp, 8
 	ret

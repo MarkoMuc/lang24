@@ -8,15 +8,15 @@
 .global _getchar
 
 _getchar:
-	sd fp, 8(sp)	# Save old FP
+	sd fp, -8(sp)	# Save old FP
 	mv fp, sp	# New FP points to the start of this frame
-	sd a0, 16(fp)	# Save used regs
-	sd a1, 24(fp)
-	sd a2, 32(fp)
-	sd a6, 40(fp)
-	sd a7, 48(fp)
+	sd a0, -16(fp)	# Save used regs
+	sd a1, -24(fp)
+	sd a2, -32(fp)
+	sd a6, -40(fp)
+	sd a7, -48(fp)
 
-	addi sp, fp, 56 # New stack pointer
+	addi sp, fp, -56 # New stack pointer
 	
 	sd zero, 0(sp)	# Save 0 to the Stack
 	mv a6, sp	# Save the address of the buffer
@@ -32,10 +32,10 @@ _getchar:
 	sd a1, 0(fp)	# Return value
 	
 	mv sp, fp	# Restore old SP
-	ld fp, 8(sp)	# Load old FP
-	ld a0, 16(sp)	# Load used regs
-	ld a1, 24(sp)
-	ld a2, 32(sp)
-	ld a6, 40(sp)
-	ld a7, 48(sp)
+	ld fp, -8(sp)	# Load old FP
+	ld a0, -16(sp)	# Load used regs
+	ld a1, -24(sp)
+	ld a2, -32(sp)
+	ld a6, -40(sp)
+	ld a7, -48(sp)
 	ret

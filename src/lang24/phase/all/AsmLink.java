@@ -100,6 +100,7 @@ public class AsmLink extends Phase {
     private void assembler(String path, String lib_path) {
         ArrayList<String> commands = new ArrayList<>();
         commands.add(String.format("%s/riscv64-unknown-elf-as", lib_path));
+        commands.add("-g");
         commands.add(String.format("-o%s.o", path));
         commands.add(String.format("%s.s", path));
 

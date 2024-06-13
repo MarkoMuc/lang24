@@ -24,6 +24,8 @@ import java.util.Vector;
 
 public class All extends Phase {
     private PrintWriter writer;
+    private final int DATA_ALIGN = 4;
+    private final int INSTR_ALIGN = 2;
 
     public All() {
         super("all");
@@ -47,7 +49,7 @@ public class All extends Phase {
         }
 
         writer.println(".section .data");
-        writer.println(".align 8");
+        writer.printf(".align %d\n", DATA_ALIGN);
 
         for (LinDataChunk chunk : chunks) {
             String data;
@@ -67,7 +69,7 @@ public class All extends Phase {
 
     private void entry() {
         writer.println(".section .text");
-        writer.println(".align 2");
+        writer.printf(".align %d\n", INSTR_ALIGN);
         writer.println(".global _start");
         writer.println("_start:");
 
@@ -76,6 +78,7 @@ public class All extends Phase {
         // This is will err if there is no main function
         //TODO: If err is not found, throw Report.Error
         printInstr("j _main\n");
+        writer.println();
     }
 
     private void subroutines(Vector<Code> subroutines, RegAll regAll) {
@@ -91,23 +94,36 @@ public class All extends Phase {
             //Prologue
 
             // Save FP and RA
-            // FIXME: This is actually wrong? WHere is SL?
             // CHECKME: When is direct offset addressing wrong, as in the offset is too large?
-            offset = frame.locsSize + 16;
-            printInstr(String.format("sd fp, %d(sp)\n", offset)); // Stores old FP
-            printInstr("mv fp, sp\n"); // Moves old SP to current FP
 
-            offset = offset + 8;
-            printInstr(String.format("sd ra, %d(fp)\n", offset)); // Saves return address
+            // 0. + 1.
+            offset = frame.locsSize + 8;
 
-            // Saves regs
+            printInstr(String.format("addi sp, sp, -%d\n", offset));
+            printInstr("sd fp, 0(sp)\n"); // Stores old FP
+            printInstr("mv fp, sp\n");
+            printInstr(String.format("addi fp, fp, %d\n", offset)); // Align FP back to the old SP
+
+            // 2.
+            offset = 8;
+            printInstr(String.format("addi sp, sp, -%d\n", offset));
+            printInstr("sd ra, 0(sp)\n"); // Saves return address
+
+            // 3.
             for (String reg : usedRegs) {
-                offset += 8;
-                printInstr(String.format("sd %s, %d(fp)\n", reg, offset));
+                printInstr(String.format("addi sp, sp, -%d\n", offset));
+                printInstr(String.format("sd %s, 0(sp)\n", reg));
             }
 
-            offset += subroutine.tempSize * 8;
-            printInstr(String.format("addi sp, fp, %d\n", offset)); // Sets SP
+            if (subroutine.tempSize != 0) {
+                offset = subroutine.tempSize;
+                printInstr(String.format("addi sp, sp, -%d\n", offset));
+            }
+
+            if(frame.argsSize != 0) {
+                offset = subroutine.frame.argsSize;
+                printInstr(String.format("addi sp, sp, -%d\n", offset)); // Sets SP
+            }
 
             printInstr(String.format("j %s\n", subroutine.entryLabel.name));
 
@@ -122,26 +138,38 @@ public class All extends Phase {
 
             //Epilogue
             writer.println(subroutine.exitLabel.name + ":");
-            offset = offset - subroutine.tempSize * 8;
 
-            // Restores used regs
-            for (String reg : usedRegs.stream().toList().reversed()) {
-                //TODO: this offset-8 needs to be done by the machine, so better to use offset
-                printInstr(String.format("ld %s, %d(fp)\n", reg, offset));
-                offset = offset - 8;
+            // 0.
+            if(frame.argsSize != 0) {
+                offset = subroutine.frame.argsSize;
+                printInstr(String.format("addi sp, sp, %d\n", offset)); // Sets SP
             }
 
-            // FIXME: Do it SP based
-            printInstr(String.format("ld ra, %d(fp)\n", offset)); // Restores RA
-            offset = offset - 8;
+            // 1.
+            if (subroutine.tempSize != 0) {
+                offset = subroutine.tempSize;
+                printInstr(String.format("addi sp, sp, %d\n", offset));
+            }
 
-            printInstr("mv sp, fp\n"); // Restores previous SP
+            // 2.
+            offset = 8;
+            for (String reg : usedRegs.stream().toList().reversed()) {
+                printInstr(String.format("ld %s, 0(sp)\n", reg));
+                printInstr(String.format("addi sp, sp, %d\n", offset));
+            }
 
-            printInstr(String.format("ld fp, %d(sp)\n", offset)); // Restores FP
+            // 3.
+            printInstr("ld ra, 0(sp)\n"); // Restores RA
+            printInstr(String.format("addi sp, sp, %d\n", offset));
+
+            // 4. + 5.
+            printInstr(String.format("ld fp, 0(sp)\n")); // Restores FP
+
+            offset = frame.locsSize + 8;
+            printInstr(String.format("addi sp, sp, %d\n", offset)); // Restores old SP
 
             //TODO: RA only needs to be saved if changed
-            printInstr("ret");
-
+            printInstr("ret\n");
 
             writer.println();
         }
