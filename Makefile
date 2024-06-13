@@ -8,6 +8,7 @@ FIND		= 'find'
 all	:
 	if [ -d src/lang24/phase/lexan ] ; then $(MAKE) -C src/lang24/phase/lexan ; fi
 	if [ -d src/lang24/phase/synan ] ; then $(MAKE) -C src/lang24/phase/synan ; fi
+	./lib/std/cmp_obj.sh
 	$(JAVAC) --module-path $(ANTLRDIR) --source-path src -d bin src/lang24/Compiler.java
 	@echo ":-) OK"
 
@@ -19,4 +20,5 @@ clean	:
 	if [ -d src/lang24/phase/synan ] ; then $(MAKE) -C src/lang24/phase/synan clean ; fi
 	$(FIND) . -type f -iname "*~" -exec $(RM) {} \;
 	$(FIND) . -type f -iname "*.class" -exec $(RM) {} \;
+	$(RM) ./lib/std/obj/*
 	$(RM) bin

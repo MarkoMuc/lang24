@@ -23,7 +23,7 @@ public class AsmLink extends Phase {
     }
 
     private void getStd(String lib_path){
-        Path obj_path = Paths.get(lib_path, "obj");
+        Path obj_path = Paths.get(lib_path, "std", "obj");
         try {
             Path[] paths = java.nio.file.Files.walk(obj_path)
                     .filter(path -> path.getFileName().toString().endsWith(".o"))

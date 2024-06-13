@@ -47,7 +47,7 @@ public class All extends Phase {
         }
 
         writer.println(".section .data");
-        writer.println(".align 2");
+        writer.println(".align 8");
 
         for (LinDataChunk chunk : chunks) {
             String data;
@@ -73,8 +73,8 @@ public class All extends Phase {
 
         /*Malloc and fill if needed, jump to main*/
         /*BODY*/
-        // TODO: patch in exit(), malloc(), putc(), getc(), putint(), getint(), etc.
         // This is will err if there is no main function
+        //TODO: If err is not found, throw Report.Error
         printInstr("j _main\n");
     }
 
@@ -107,7 +107,7 @@ public class All extends Phase {
             }
 
             offset += subroutine.tempSize * 8;
-            printInstr(String.format("add sp, fp, %d\n", offset)); // Sets SP
+            printInstr(String.format("addi sp, fp, %d\n", offset)); // Sets SP
 
             printInstr(String.format("j %s\n", subroutine.entryLabel.name));
 
