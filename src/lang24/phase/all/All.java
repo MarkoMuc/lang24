@@ -3,7 +3,6 @@ package lang24.phase.all;
 import lang24.common.report.Report;
 import lang24.data.asm.AsmInstr;
 import lang24.data.asm.AsmLABEL;
-import lang24.data.asm.AsmOPER;
 import lang24.data.asm.Code;
 import lang24.data.lin.LinDataChunk;
 import lang24.data.mem.MemFrame;
@@ -23,9 +22,10 @@ import java.util.Vector;
 
 
 public class All extends Phase {
-    private PrintWriter writer;
     private final int DATA_ALIGN = 4;
-    private final int INSTR_ALIGN = 2;
+    private final int INSTR_ALIGN = 6;
+    private PrintWriter writer;
+    private final HashSet<LinDataChunk> mmapGlobals = new HashSet<>();
 
     public All() {
         super("all");
@@ -44,7 +44,7 @@ public class All extends Phase {
         //TODO: data can be closer to its first use
         Vector<LinDataChunk> chunks = ImcLin.dataChunks();
 
-        if(chunks.isEmpty()) {
+        if (chunks.isEmpty()) {
             return;
         }
 
@@ -53,9 +53,17 @@ public class All extends Phase {
 
         for (LinDataChunk chunk : chunks) {
             String data;
+            long size;
             String type = null;
             if (chunk.init == null) {
-                data = String.join(",", Collections.nCopies((int) (chunk.size / 8), "0"));
+                size = chunk.size / 8;
+                if (size > 32) {
+                    data = "0";
+                    mmapGlobals.add(chunk);
+                } else {
+                    data = String.join(",", Collections.nCopies((int) (size), "0"));
+                }
+
                 type = ".dword";
             } else {
                 type = ".string";
@@ -67,16 +75,27 @@ public class All extends Phase {
         writer.println();
     }
 
+    private void mmapGenerate(LinDataChunk chunk) {
+        printInstr(String.format("li a1, %d\n", chunk.size / 8));
+        printInstr("sd a1, 8(sp)\n");
+        printInstr("call _mmap\n");
+        printInstr("ld a0, 0(sp)\n");
+        printInstr(String.format("la a1, %s\n", chunk.label.name));
+        printInstr("sd a0, 0(a1)\n");
+        writer.println();
+    }
+
     private void entry() {
         writer.println(".section .text");
         writer.printf(".align %d\n", INSTR_ALIGN);
         writer.println(".global _start");
         writer.println("_start:");
 
-        /*Malloc and fill if needed, jump to main*/
-        /*BODY*/
-        // This is will err if there is no main function
         //TODO: If err is not found, throw Report.Error
+        for (LinDataChunk chunk : mmapGlobals) {
+            mmapGenerate(chunk);
+        }
+
         printInstr("j _main\n");
         writer.println();
     }
@@ -120,7 +139,7 @@ public class All extends Phase {
                 printInstr(String.format("addi sp, sp, -%d\n", offset));
             }
 
-            if(frame.argsSize != 0) {
+            if (frame.argsSize != 0) {
                 offset = subroutine.frame.argsSize;
                 printInstr(String.format("addi sp, sp, -%d\n", offset)); // Sets SP
             }
@@ -129,9 +148,9 @@ public class All extends Phase {
 
             for (AsmInstr instr : subroutine.instrs) {
                 String instruction = instr.toRegsString(tempToString);
-                if(instr instanceof AsmLABEL){
+                if (instr instanceof AsmLABEL) {
                     writer.printf("%s:\n", instruction);
-                } else{
+                } else {
                     printInstr(String.format("%s\n", instruction));
                 }
             }
@@ -140,7 +159,7 @@ public class All extends Phase {
             writer.println(subroutine.exitLabel.name + ":");
 
             // 0.
-            if(frame.argsSize != 0) {
+            if (frame.argsSize != 0) {
                 offset = subroutine.frame.argsSize;
                 printInstr(String.format("addi sp, sp, %d\n", offset)); // Sets SP
             }
@@ -163,7 +182,7 @@ public class All extends Phase {
             printInstr(String.format("addi sp, sp, %d\n", offset));
 
             // 4. + 5.
-            printInstr(String.format("ld fp, 0(sp)\n")); // Restores FP
+            printInstr("ld fp, 0(sp)\n"); // Restores FP
 
             offset = frame.locsSize + 8;
             printInstr(String.format("addi sp, sp, %d\n", offset)); // Restores old SP
@@ -180,7 +199,7 @@ public class All extends Phase {
         printInstr("call _exit\n");
     }
 
-    private void printInstr(String instr){
+    private void printInstr(String instr) {
         writer.print('\t');
         writer.printf(instr);
     }

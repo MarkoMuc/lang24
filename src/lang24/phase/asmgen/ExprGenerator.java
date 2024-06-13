@@ -5,8 +5,10 @@ import lang24.data.asm.AsmInstr;
 import lang24.data.asm.AsmOPER;
 import lang24.data.imc.code.expr.*;
 import lang24.data.imc.visitor.ImcVisitor;
+import lang24.data.lin.LinDataChunk;
 import lang24.data.mem.MemLabel;
 import lang24.data.mem.MemTemp;
+import lang24.phase.imclin.ImcLin;
 
 import java.util.Vector;
 
@@ -197,14 +199,25 @@ public class ExprGenerator implements ImcVisitor<MemTemp, Vector<AsmInstr>> {
         Vector<MemTemp> defs = new Vector<>();
         Vector<MemLabel> jumps = new Vector<>();
         MemTemp reg = new MemTemp();
-
         defs.add(reg);
+
+        String instr = String.format("la `d0, %s", name.label.name);
+
         //CHECKME: Whats the limit/ when should local/global/absolute addressing be used
         //String instr = String.format("lui `d0, %hi(%s)", name.label.name);
         //arg.add(new AsmOper(instr, uses, defs, jumps))
         //instr = String.format("lw `d0, %lo(%s)(`d0)", name.label.name);
         //arg.add(new AsmOper(instr, uses, defs, jumps))
-        String instr = String.format("la `d0, %s", name.label.name);
+
+        Vector<LinDataChunk> chunk = new Vector<>(ImcLin.dataChunks()
+                .stream()
+                .filter(linDataChunk -> linDataChunk.label == name.label)
+                .toList());
+        if (chunk.size() == 1 &&
+                (chunk.getFirst().size / 8) > 32) {
+            instr = String.format("ld `d0, %s", name.label.name);
+        }
+
 
         arg.add(new AsmOPER(instr, uses, defs, jumps));
 
