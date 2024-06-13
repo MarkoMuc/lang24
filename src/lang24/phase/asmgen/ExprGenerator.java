@@ -201,7 +201,7 @@ public class ExprGenerator implements ImcVisitor<MemTemp, Vector<AsmInstr>> {
         MemTemp reg = new MemTemp();
         defs.add(reg);
 
-        String instr = String.format("la `d0, %s", name.label.name);
+        String instr = String.format("lga `d0, %s", name.label.name);
 
         //CHECKME: Whats the limit/ when should local/global/absolute addressing be used
         //String instr = String.format("lui `d0, %hi(%s)", name.label.name);

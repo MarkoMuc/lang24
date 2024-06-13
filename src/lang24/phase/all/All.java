@@ -22,7 +22,7 @@ import java.util.Vector;
 
 
 public class All extends Phase {
-    private final int DATA_ALIGN = 4;
+    private final int DATA_ALIGN = 6;
     private final int INSTR_ALIGN = 6;
     private PrintWriter writer;
     private final HashSet<LinDataChunk> mmapGlobals = new HashSet<>();
