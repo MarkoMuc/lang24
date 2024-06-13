@@ -1,0 +1,11 @@
+putchar(c:char):void
+exit(i:int):void
+
+putcarr(str:^[100]char, len:int):void = {
+	i = 0;
+	while(i < len):{
+		putchar(str^[i]);
+		i = i + 1;
+	}
+
+}{i:int}
