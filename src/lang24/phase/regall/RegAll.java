@@ -149,8 +149,7 @@ public class RegAll extends Phase {
                         new ExprGenerator(),
                         inst
                 );
-                //FIXME: this isnt correct risc-v code
-                String instrString = "ld `d0,`s0,`s1";
+                String instrString = "ld `d0, `s0, `s1";
                 Vector<MemTemp> uses = new Vector<MemTemp>();
                 Vector<MemTemp> defs = new Vector<MemTemp>();
                 Vector<MemLabel> jumps = new Vector<MemLabel>();
@@ -171,7 +170,7 @@ public class RegAll extends Phase {
                         new ExprGenerator(),
                         inst
                 );
-                String instrString = "sd `s0,`s1,`s2";
+                String instrString = "sd `s0, `s1, `s2";
                 Vector<MemTemp> uses = new Vector<MemTemp>();
                 Vector<MemTemp> defs = new Vector<MemTemp>();
                 Vector<MemLabel> jumps = new Vector<MemLabel>();
