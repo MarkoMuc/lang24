@@ -30,6 +30,7 @@ import lang24.phase.seman.SemAn;
 public class MemEvaluator implements AstFullVisitor<Object, MemEvaluator.Carry> {
 
     HashSet<String> GlobalNames = new HashSet<>();
+    private static int strCount = 0;
 
     @Override
     public Object visit(AstVarDefn varDefn, Carry arg) {
@@ -160,9 +161,10 @@ public class MemEvaluator implements AstFullVisitor<Object, MemEvaluator.Carry> 
     public Object visit(AstAtomExpr atomExpr, Carry arg) {
         if(atomExpr.type == AstAtomExpr.Type.STR){
             String StrConst = atomExpr.value.substring(1, atomExpr.value.length()-1);
-            long size = (StrConst.length() + 1);
-            MemAbsAccess memAbsAccess = new MemAbsAccess(size, new MemLabel(StrConst), StrConst);
+            long size = (StrConst.length() + 1) * 8L;
+            MemAbsAccess memAbsAccess = new MemAbsAccess(size, new MemLabel("__str"+strCount), StrConst);
             Memory.strings.put(atomExpr, memAbsAccess);
+            strCount++;
         }
         return null;
     }

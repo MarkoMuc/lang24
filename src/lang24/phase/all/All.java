@@ -66,8 +66,16 @@ public class All extends Phase {
 
                 type = ".dword";
             } else {
-                type = ".string";
-                data = chunk.init;
+                size = chunk.size / 8;
+
+                if (size > 32) {
+                    type = ".dword";
+                    data = "0";
+                    mmapGlobals.add(chunk);
+                } else {
+                    type = ".string";
+                    data = "\"" + chunk.init + "\"";
+                }
             }
             writer.printf("%s:\t%s %s\n", chunk.label.name, type, data);
         }
@@ -82,6 +90,17 @@ public class All extends Phase {
         printInstr("ld a0, 0(sp)\n");
         printInstr(String.format("la a1, %s\n", chunk.label.name));
         printInstr("sd a0, 0(a1)\n");
+        if(chunk.label.name.contains("__str")) {
+            String data = chunk.init;
+            for(Character c : data.toCharArray()) {
+                printInstr(String.format("li a1, %d\n", (int)c));
+                printInstr("sb a1, 0(a0)\n");
+                printInstr("addi a0, a0, 1\n");
+            }
+            printInstr("li a1, 0\n");
+            printInstr("sb a1, 0(a0)\n");
+        }
+
         writer.println();
     }
 
