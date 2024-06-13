@@ -431,7 +431,11 @@ public class TypeResolver implements AstFullVisitor<SemType, TypeResolver.Contex
 		SemType FuncType = SemAn.ofType.get(defn);
 		SemAn.ofType.put(callExpr, FuncType);
 
+
 		if(defn.pars == null){
+			if(callExpr.args != null){
+				throw new Report.Error(callExpr,"This function does not accept arguments.");
+			}
 			return FuncType;
 		}
 
