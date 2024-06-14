@@ -84,7 +84,7 @@ public class All extends Phase {
     }
 
     private void mmapGenerate(LinDataChunk chunk) {
-        printInstr(String.format("li a1, %d\n", chunk.size / 8));
+        printInstr(String.format("li a1, %d\n", chunk.size));
         printInstr("sd a1, 8(sp)\n");
         printInstr("call _mmap\n");
         printInstr("ld a0, 0(sp)\n");
