@@ -32,11 +32,12 @@ public class Compiler {
 
 	/** All valid phases name of the compiler. */
 	private static final Vector<String> phaseNames = new Vector<String>(Arrays.asList("none", "all", "lexan", "synan",
-			"abstr", "seman", "memory", "imcgen", "imclin", "asmgen", "livean", "regall", "asm"));
+			"abstr", "seman", "memory", "imcgen", "imclin", "asmgen", "livean", "regall"));
 
 	/** Names of command line options. */
 	private static final HashSet<String> cmdLineOptNames = new HashSet<String>(
-			Arrays.asList("--src-file-name", "--dst-file-name", "--target-phase", "--logged-phase", "--xml", "--xsl", "--num-regs"));
+			Arrays.asList("--src-file-name", "--dst-file-name", "--target-phase", "--logged-phase", "--xml",
+					"--xsl", "--num-regs", "--obj", "--asm"));
 
 	/** Values of command line options indexed by their command line option name. */
 	private static final HashMap<String, String> cmdLineOptValues = new HashMap<String, String>();
@@ -262,14 +263,16 @@ public class Compiler {
 					all.allTogether(path, regAll);
 				}
 
-				if (cmdLineOptValues.get("--target-phase").equals("asm"))
+				if (cmdLineOptValues.containsKey("--asm")) {
 					break;
+				}
 
-				//TODO: remove the assembly out if its not only asm after compiling
 				try(AsmLink asmLink = new AsmLink()){
 					String path = cmdLineOptValues.get("--dst-file-name");
 					if(path == null) path = cmdLineOptValues.get("--src-file-name");
-					asmLink.assembleAndLink(path);
+					boolean objOnly = false;
+					if(cmdLineOptValues.containsKey("--obj")) objOnly = true;
+					asmLink.assembleAndLink(path, objOnly);
 				}
 
 				break;
