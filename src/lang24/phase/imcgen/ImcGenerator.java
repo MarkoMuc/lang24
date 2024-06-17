@@ -23,11 +23,11 @@ import lang24.phase.seman.SemAn;
 import java.util.Stack;
 import java.util.Vector;
 
-
 public class ImcGenerator implements AstFullVisitor<Object, Stack<MemFrame>> {
 
     Stack<ImcGenerator.FuncContext> funcContexts = new Stack<>();
     boolean conditionalStatement = false;
+
     @Override
     public Object visit(AstFunDefn funDefn, Stack<MemFrame> arg) {
         if(arg == null){
