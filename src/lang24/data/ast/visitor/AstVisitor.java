@@ -135,6 +135,7 @@ public interface AstVisitor<Result, Argument> {
 		throw new Report.InternalError();
 	}
 
+	public default  Result visit(AstDecoratorStmt decStmt, Argument arg) { throw new Report.InternalError(); };
 	// lang24.data.ast.tree.type:
 
 	@SuppressWarnings({ "doclint:missing" })
@@ -171,5 +172,4 @@ public interface AstVisitor<Result, Argument> {
 	public default Result visit(AstRecType.AstCmpDefn cmpDefn, Argument arg) {
 		throw new Report.InternalError();
 	}
-
 }

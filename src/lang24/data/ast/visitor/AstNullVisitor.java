@@ -134,6 +134,8 @@ public interface AstNullVisitor<Result, Argument> extends AstVisitor<Result, Arg
 		return null;
 	}
 
+	@Override
+	default Result visit(AstDecoratorStmt decStmt, Argument arg) {return null;}
 	// lang24.data.ast.tree.type:
 
 	@Override
@@ -170,5 +172,4 @@ public interface AstNullVisitor<Result, Argument> extends AstVisitor<Result, Arg
 	public default Result visit(AstRecType.AstCmpDefn cmpDefn, Argument arg) {
 		return null;
 	}
-
 }

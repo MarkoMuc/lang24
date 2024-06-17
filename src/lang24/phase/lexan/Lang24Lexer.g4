@@ -103,6 +103,14 @@ ID: (LETTER | '_') (LETTER | DIGITS | '_')* ;
 // Comments
 COMMENT: '#' ~[\r\n]* -> skip ;
 
+// ADDONS
+DEC_VEC: '@vector';
+
+ERRORD_V:
+     ([@] (LETTER | '_') (LETTER | DIGITS | '_')*
+     {if(true)ThrowNewError("Invalid Decorator Identifier: Illegal characters");})
+     ;
+
 // Whitespace
 WS: [ \n\r]+ -> skip ;
 TAB : '\t' {setCharPositionInLine(getCharPositionInLine() + (8 - getCharPositionInLine() % 8));} -> skip ;

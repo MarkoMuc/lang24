@@ -3,7 +3,7 @@ ANTLRDIR        = ../lib/antlr-4.13.1-complete.jar
 XSLTPROC	= xsltproc
 RM              = 'rm' -fr
 
-TARGETPHASE	= all
+TARGETPHASE	= synan
 LOGGEDPHASE	= all
 
 .PHONY	: %

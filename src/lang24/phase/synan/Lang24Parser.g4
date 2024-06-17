@@ -101,6 +101,7 @@ returns [AstStmt s, Location l]:
     | while_statement { $s = $while_statement.s; $l = $while_statement.l; }
     | return_statement { $s = $return_statement.s; $l = $return_statement.l; }
     | block_statement { $s = $block_statement.s; $l = $block_statement.l; }
+    | decorator_statement { $s = $decorator_statement.s; $l = $decorator_statement.l; }
     ; catch [RecognitionException e] {ThrowNewExcp(e, "Statement error around token: ");}
 
 // 				|——————————————Type declarations——————————————|
@@ -270,6 +271,26 @@ returns [AstBlockStmt s, Location l] :
 		$s = new AstBlockStmt($l, stmts);
 	}
 	;
+
+decorator_statement
+returns [AstDecoratorStmt s, Location l] :
+	{ Vector<AstExpr> exprs = new Vector<>(); }
+	DEC_VEC
+	LSBRAC
+	    expression
+	    { exprs.add($expression.e); }
+	    (
+	        COMMA expression
+	        { exprs.add($expression.e); }
+	    )*
+	RSBRAC
+	while_statement
+	{
+	    $l = loc($DEC_VEC, $while_statement.l);
+	    AstNodes<AstExpr> deps = new AstNodes<>(exprs);
+        $s = new AstDecoratorStmt($l, deps, $while_statement.s);
+	}
+    ; catch [RecognitionException e] {ThrowNewExcp(e, "Decorator Statement error around: ");}
 
 //|——————————————TYPE SUBRULES——————————————|
 types

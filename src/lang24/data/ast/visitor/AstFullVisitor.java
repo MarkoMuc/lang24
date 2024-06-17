@@ -172,6 +172,14 @@ public interface AstFullVisitor<Result, Argument> extends AstVisitor<Result, Arg
 		return null;
 	}
 
+	@Override
+	default Result visit(AstDecoratorStmt decStmt, Argument arg) {
+		if(decStmt.deps != null)
+			decStmt.deps.accept(this, arg);
+		decStmt.stmt.accept(this, arg);
+		return null;
+	}
+
 	// lang24.data.ast.tree.type:
 
 	@Override
