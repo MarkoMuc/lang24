@@ -542,6 +542,27 @@ public class TypeResolver implements AstFullVisitor<SemType, TypeResolver.Contex
 	}
 
 	@Override
+	public SemType visit(AstDecoratorStmt decStmt, Context arg) {
+		for(AstExpr expr : decStmt.deps){
+			SemType t = expr.accept(this, null);
+			if(!(t.actualType() instanceof SemIntType) &&
+					!(t instanceof SemArrayType &&
+							((SemArrayType) t).elemType.actualType() instanceof SemIntType) &&
+				!(t.actualType() instanceof SemPointerType &&
+						((SemPointerType) t).baseType.actualType() instanceof SemIntType)){
+				//TODO:CHECK if this covers all types correctly
+				throw new Report.Error(decStmt, "Decorator parameters can only be " +
+						"type int, array of ints or pointer to int.");
+			}
+		}
+
+		decStmt.stmt.accept(this, null);
+		SemAn.ofType.put(decStmt, SemVoidType.type);
+
+		return SemVoidType.type;
+	}
+
+	@Override
 	public SemType visit(AstTypDefn typDefn, Context arg) {
 		SemType type = null;
 		if(arg == Context.FIRST){

@@ -213,6 +213,12 @@ public class SemAnLogger implements AstNullVisitor<Object, Object>, SemVisitor<O
 		return null;
 	}
 
+	@Override
+	public Object visit(AstDecoratorStmt decStmt, Object arg) {
+		logAttributes(decStmt);
+		return null;
+	}
+
 	// lang24.data.ast.tree.type:
 
 	@Override

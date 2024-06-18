@@ -8,6 +8,7 @@ import lang24.data.ast.tree.defn.AstFunDefn;
 import lang24.data.ast.tree.defn.AstVarDefn;
 import lang24.data.ast.tree.expr.*;
 import lang24.data.ast.tree.stmt.AstAssignStmt;
+import lang24.data.ast.tree.stmt.AstDecoratorStmt;
 import lang24.data.ast.visitor.*;
 /**
  * Lvalue resolver.
@@ -150,4 +151,20 @@ public class LValResolver implements AstFullVisitor<Object, Object> {
 		return null;
 	}
 
+	@Override
+	public Object visit(AstDecoratorStmt decStmt, Object arg) {
+		for(AstExpr expr : decStmt.deps) {
+			if(!(expr instanceof AstNameExpr)){
+				throw new Report.Error(decStmt, "Decorator parameters can only be identifiers.");
+			}
+			decStmt.deps.accept(this, null);
+			Boolean test = SemAn.isLVal.get(expr);
+
+			if(test == null || !test){
+				throw new Report.Error(decStmt,"Decorator parameters must be l-values.");
+			}
+		}
+		decStmt.stmt.accept(this, null);
+		return null;
+	}
 }
