@@ -551,6 +551,7 @@ public class TypeResolver implements AstFullVisitor<SemType, TypeResolver.Contex
 				!(t.actualType() instanceof SemPointerType &&
 						((SemPointerType) t).baseType.actualType() instanceof SemIntType)){
 				//TODO:CHECK if this covers all types correctly
+				// Needs to cover ^[100]int
 				throw new Report.Error(decStmt, "Decorator parameters can only be " +
 						"type int, array of ints or pointer to int.");
 			}

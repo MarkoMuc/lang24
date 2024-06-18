@@ -204,6 +204,12 @@ public class ImcLogger implements AstNullVisitor<Object, Object> {
 		return null;
 	}
 
+	@Override
+	public Object visit(AstDecoratorStmt decStmt, Object arg) {
+		logAttributes(decStmt);
+		return null;
+	}
+
 	// lang24.data.ast.tree.type:
 
 	@Override

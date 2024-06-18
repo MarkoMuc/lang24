@@ -434,6 +434,20 @@ public class ImcGenerator implements AstFullVisitor<Object, Stack<MemFrame>> {
     }
 
     @Override
+    public Object visit(AstDecoratorStmt decStmt, Stack<MemFrame> arg) {
+        ImcSTMTS stmts = (ImcSTMTS) decStmt.stmt.accept(this, arg);
+        Vector<AstNameExpr> exprs = new Vector<>();
+        for(AstExpr expr : decStmt.deps){
+            exprs.add((AstNameExpr) expr);
+        }
+
+        ImcVectStmt vectStmt = new ImcVectStmt(exprs, stmts);
+        ImcGen.stmtImc.put(decStmt, vectStmt);
+
+        return vectStmt;
+    }
+
+    @Override
     public Object visit(AstNodes<? extends AstNode> nodes, Stack<MemFrame> arg) {
         for(AstNode node : nodes){
             if(node instanceof AstDefn def){

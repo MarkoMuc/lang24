@@ -62,6 +62,8 @@ public interface ImcVisitor<Result, Arg> {
 		throw new Report.InternalError();
 	}
 
+	public default Result visit(ImcVectStmt imcVectStmt, Arg accArg) {throw new Report.InternalError();};
+
 	public default Result visit(ImcTEMP temp, Arg visArg) {
 		throw new Report.InternalError();
 	}
