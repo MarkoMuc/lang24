@@ -15,6 +15,7 @@ import lang24.data.imc.code.stmt.*;
 import lang24.data.mem.*;
 import lang24.data.type.SemArrayType;
 import lang24.data.type.SemCharType;
+import lang24.data.type.SemPointerType;
 import lang24.data.type.SemType;
 import lang24.phase.memory.MemEvaluator;
 import lang24.phase.memory.Memory;
@@ -30,7 +31,7 @@ public class ImcGenerator implements AstFullVisitor<Object, Stack<MemFrame>> {
 
     @Override
     public Object visit(AstFunDefn funDefn, Stack<MemFrame> arg) {
-        if(arg == null){
+        if (arg == null) {
             arg = new Stack<>();
         }
         MemLabel entryL = new MemLabel();
@@ -45,11 +46,11 @@ public class ImcGenerator implements AstFullVisitor<Object, Stack<MemFrame>> {
         ImcGen.entryLabel.put(funDefn, entryL);
         ImcGen.exitLabel.put(funDefn, exitL);
 
-        if(funDefn.defns != null){
+        if (funDefn.defns != null) {
             funDefn.defns.accept(this, arg);
         }
 
-        if(funDefn.stmt != null){
+        if (funDefn.stmt != null) {
             funDefn.stmt.accept(this, arg);
         }
 
@@ -63,7 +64,7 @@ public class ImcGenerator implements AstFullVisitor<Object, Stack<MemFrame>> {
     @Override
     public Object visit(AstAtomExpr atomExpr, Stack<MemFrame> arg) {
         //TODO: bounds check for int -> throw error if too large
-        ImcExpr imcConst = switch (atomExpr.type){
+        ImcExpr imcConst = switch (atomExpr.type) {
             case BOOL -> new ImcCONST(atomExpr.value.equals("true") ? 1 : 0);
             case VOID -> new ImcCONST(-1);
             case PTR -> new ImcCONST(0);
@@ -78,7 +79,7 @@ public class ImcGenerator implements AstFullVisitor<Object, Stack<MemFrame>> {
     // EX4, EX6
     @Override
     public Object visit(AstPfxExpr pfxExpr, Stack<MemFrame> arg) {
-        ImcExpr imcPrefix = switch (pfxExpr.oper){
+        ImcExpr imcPrefix = switch (pfxExpr.oper) {
             case NOT -> new ImcUNOP(ImcUNOP.Oper.NOT, (ImcExpr) pfxExpr.expr.accept(this, arg));
             case SUB -> new ImcUNOP(ImcUNOP.Oper.NEG, (ImcExpr) pfxExpr.expr.accept(this, arg));
             case ADD -> ((ImcExpr) pfxExpr.expr.accept(this, arg));
@@ -95,7 +96,7 @@ public class ImcGenerator implements AstFullVisitor<Object, Stack<MemFrame>> {
         ImcExpr expr1 = (ImcExpr) binExpr.fstExpr.accept(this, arg);
         ImcExpr expr2 = (ImcExpr) binExpr.sndExpr.accept(this, arg);
 
-        ImcExpr imcBin = switch (binExpr.oper){
+        ImcExpr imcBin = switch (binExpr.oper) {
             case ADD -> new ImcBINOP(ImcBINOP.Oper.ADD, expr1, expr2);
             case AND -> new ImcBINOP(ImcBINOP.Oper.AND, expr1, expr2);
             case DIV -> new ImcBINOP(ImcBINOP.Oper.DIV, expr1, expr2);
@@ -132,30 +133,30 @@ public class ImcGenerator implements AstFullVisitor<Object, Stack<MemFrame>> {
         ImcExpr imcExpr = null;
 
         MemAccess memAccess;
-        if(astDefn instanceof AstVarDefn astVarDefn){
+        if (astDefn instanceof AstVarDefn astVarDefn) {
             memAccess = Memory.varAccesses.get(astVarDefn);
-        } else if(astDefn instanceof AstFunDefn.AstParDefn parDefn){
+        } else if (astDefn instanceof AstFunDefn.AstParDefn parDefn) {
             memAccess = Memory.parAccesses.get(parDefn);
-        }else{
+        } else {
             return null;
         }
 
-        if(memAccess instanceof MemAbsAccess){
+        if (memAccess instanceof MemAbsAccess) {
             imcExpr = new ImcMEM(new ImcNAME(((MemAbsAccess) memAccess).label));
-        } else{
+        } else {
             MemRelAccess local = (MemRelAccess) memAccess;
             ImcExpr expr = new ImcTEMP(arg.peek().FP);
 
             long depth = arg.peek().depth - local.depth;
             ImcCONST imcCONST = new ImcCONST(local.offset);
 
-            for(int i = 0; i < depth; i++){
+            for (int i = 0; i < depth; i++) {
                 expr = new ImcMEM(expr);
             }
 
             ImcBINOP imcBin = new ImcBINOP(ImcBINOP.Oper.ADD, expr, imcCONST);
             imcExpr = new ImcMEM(imcBin);
-            if(astDefn instanceof AstFunDefn.AstRefParDefn){
+            if (astDefn instanceof AstFunDefn.AstRefParDefn) {
                 imcExpr = new ImcMEM(imcExpr);
             }
         }
@@ -169,13 +170,26 @@ public class ImcGenerator implements AstFullVisitor<Object, Stack<MemFrame>> {
     public Object visit(AstArrExpr arrExpr, Stack<MemFrame> arg) {
         ImcExpr arr = (ImcExpr) arrExpr.arr.accept(this, arg);
         ImcExpr idx = (ImcExpr) arrExpr.idx.accept(this, arg);
-        SemArrayType semType = (SemArrayType) SemAn.ofType.get(arrExpr.arr).actualType();
 
-        ImcBINOP imcOffset = new ImcBINOP(ImcBINOP.Oper.MUL, idx, new ImcCONST(MemEvaluator.SizeOfType(semType.elemType)));
-        // CHECKME: is this only done here?
-        if(arr instanceof ImcMEM mem){
-            arr = mem.addr;
+        SemType semType = SemAn.ofType.get(arrExpr.arr).actualType();
+        //SemArrayType semType = (SemArrayType) SemAn.ofType.get(arrExpr.arr).actualType();
+
+        ImcCONST typeSize = null;
+        if (semType instanceof SemArrayType arrType) {
+            typeSize = new ImcCONST(MemEvaluator.SizeOfType(arrType.elemType));
+            if (arr instanceof ImcMEM mem) {
+                arr = mem.addr;
+            }
+        } else if (semType instanceof SemPointerType ptrType) {
+            typeSize = new ImcCONST(MemEvaluator.SizeOfType(ptrType.baseType));
+        } else {
+            throw new Report.Error(arrExpr, "This shouldn't happen.");
         }
+
+        ImcBINOP imcOffset = new ImcBINOP(ImcBINOP.Oper.MUL, idx, typeSize);
+
+        // CHECKME: is this only done here? Check what this does, i forgots tbh
+
         ImcBINOP imcBin = new ImcBINOP(ImcBINOP.Oper.ADD, arr, imcOffset);
 
         ImcMEM imcMEM = new ImcMEM(imcBin);
@@ -207,11 +221,11 @@ public class ImcGenerator implements AstFullVisitor<Object, Stack<MemFrame>> {
         MemFrame memFrame = Memory.frames.get(funDefn);
 
         ImcExpr imcExpr1 = new ImcTEMP(arg.peek().FP);
-        for(int i = 0; i < arg.peek().depth - memFrame.depth + 1; i++){
+        for (int i = 0; i < arg.peek().depth - memFrame.depth + 1; i++) {
             imcExpr1 = new ImcMEM(imcExpr1);
         }
 
-        if(memFrame.depth == 0){
+        if (memFrame.depth == 0) {
             imcExpr1 = new ImcCONST(0);
         }
 
@@ -221,7 +235,7 @@ public class ImcGenerator implements AstFullVisitor<Object, Stack<MemFrame>> {
         offsets.add(0L);
         args.add(imcExpr1);
 
-        if(callExpr.args != null) {
+        if (callExpr.args != null) {
             for (int i = 0; i < callExpr.args.size(); i++) {
                 AstFunDefn.AstParDefn parDefn = funDefn.pars.get(i);
                 MemRelAccess memRelAccess = (MemRelAccess) Memory.parAccesses.get(parDefn);
@@ -247,13 +261,13 @@ public class ImcGenerator implements AstFullVisitor<Object, Stack<MemFrame>> {
         ImcExpr imcExpr = (ImcExpr) castExpr.expr.accept(this, arg);
         ImcExpr imcCast;
 
-        if(semType instanceof SemCharType){
+        if (semType instanceof SemCharType) {
             imcCast = new ImcBINOP(ImcBINOP.Oper.MOD, imcExpr, new ImcCONST(256));
-        }else {
+        } else {
             imcCast = imcExpr;
         }
 
-        ImcGen.exprImc.put(castExpr,imcCast);
+        ImcGen.exprImc.put(castExpr, imcCast);
 
         return imcCast;
     }
@@ -277,7 +291,7 @@ public class ImcGenerator implements AstFullVisitor<Object, Stack<MemFrame>> {
         ImcExpr imcExpr = (ImcExpr) exprStmt.expr.accept(this, arg);
         ImcStmt imcESTMT = new ImcESTMT(imcExpr);
 
-        if(first){
+        if (first) {
             imcESTMT = funcBody(imcESTMT, arg.peek().RV);
         }
 
@@ -296,7 +310,7 @@ public class ImcGenerator implements AstFullVisitor<Object, Stack<MemFrame>> {
         ImcExpr expr2 = (ImcExpr) assignStmt.dst.accept(this, arg);
         ImcStmt imcMOVE = new ImcMOVE(expr2, expr1);
 
-        if(first){
+        if (first) {
             imcMOVE = funcBody(imcMOVE, arg.peek().RV);
         }
 
@@ -326,14 +340,14 @@ public class ImcGenerator implements AstFullVisitor<Object, Stack<MemFrame>> {
         imcStmts.add(new ImcJUMP(endL));
         imcStmts.add(new ImcLABEL(elseL));
 
-        if(ifStmt.elseStmt != null){
+        if (ifStmt.elseStmt != null) {
             imcStmts.add((ImcStmt) ifStmt.elseStmt.accept(this, arg));
         }
         imcStmts.add(new ImcLABEL(endL));
 
         ImcStmt imcSTMTS = new ImcSTMTS(imcStmts);
 
-        if(first){
+        if (first) {
             imcSTMTS = funcBody(imcSTMTS, arg.peek().RV);
         }
 
@@ -361,7 +375,7 @@ public class ImcGenerator implements AstFullVisitor<Object, Stack<MemFrame>> {
         Vector<ImcStmt> imcStmts = new Vector<>();
 
         imcStmts.add(new ImcLABEL(cond));
-        imcStmts.add(new ImcCJUMP(imcExpr,body,end));
+        imcStmts.add(new ImcCJUMP(imcExpr, body, end));
 
         imcStmts.add(new ImcLABEL(body));
         imcStmts.add(imcStmt);
@@ -371,7 +385,7 @@ public class ImcGenerator implements AstFullVisitor<Object, Stack<MemFrame>> {
 
         ImcStmt imcSTMTS = new ImcSTMTS(imcStmts);
 
-        if(first){
+        if (first) {
             imcSTMTS = funcBody(imcSTMTS, arg.peek().RV);
         }
 
@@ -396,7 +410,7 @@ public class ImcGenerator implements AstFullVisitor<Object, Stack<MemFrame>> {
 
         ImcStmt imcSTMTS = new ImcSTMTS(imcStmts);
 
-        if(first){
+        if (first) {
             imcSTMTS = funcBody(imcSTMTS, arg.peek().RV);
         }
 
@@ -411,7 +425,7 @@ public class ImcGenerator implements AstFullVisitor<Object, Stack<MemFrame>> {
         funcContexts.peek().first = false;
         //CHECKME:Do i need to check if there is a return elsewhere tho?
         //      -  E.G this is inside an IF or While stmt, so we still need the additional back
-        if(!conditionalStatement) {
+        if (!conditionalStatement) {
             funcContexts.peek().add_return = false;
         }
         Vector<ImcStmt> returnStms = new Vector<>();
@@ -424,7 +438,7 @@ public class ImcGenerator implements AstFullVisitor<Object, Stack<MemFrame>> {
         returnStms.add(new ImcJUMP(funcContexts.peek().exitL));
         ImcStmt imcSTMTS = new ImcSTMTS(returnStms);
 
-        if(first){
+        if (first) {
             imcSTMTS = funcBody(imcSTMTS, arg.peek().RV);
         }
 
@@ -437,7 +451,7 @@ public class ImcGenerator implements AstFullVisitor<Object, Stack<MemFrame>> {
     public Object visit(AstDecoratorStmt decStmt, Stack<MemFrame> arg) {
         ImcSTMTS stmts = (ImcSTMTS) decStmt.stmt.accept(this, arg);
         Vector<AstNameExpr> exprs = new Vector<>();
-        for(AstExpr expr : decStmt.deps){
+        for (AstExpr expr : decStmt.deps) {
             exprs.add((AstNameExpr) expr);
         }
 
@@ -449,12 +463,12 @@ public class ImcGenerator implements AstFullVisitor<Object, Stack<MemFrame>> {
 
     @Override
     public Object visit(AstNodes<? extends AstNode> nodes, Stack<MemFrame> arg) {
-        for(AstNode node : nodes){
-            if(node instanceof AstDefn def){
-                if(def instanceof AstFunDefn fun){
+        for (AstNode node : nodes) {
+            if (node instanceof AstDefn def) {
+                if (def instanceof AstFunDefn fun) {
                     fun.accept(this, arg);
                 }
-            }else{
+            } else {
                 node.accept(this, arg);
             }
         }
@@ -462,7 +476,7 @@ public class ImcGenerator implements AstFullVisitor<Object, Stack<MemFrame>> {
         return null;
     }
 
-    private int createChar(String value){
+    private int createChar(String value) {
         int c = -1;
 
         //Remove ' '
@@ -470,12 +484,12 @@ public class ImcGenerator implements AstFullVisitor<Object, Stack<MemFrame>> {
         int lst = value.lastIndexOf('\'') == -1 ? value.length() : value.lastIndexOf('\'');
         value = value.substring(fst + 1, lst);
 
-        if(value.length() == 1) { // Simple char
+        if (value.length() == 1) { // Simple char
             c = value.charAt(0);
-        }else if(value.length() == 2){
+        } else if (value.length() == 2) {
             value = value.substring(value.indexOf("\\") + 1);
             c = value.indexOf('n') == -1 ? value.charAt(0) : 0x0A;
-        } else if(value.length() == 3){ // Escape sequence
+        } else if (value.length() == 3) { // Escape sequence
             c = Integer.parseInt(value.substring(value.indexOf("\\") + 1), 16);
         } else {
             throw new Report.Error("Not a valid char" + value);
@@ -484,17 +498,17 @@ public class ImcGenerator implements AstFullVisitor<Object, Stack<MemFrame>> {
         return c;
     }
 
-    private long CheckNParse(String value){
-        try{
+    private long CheckNParse(String value) {
+        try {
             return Long.parseLong(value);
-        }catch (NumberFormatException e){
+        } catch (NumberFormatException e) {
             throw new Report.Error("Not a valid number" + value);
         }
     }
 
-    private ImcStmt funcBody(ImcStmt mainStmt, MemTemp RV){
+    private ImcStmt funcBody(ImcStmt mainStmt, MemTemp RV) {
 
-        if(mainStmt instanceof ImcSTMTS mainSTMTS){
+        if (mainStmt instanceof ImcSTMTS mainSTMTS) {
             mainSTMTS.stmts.addFirst(new ImcLABEL(funcContexts.peek().entryL));
             mainSTMTS.stmts.addLast(new ImcLABEL(funcContexts.peek().exitL));
         } else {
@@ -507,10 +521,10 @@ public class ImcGenerator implements AstFullVisitor<Object, Stack<MemFrame>> {
             mainStmt = new ImcSTMTS(stmtVector);
         }
 
-        if(funcContexts.peek().add_return) {
+        if (funcContexts.peek().add_return) {
             ImcStmt imcMOVE = new ImcMOVE(new ImcTEMP(RV), new ImcCONST(0));
-            int len = ((ImcSTMTS)mainStmt).stmts.size();
-            ((ImcSTMTS)mainStmt).stmts.add(len - 1, imcMOVE);
+            int len = ((ImcSTMTS) mainStmt).stmts.size();
+            ((ImcSTMTS) mainStmt).stmts.add(len - 1, imcMOVE);
             funcContexts.peek().add_return = false;
         }
 
@@ -519,13 +533,13 @@ public class ImcGenerator implements AstFullVisitor<Object, Stack<MemFrame>> {
         return mainStmt;
     }
 
-    private class FuncContext{
+    private class FuncContext {
         boolean first;
         MemLabel entryL;
         MemLabel exitL;
         boolean add_return;
 
-        FuncContext(MemLabel entryL, MemLabel exitL){
+        FuncContext(MemLabel entryL, MemLabel exitL) {
             this.first = true;
             this.add_return = true;
             this.entryL = entryL;
