@@ -173,6 +173,15 @@ public interface AstFullVisitor<Result, Argument> extends AstVisitor<Result, Arg
 	}
 
 	@Override
+	default Result visit(AstForStmt forStmt, Argument arg) {
+		forStmt.init.accept(this, arg);
+		forStmt.cond.accept(this, arg);
+		forStmt.step.accept(this, arg);
+		forStmt.stmt.accept(this, arg);
+		return null;
+	}
+
+	@Override
 	default Result visit(AstDecoratorStmt decStmt, Argument arg) {
 		if(decStmt.deps != null)
 			decStmt.deps.accept(this, arg);

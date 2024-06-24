@@ -135,6 +135,10 @@ public interface AstVisitor<Result, Argument> {
 		throw new Report.InternalError();
 	}
 
+	public default Result visit(AstForStmt forStmt, Argument arg) {
+		throw new Report.InternalError();
+	}
+
 	public default  Result visit(AstDecoratorStmt decStmt, Argument arg) { throw new Report.InternalError(); };
 	// lang24.data.ast.tree.type:
 

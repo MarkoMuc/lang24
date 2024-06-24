@@ -395,6 +395,47 @@ public class ImcGenerator implements AstFullVisitor<Object, Stack<MemFrame>> {
         return imcSTMTS;
     }
 
+    @Override
+    public Object visit(AstForStmt forStmt, Stack<MemFrame> arg) {
+        boolean first = funcContexts.peek().first;
+        funcContexts.peek().first = false;
+
+        conditionalStatement = false;
+
+        ImcStmt imcInitStmt = (ImcStmt) forStmt.init.accept(this, arg);
+        ImcExpr imcExpr = (ImcExpr) forStmt.cond.accept(this, arg);
+        ImcStmt imcStepStmt = (ImcStmt) forStmt.step.accept(this, arg);
+        ImcStmt imcBodyStmt = (ImcStmt) forStmt.stmt.accept(this, arg);
+
+        MemLabel cond = new MemLabel();
+        MemLabel body = new MemLabel();
+        MemLabel end = new MemLabel();
+
+        Vector<ImcStmt> imcStmts = new Vector<>();
+
+        imcStmts.add(imcInitStmt);
+        imcStmts.add(new ImcLABEL(cond));
+        imcStmts.add(new ImcCJUMP(imcExpr, body, end));
+
+        imcStmts.add(new ImcLABEL(body));
+        imcStmts.add(imcBodyStmt);
+
+        imcStmts.add(imcStepStmt);
+        imcStmts.add(new ImcJUMP(cond));
+        imcStmts.add(new ImcLABEL(end));
+
+        ImcStmt imcSTMTS = new ImcSTMTS(imcStmts);
+
+        if (first) {
+            imcSTMTS = funcBody(imcSTMTS, arg.peek().RV);
+        }
+
+        conditionalStatement = false;
+        ImcGen.stmtImc.put(forStmt, imcSTMTS);
+
+        return imcSTMTS;
+    }
+
     // ST9
     @Override
     public Object visit(AstBlockStmt blockStmt, Stack<MemFrame> arg) {

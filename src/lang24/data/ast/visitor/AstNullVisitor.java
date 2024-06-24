@@ -133,6 +133,10 @@ public interface AstNullVisitor<Result, Argument> extends AstVisitor<Result, Arg
 	public default Result visit(AstWhileStmt whileStmt, Argument arg) {
 		return null;
 	}
+	@Override
+	public default Result visit(AstForStmt forStmt, Argument arg) {
+		return null;
+	}
 
 	@Override
 	default Result visit(AstDecoratorStmt decStmt, Argument arg) {return null;}

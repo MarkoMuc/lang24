@@ -389,6 +389,24 @@ public class AbstrLogger implements AstVisitor<Object, String> {
 	}
 
 	@Override
+	public Object visit(AstForStmt forStmt, String arg) {
+		if (logger == null)
+			return null;
+		logger.begElement("node");
+		forStmt.location().log(logger);
+		logger.addAttribute("id", Integer.toString(forStmt.id));
+		logger.addAttribute("label", forStmt.getClass().getSimpleName());
+		forStmt.init.accept(this, null);
+		forStmt.cond.accept(this, null);
+		forStmt.step.accept(this, null);
+		forStmt.stmt.accept(this, null);
+		for (AstVisitor<?, ?> subvisitor : subvisitors)
+			forStmt.accept(subvisitor, null);
+		logger.endElement();
+		return null;
+	}
+
+	@Override
 	public Object visit(AstDecoratorStmt decStmt, String arg) {
 		if (logger == null)
 			return null;

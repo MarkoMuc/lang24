@@ -538,6 +538,21 @@ public class TypeResolver implements AstFullVisitor<SemType, TypeResolver.Contex
     }
 
     @Override
+    public SemType visit(AstForStmt forStmt, Context arg) {
+        forStmt.init.accept(this, null);
+        SemType CondType = forStmt.cond.accept(this, null);
+        forStmt.step.accept(this, null);
+        forStmt.stmt.accept(this, null);
+
+        if (!(CondType.actualType() instanceof SemBoolType)) {
+            throw new Report.Error(forStmt, "For condition is not type bool.");
+        }
+        SemAn.ofType.put(forStmt, SemVoidType.type);
+
+        return SemVoidType.type;
+    }
+
+    @Override
     public SemType visit(AstReturnStmt retStmt, Context arg) {
         SemType ExprType = retStmt.expr.accept(this, null);
         if (!equiv(FuncTypeStack.peek(), ExprType)) {

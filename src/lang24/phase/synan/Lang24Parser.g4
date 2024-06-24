@@ -99,6 +99,7 @@ returns [AstStmt s, Location l]:
     | assign_statement { $s = $assign_statement.s; $l = $assign_statement.l; }
     | if_statement { $s = $if_statement.s; $l = $if_statement.l; }
     | while_statement { $s = $while_statement.s; $l = $while_statement.l; }
+    | for_statement { $s = $for_statement.s; $l = $for_statement.l; }
     | return_statement { $s = $return_statement.s; $l = $return_statement.l; }
     | block_statement { $s = $block_statement.s; $l = $block_statement.l; }
     | decorator_statement { $s = $decorator_statement.s; $l = $decorator_statement.l; }
@@ -244,6 +245,15 @@ returns [AstWhileStmt s, Location l] :
 	{
 	    $l = loc($KWHILE, $statement.l);
 		$s = new AstWhileStmt($l, $expression.e, $statement.s);
+	}
+	;
+
+for_statement
+returns [AstForStmt s, Location l] :
+	KFOR LPAR a1=assign_statement expression SEMI a2=assign_statement RPAR COLON statement
+	{
+	    $l = loc($KFOR, $statement.l);
+		$s = new AstForStmt($l, $a1.s, $expression.e, $a2.s, $statement.s);
 	}
 	;
 
