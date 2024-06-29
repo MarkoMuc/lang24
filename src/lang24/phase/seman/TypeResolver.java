@@ -54,94 +54,94 @@ public class TypeResolver implements AstFullVisitor<SemType, TypeResolver.Contex
     private boolean equiv(SemType type1, SemType type2, HashMap<SemType, HashSet<SemType>> equivs) {
 
         if ((type1 instanceof SemNameType) && (type2 instanceof SemNameType)) {
-			if (equivs == null) {
-				equivs = new HashMap<SemType, HashSet<SemType>>();
-			}
+            if (equivs == null) {
+                equivs = new HashMap<SemType, HashSet<SemType>>();
+            }
 
-			if (equivs.get(type1) == null) {
-				equivs.put(type1, new HashSet<SemType>());
-			}
-			if (equivs.get(type2) == null) {
-				equivs.put(type2, new HashSet<SemType>());
-			}
-			if (equivs.get(type1).contains(type2) && equivs.get(type2).contains(type1)) {
-				return true;
-			} else {
-				HashSet<SemType> types;
+            if (equivs.get(type1) == null) {
+                equivs.put(type1, new HashSet<SemType>());
+            }
+            if (equivs.get(type2) == null) {
+                equivs.put(type2, new HashSet<SemType>());
+            }
+            if (equivs.get(type1).contains(type2) && equivs.get(type2).contains(type1)) {
+                return true;
+            } else {
+                HashSet<SemType> types;
 
-				types = equivs.get(type1);
-				types.add(type2);
-				equivs.put(type1, types);
+                types = equivs.get(type1);
+                types.add(type2);
+                equivs.put(type1, types);
 
-				types = equivs.get(type2);
-				types.add(type1);
-				equivs.put(type2, types);
-			}
+                types = equivs.get(type2);
+                types.add(type1);
+                equivs.put(type2, types);
+            }
         }
 
         type1 = type1.actualType();
         type2 = type2.actualType();
 
-		if (type1 instanceof SemVoidType) {
-			return (type2 instanceof SemVoidType);
-		}
-		if (type1 instanceof SemBoolType) {
-			return (type2 instanceof SemBoolType);
-		}
-		if (type1 instanceof SemCharType) {
-			return (type2 instanceof SemCharType);
-		}
-		if (type1 instanceof SemIntType) {
-			return (type2 instanceof SemIntType);
-		}
+        if (type1 instanceof SemVoidType) {
+            return (type2 instanceof SemVoidType);
+        }
+        if (type1 instanceof SemBoolType) {
+            return (type2 instanceof SemBoolType);
+        }
+        if (type1 instanceof SemCharType) {
+            return (type2 instanceof SemCharType);
+        }
+        if (type1 instanceof SemIntType) {
+            return (type2 instanceof SemIntType);
+        }
 
         if (type1 instanceof SemArrayType arr1) {
-			if (!(type2 instanceof SemArrayType arr2)) {
-				return false;
-			}
+            if (!(type2 instanceof SemArrayType arr2)) {
+                return false;
+            }
             if (arr1.size != arr2.size) {
-				return false;
-			}
+                return false;
+            }
             return equiv(arr1.elemType, arr2.elemType, equivs);
         }
 
         if (type1 instanceof SemPointerType ptr1) {
-			if (!(type2 instanceof SemPointerType ptr2)) {
-				return false;
-			}
+            if (!(type2 instanceof SemPointerType ptr2)) {
+                return false;
+            }
             if ((ptr1.baseType.actualType() instanceof SemVoidType)
-					|| (ptr2.baseType.actualType() instanceof SemVoidType)) {
-				return true;
-			}
+                    || (ptr2.baseType.actualType() instanceof SemVoidType)) {
+                return true;
+            }
             return equiv(ptr1.baseType, ptr2.baseType, equivs);
         }
 
         if (type1 instanceof SemStructType str1) {
-			if (!(type2 instanceof SemStructType str2)) {
-				return false;
-			}
+            if (!(type2 instanceof SemStructType str2)) {
+                return false;
+            }
             if (str1.cmpTypes.size() != str2.cmpTypes.size()) {
-				return false;
-			}
-			for (int c = 0; c < str1.cmpTypes.size(); c++) {
-				if (!(equiv(str1.cmpTypes.get(c), str2.cmpTypes.get(c), equivs))) {
-					return false;
-				}
-			}
+                return false;
+            }
+            for (int c = 0; c < str1.cmpTypes.size(); c++) {
+                if (!(equiv(str1.cmpTypes.get(c), str2.cmpTypes.get(c), equivs))) {
+                    return false;
+                }
+            }
             return true;
         }
         if (type1 instanceof SemUnionType uni1) {
-			if (!(type2 instanceof SemUnionType uni2)) {
-				return false;
-			}
+            if (!(type2 instanceof SemUnionType uni2)) {
+                return false;
+            }
             if (uni1.cmpTypes.size() != uni2.cmpTypes.size()) {
-				return false;
-			}
-			for (int c = 0; c < uni1.cmpTypes.size(); c++) {
-				if (!(equiv(uni1.cmpTypes.get(c), uni2.cmpTypes.get(c), equivs))) {
-					return false;
-				}
-			}
+                return false;
+            }
+            for (int c = 0; c < uni1.cmpTypes.size(); c++) {
+                if (!(equiv(uni1.cmpTypes.get(c), uni2.cmpTypes.get(c), equivs))) {
+                    return false;
+                }
+            }
             return true;
         }
 
@@ -668,17 +668,18 @@ public class TypeResolver implements AstFullVisitor<SemType, TypeResolver.Contex
 
     @Override
     public SemType visit(AstFunDefn funDefn, Context arg) {
-        SemType RetType = null;
+        SemType returnType = null;
         if (arg == Context.SECOND) {
-            RetType = funDefn.type.accept(this, null);
+            returnType = funDefn.type.accept(this, null);
 
-            if (!(RetType.actualType() instanceof SemBoolType ||
-                    RetType.actualType() instanceof SemCharType ||
-                    RetType.actualType() instanceof SemIntType ||
-                    RetType.actualType() instanceof SemVoidType ||
-                    RetType.actualType() instanceof SemPointerType)) {
+            if (!(returnType.actualType() instanceof SemBoolType ||
+                    returnType.actualType() instanceof SemCharType ||
+                    returnType.actualType() instanceof SemIntType ||
+                    returnType.actualType() instanceof SemVoidType ||
+                    returnType.actualType() instanceof SemPointerType)) {
                 throw new Report.Error(funDefn, funDefn.name + " is wrong type.");
             }
+
             if (funDefn.pars != null) {
                 for (AstFunDefn.AstParDefn par : funDefn.pars) {
                     SemType type = par.accept(this, null);
@@ -690,24 +691,25 @@ public class TypeResolver implements AstFullVisitor<SemType, TypeResolver.Contex
                     }
                 }
             }
-            SemAn.ofType.put(funDefn, RetType);
+
+            SemAn.ofType.put(funDefn, returnType);
         } else {
-            RetType = SemAn.ofType.get(funDefn);
+            returnType = SemAn.ofType.get(funDefn);
             int count = FuncTypeStack.size();
-			if (funDefn.stmt != null) {
-				FuncTypeStack.push(RetType);
-			}
-			if (funDefn.defns != null) {
-				funDefn.defns.accept(this, null);
-			}
-			if (funDefn.stmt != null) {
-				funDefn.stmt.accept(this, null);
-			}
-			if (count != FuncTypeStack.size()) {
-				FuncTypeStack.pop();
-			}
+            if (funDefn.stmt != null) {
+                FuncTypeStack.push(returnType);
+            }
+            if (funDefn.defns != null) {
+                funDefn.defns.accept(this, null);
+            }
+            if (funDefn.stmt != null) {
+                funDefn.stmt.accept(this, null);
+            }
+            if (count != FuncTypeStack.size()) {
+                FuncTypeStack.pop();
+            }
         }
-        return RetType;
+        return returnType;
     }
 
     @Override

@@ -20,7 +20,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Vector;
 
-
 public class All extends Phase {
     private final int DATA_ALIGN = 6;
     private final int INSTR_ALIGN = 6;
@@ -84,6 +83,7 @@ public class All extends Phase {
     }
 
     private void mmapGenerate(LinDataChunk chunk) {
+        //TODO: add \0 and a function that prints it this way
         printInstr(String.format("li a1, %d\n", chunk.size));
         printInstr("sd a1, 8(sp)\n");
         printInstr("addi a1, a1, 8\n");
@@ -106,37 +106,51 @@ public class All extends Phase {
         writer.println();
     }
 
-    private void entry() {
+    private void entry(boolean compileAsLibrary) {
         writer.println(".section .text");
         writer.printf(".align %d\n", INSTR_ALIGN);
-        writer.println(".global _start");
-        writer.println("_start:");
+        if(!compileAsLibrary) {
+            writer.println(".global _start");
+            writer.println("_start:");
+        }
 
-        //TODO: If err is not found, throw Report.Error
         for (LinDataChunk chunk : mmapGlobals) {
             mmapGenerate(chunk);
         }
 
-        printInstr("j _main\n");
+        if(!compileAsLibrary) {
+            printInstr("call _main\n");
+
+            printInstr("ld a0, 0(sp)\n");
+            printInstr("li a1, 0\n");
+            printInstr("sd a1, 0(sp)\n");
+            printInstr("sd a0, 8(sp)\n");
+            printInstr("call _exit\n");
+        }
+
         writer.println();
     }
 
-    private void subroutines(Vector<Code> subroutines, RegAll regAll) {
+    private void subroutines(RegAll regAll, Vector<Code> subroutines, boolean compileAsLibrary) {
         HashMap<MemTemp, String> tempToString = regAll.tempToSReg;
         HashMap<Code, HashSet<String>> codeToRegs = regAll.codeToRegs;
+        boolean mainSubroutine = false;
 
         for (Code subroutine : subroutines) {
             MemFrame frame = subroutine.frame;
             HashSet<String> usedRegs = codeToRegs.get(subroutine);
             long offset = 0;
-            writer.println(frame.label.name + ":");
+            if (frame.label.name.equals("main") &&
+                frame.depth == 0){
+                mainSubroutine = true;
+            }
 
+            writer.println(frame.label.name + ":");
             //Prologue
 
             // Save FP and RA
             // CHECKME: When is direct offset addressing wrong, as in the offset is too large?
 
-            // 0. + 1.
             offset = frame.locsSize + 8;
 
             printInstr(String.format("addi sp, sp, -%d\n", offset));
@@ -144,12 +158,10 @@ public class All extends Phase {
             printInstr("mv fp, sp\n");
             printInstr(String.format("addi fp, fp, %d\n", offset)); // Align FP back to the old SP
 
-            // 2.
             offset = 8;
             printInstr(String.format("addi sp, sp, -%d\n", offset));
             printInstr("sd ra, 0(sp)\n"); // Saves return address
 
-            // 3.
             for (String reg : usedRegs) {
                 printInstr(String.format("addi sp, sp, -%d\n", offset));
                 printInstr(String.format("sd %s, 0(sp)\n", reg));
@@ -179,45 +191,37 @@ public class All extends Phase {
             //Epilogue
             writer.println(subroutine.exitLabel.name + ":");
 
-            // 0.
             if (frame.argsSize != 0) {
-                offset = subroutine.frame.argsSize;
                 printInstr(String.format("addi sp, sp, %d\n", offset)); // Sets SP
             }
 
-            // 1.
             if (subroutine.tempSize != 0) {
                 offset = subroutine.tempSize;
                 printInstr(String.format("addi sp, sp, %d\n", offset));
             }
 
-            // 2.
             offset = 8;
             for (String reg : usedRegs.stream().toList().reversed()) {
                 printInstr(String.format("ld %s, 0(sp)\n", reg));
                 printInstr(String.format("addi sp, sp, %d\n", offset));
             }
 
-            // 3.
             printInstr("ld ra, 0(sp)\n"); // Restores RA
             printInstr(String.format("addi sp, sp, %d\n", offset));
 
-            // 4. + 5.
             printInstr("ld fp, 0(sp)\n"); // Restores FP
 
             offset = frame.locsSize + 8;
             printInstr(String.format("addi sp, sp, %d\n", offset)); // Restores old SP
-
             //TODO: RA only needs to be saved if changed
             printInstr("ret\n");
 
             writer.println();
         }
-        //Add exit if there is no exit yet
-        printInstr("li a0, 1\n");
-        printInstr("sd a0, 0(sp)\n");
-        printInstr("sd a0, 8(sp)\n");
-        printInstr("call _exit\n");
+
+        if(mainSubroutine && !compileAsLibrary) {
+            throw new Report.Error("No main functions found at the global scope.");
+        }
     }
 
     private void printInstr(String instr) {
@@ -225,18 +229,16 @@ public class All extends Phase {
         writer.printf(instr);
     }
 
-    //TODO: name it something like temp or something idk
-    public void allTogether(String path, RegAll regAll) {
+    public void allTogether(String path, RegAll regAll, boolean compileAsLibrary) {
         initWriter(path + ".s");
 
         dataSegment();
-        entry();
-        subroutines(AsmGen.codes, regAll);
+        entry(compileAsLibrary);
+        subroutines(regAll, AsmGen.codes, compileAsLibrary);
 
         writer.flush();
         writer.close();
     }
-
 
     private Vector<Integer> createCharArray(String value){
         Vector<Integer> chars = new Vector<>();

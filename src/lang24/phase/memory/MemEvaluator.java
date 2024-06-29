@@ -1,36 +1,83 @@
 package lang24.phase.memory;
 
-import java.security.SignatureException;
-import java.util.*;
-
-import lang24.data.ast.tree.*;
-import lang24.data.ast.tree.defn.*;
-import lang24.data.ast.tree.expr.*;
+import lang24.common.report.Report;
+import lang24.data.ast.tree.defn.AstFunDefn;
+import lang24.data.ast.tree.defn.AstVarDefn;
+import lang24.data.ast.tree.expr.AstAtomExpr;
+import lang24.data.ast.tree.expr.AstCallExpr;
+import lang24.data.ast.tree.expr.AstExpr;
 import lang24.data.ast.tree.type.AstRecType;
 import lang24.data.ast.tree.type.AstStrType;
 import lang24.data.ast.tree.type.AstUniType;
-import lang24.data.ast.visitor.*;
-import lang24.data.mem.*;
+import lang24.data.ast.visitor.AstFullVisitor;
+import lang24.data.mem.MemAbsAccess;
+import lang24.data.mem.MemFrame;
+import lang24.data.mem.MemLabel;
+import lang24.data.mem.MemRelAccess;
 import lang24.data.type.*;
-import lang24.data.type.visitor.*;
 import lang24.phase.seman.SemAn;
+
+import java.util.HashSet;
 
 /**
  * Computing memory layout: stack frames and variable accesses.
- * 
+ *
  * @author bostjan.slivnik@fri.uni-lj.si
  */
 
-/*
-    TODO:
-     1. No function frame for function prototypes
-        -> Expands to imcgen and function call
- */
+//TODO: Clean up code
 
 public class MemEvaluator implements AstFullVisitor<Object, MemEvaluator.Carry> {
 
-    HashSet<String> GlobalNames = new HashSet<>();
     private static int strCount = 0;
+    HashSet<String> GlobalNames = new HashSet<>();
+
+    public static Long SizeOfType(SemType type) {
+        long size = 0L;
+
+        if (type.actualType() instanceof SemCharType ||
+                type.actualType() instanceof SemBoolType) {
+            size = 8L;
+            return size;
+        }
+
+        if (type.actualType() instanceof SemArrayType arr) {
+            long typeSize = SizeOfType(arr.elemType);
+            if (arr.elemType.actualType() instanceof SemCharType ||
+                    arr.elemType.actualType() instanceof SemBoolType) {
+                typeSize = typeSize + (8 - (typeSize % 8)) % 8;
+            }
+            size = arr.size * typeSize;
+            return size;
+        }
+
+        if (type.actualType() instanceof SemIntType ||
+                type.actualType() instanceof SemPointerType) {
+            size = 8L;
+            return size;
+        }
+
+        if (type.actualType() instanceof SemStructType structType) {
+            for (SemType cmpType : structType.cmpTypes) {
+                long typeSize = SizeOfType(cmpType);
+                typeSize = typeSize + (8 - (typeSize % 8)) % 8;
+
+                size += typeSize;
+            }
+            return size;
+        }
+
+        if (type.actualType() instanceof SemUnionType unionType) {
+            for (SemType cmpType : unionType.cmpTypes) {
+                long typeSize = SizeOfType(cmpType);
+                typeSize = typeSize + (8 - (typeSize % 8)) % 8;
+                size = Math.max(size, typeSize);
+            }
+            return size;
+        }
+
+        return size;
+    }
 
     @Override
     public Object visit(AstVarDefn varDefn, Carry arg) {
@@ -38,17 +85,17 @@ public class MemEvaluator implements AstFullVisitor<Object, MemEvaluator.Carry> 
         SemType type = SemAn.isType.get(varDefn.type);
 
         long size = SizeOfType(type);
-        if(arg == null){
+        if (arg == null) {
             // CHECKME: I think this isn't needed
-            if(GlobalNames.contains(varDefn.name)){
+            if (GlobalNames.contains(varDefn.name)) {
                 // Is this even needed? -> Shadowing in same scope, is this even allowed in our language?
                 Memory.varAccesses.put(varDefn, new MemAbsAccess(size, new MemLabel()));
-            }else{
+            } else {
                 GlobalNames.add(varDefn.name);
                 Memory.varAccesses.put(varDefn, new MemAbsAccess(size, new MemLabel(varDefn.name)));
             }
 
-        }else {
+        } else {
             FuncCarry funcCarry = (FuncCarry) arg;
             funcCarry.LocalsSize += size;
             MemRelAccess memRelAccess = new MemRelAccess(size, -funcCarry.LocalsSize, funcCarry.depth);
@@ -62,31 +109,37 @@ public class MemEvaluator implements AstFullVisitor<Object, MemEvaluator.Carry> 
         FuncCarry funcCarry = new FuncCarry();
         MemLabel label = null;
 
-        if(arg == null){
+        if (arg == null) {
             funcCarry.depth = 0;
+
+            if (funDefn.name.equals("main") &&
+                    !(SemAn.ofType.get(funDefn) instanceof SemIntType)) {
+                throw new Report.Error(funDefn, "Global function " + funDefn.name
+                        + " must be of type int.");
+            }
             // CHECKME: I think this isn't needed
-            if(GlobalNames.contains(funDefn.name)) {
+            if (GlobalNames.contains(funDefn.name)) {
                 label = new MemLabel();
-            }else{
+            } else {
                 GlobalNames.add(funDefn.name);
                 label = new MemLabel(funDefn.name);
             }
-        }else {
+        } else {
             funcCarry.depth = arg.depth + 1;
             label = new MemLabel();
         }
 
-        if(funDefn.pars != null){
+        if (funDefn.pars != null) {
             funDefn.pars.accept(this, funcCarry);
         }
 
         funDefn.type.accept(this, funcCarry);
 
-        if(funDefn.defns != null){
+        if (funDefn.defns != null) {
             funDefn.defns.accept(this, funcCarry);
         }
 
-        if(funDefn.stmt != null){
+        if (funDefn.stmt != null) {
             funDefn.stmt.accept(this, funcCarry);
         }
 
@@ -97,7 +150,7 @@ public class MemEvaluator implements AstFullVisitor<Object, MemEvaluator.Carry> 
 
         Memory.frames.put(funDefn, memFrame);
 
-        return  null;
+        return null;
     }
 
     @Override
@@ -138,7 +191,7 @@ public class MemEvaluator implements AstFullVisitor<Object, MemEvaluator.Carry> 
         RecCarry recCarry = (RecCarry) arg;
 
         long offset = 0;
-        if(recCarry.type == RecCarry.RecType.STR){
+        if (recCarry.type == RecCarry.RecType.STR) {
             offset = recCarry.CompSize;
         }
 
@@ -148,7 +201,7 @@ public class MemEvaluator implements AstFullVisitor<Object, MemEvaluator.Carry> 
         if (recCarry.type == RecCarry.RecType.STR) {
             size = size + (8 - (size % 8)) % 8;
             recCarry.CompSize += size;
-        }else {
+        } else {
             recCarry.CompSize = Math.max(size, recCarry.CompSize);
         }
 
@@ -159,10 +212,10 @@ public class MemEvaluator implements AstFullVisitor<Object, MemEvaluator.Carry> 
 
     @Override
     public Object visit(AstAtomExpr atomExpr, Carry arg) {
-        if(atomExpr.type == AstAtomExpr.Type.STR){
-            String StrConst = atomExpr.value.substring(1, atomExpr.value.length()-1);
+        if (atomExpr.type == AstAtomExpr.Type.STR) {
+            String StrConst = atomExpr.value.substring(1, atomExpr.value.length() - 1);
             long size = (StrConst.length() + 1) * 8L;
-            MemAbsAccess memAbsAccess = new MemAbsAccess(size, new MemLabel("__str"+strCount), StrConst);
+            MemAbsAccess memAbsAccess = new MemAbsAccess(size, new MemLabel("__str" + strCount), StrConst);
             Memory.strings.put(atomExpr, memAbsAccess);
             strCount++;
         }
@@ -173,7 +226,7 @@ public class MemEvaluator implements AstFullVisitor<Object, MemEvaluator.Carry> 
     public Object visit(AstCallExpr callExpr, Carry arg) {
         long ArgsSize = 8L;
 
-        if(callExpr.args != null) {
+        if (callExpr.args != null) {
             callExpr.args.accept(this, arg);
 
             for (AstExpr astExpr : callExpr.args) {
@@ -203,66 +256,23 @@ public class MemEvaluator implements AstFullVisitor<Object, MemEvaluator.Carry> 
     public static abstract class Carry {
         long depth;
     }
-    public class FuncCarry extends Carry{
+
+    public class FuncCarry extends Carry {
         long LocalsSize;
         long ArgsSize;
         long ParSize;
     }
-    public class RecCarry extends Carry{
+
+    public class RecCarry extends Carry {
         long CompSize;
-        enum RecType {STR, UNI};
         RecType type = null;
-        RecCarry(RecType type){
+
+        RecCarry(RecType type) {
             this.type = type;
             this.depth = -1;
             this.CompSize = 0;
         }
-    }
 
-    public static Long SizeOfType(SemType type){
-        long size = 0L;
-
-        if(type.actualType() instanceof SemCharType ||
-                type.actualType() instanceof SemBoolType){
-            size = 8L;
-            return size;
-        }
-
-        if(type.actualType() instanceof SemArrayType arr){
-            long typeSize = SizeOfType(arr.elemType);
-            if(arr.elemType.actualType() instanceof SemCharType ||
-                arr.elemType.actualType() instanceof SemBoolType){
-                typeSize = typeSize + (8 - (typeSize % 8)) % 8;
-            }
-            size = arr.size * typeSize;
-            return size;
-        }
-
-        if(type.actualType() instanceof SemIntType ||
-            type.actualType() instanceof SemPointerType){
-            size = 8L;
-            return size;
-        }
-
-        if(type.actualType() instanceof SemStructType structType){
-            for (SemType cmpType : structType.cmpTypes) {
-                long typeSize = SizeOfType(cmpType);
-                typeSize = typeSize + (8 - (typeSize % 8)) % 8;
-
-                size += typeSize;
-            }
-            return size;
-        }
-
-        if(type.actualType() instanceof SemUnionType unionType){
-            for (SemType cmpType : unionType.cmpTypes) {
-                long typeSize = SizeOfType(cmpType);
-                typeSize = typeSize + (8 - (typeSize % 8)) % 8;
-                size = Math.max(size, typeSize);
-            }
-            return size;
-        }
-
-        return size;
+        enum RecType {STR, UNI}
     }
 }

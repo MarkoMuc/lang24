@@ -13,10 +13,7 @@ import lang24.data.ast.visitor.AstFullVisitor;
 import lang24.data.imc.code.expr.*;
 import lang24.data.imc.code.stmt.*;
 import lang24.data.mem.*;
-import lang24.data.type.SemArrayType;
-import lang24.data.type.SemCharType;
-import lang24.data.type.SemPointerType;
-import lang24.data.type.SemType;
+import lang24.data.type.*;
 import lang24.phase.memory.MemEvaluator;
 import lang24.phase.memory.Memory;
 import lang24.phase.seman.SemAn;
@@ -28,12 +25,15 @@ public class ImcGenerator implements AstFullVisitor<Object, Stack<MemFrame>> {
 
     Stack<ImcGenerator.FuncContext> funcContexts = new Stack<>();
     boolean conditionalStatement = false;
+    int ifStatementDepth = -1;
+    boolean conditionalContainsReturn = false;
 
     @Override
     public Object visit(AstFunDefn funDefn, Stack<MemFrame> arg) {
         if (arg == null) {
             arg = new Stack<>();
         }
+
         MemLabel entryL = new MemLabel();
         MemLabel exitL = new MemLabel();
 
@@ -51,7 +51,16 @@ public class ImcGenerator implements AstFullVisitor<Object, Stack<MemFrame>> {
         }
 
         if (funDefn.stmt != null) {
-            funDefn.stmt.accept(this, arg);
+            ImcStmt functionBodyStmt = (ImcStmt) funDefn.stmt.accept(this, arg);
+            functionBodyStmt = functionBody(functionBodyStmt, frame.RV);
+            ImcGen.stmtImc.put(funDefn.stmt, functionBodyStmt);
+
+            if (!funcContext.hasReturnOrExit &&
+                    !(SemAn.ofType.get(funDefn).actualType() instanceof SemVoidType)) {
+                String errorString = String.format("Missing return statement in non void function: %s", funDefn.name);
+                throw new Report.Error(funDefn, errorString);
+            }
+
         }
 
         funcContexts.pop();
@@ -68,7 +77,7 @@ public class ImcGenerator implements AstFullVisitor<Object, Stack<MemFrame>> {
             case BOOL -> new ImcCONST(atomExpr.value.equals("true") ? 1 : 0);
             case VOID -> new ImcCONST(-1);
             case PTR -> new ImcCONST(0);
-            case INT -> new ImcCONST(CheckNParse(atomExpr.value));
+            case INT -> new ImcCONST(checkAndParse(atomExpr.value));
             case CHAR -> new ImcCONST(createChar(atomExpr.value));
             case STR -> new ImcNAME(Memory.strings.get(atomExpr).label);
         };
@@ -220,6 +229,14 @@ public class ImcGenerator implements AstFullVisitor<Object, Stack<MemFrame>> {
         AstFunDefn funDefn = (AstFunDefn) SemAn.definedAt.get(callExpr);
         MemFrame memFrame = Memory.frames.get(funDefn);
 
+        if (callExpr.name.equals("exit")) {
+            if (!conditionalStatement) {
+                funcContexts.peek().hasReturnOrExit = true;
+            } else if (ifStatementDepth == 0) {
+                conditionalContainsReturn = true;
+            }
+        }
+
         ImcExpr imcExpr1 = new ImcTEMP(arg.peek().FP);
         for (int i = 0; i < arg.peek().depth - memFrame.depth + 1; i++) {
             imcExpr1 = new ImcMEM(imcExpr1);
@@ -285,15 +302,15 @@ public class ImcGenerator implements AstFullVisitor<Object, Stack<MemFrame>> {
     // ST1
     @Override
     public Object visit(AstExprStmt exprStmt, Stack<MemFrame> arg) {
-        boolean first = funcContexts.peek().first;
-        funcContexts.peek().first = false;
+        //boolean first = funcContexts.peek().first;
+        //funcContexts.peek().first = false;
 
         ImcExpr imcExpr = (ImcExpr) exprStmt.expr.accept(this, arg);
         ImcStmt imcESTMT = new ImcESTMT(imcExpr);
 
-        if (first) {
-            imcESTMT = funcBody(imcESTMT, arg.peek().RV);
-        }
+        // if (first) {
+        //     imcESTMT = functionBody(imcESTMT, arg.peek().RV);
+        // }
 
         ImcGen.stmtImc.put(exprStmt, imcESTMT);
 
@@ -303,16 +320,16 @@ public class ImcGenerator implements AstFullVisitor<Object, Stack<MemFrame>> {
     // ST2
     @Override
     public Object visit(AstAssignStmt assignStmt, Stack<MemFrame> arg) {
-        boolean first = funcContexts.peek().first;
-        funcContexts.peek().first = false;
+        // boolean first = funcContexts.peek().first;
+        // funcContexts.peek().first = false;
 
         ImcExpr expr1 = (ImcExpr) assignStmt.src.accept(this, arg);
         ImcExpr expr2 = (ImcExpr) assignStmt.dst.accept(this, arg);
         ImcStmt imcMOVE = new ImcMOVE(expr2, expr1);
 
-        if (first) {
-            imcMOVE = funcBody(imcMOVE, arg.peek().RV);
-        }
+        // if (first) {
+        //     imcMOVE = functionBody(imcMOVE, arg.peek().RV);
+        // }
 
         ImcGen.stmtImc.put(assignStmt, imcMOVE);
 
@@ -322,10 +339,12 @@ public class ImcGenerator implements AstFullVisitor<Object, Stack<MemFrame>> {
     // ST3, ST4, ST5, ST6
     @Override
     public Object visit(AstIfStmt ifStmt, Stack<MemFrame> arg) {
-        boolean first = funcContexts.peek().first;
-        funcContexts.peek().first = false;
-
+        // boolean first = funcContexts.peek().first;
+        // funcContexts.peek().first = false;
+        boolean previousConditionalValue = conditionalStatement;
         conditionalStatement = true;
+        ifStatementDepth++;
+
         ImcExpr imcExpr = (ImcExpr) ifStmt.cond.accept(this, arg);
         ImcStmt stmt = (ImcStmt) ifStmt.thenStmt.accept(this, arg);
 
@@ -341,17 +360,30 @@ public class ImcGenerator implements AstFullVisitor<Object, Stack<MemFrame>> {
         imcStmts.add(new ImcLABEL(elseL));
 
         if (ifStmt.elseStmt != null) {
+            boolean ifContainsReturn = conditionalContainsReturn;
+            conditionalStatement = false;
+
             imcStmts.add((ImcStmt) ifStmt.elseStmt.accept(this, arg));
+
+            if (ifStatementDepth == 0 && conditionalContainsReturn && ifContainsReturn) {
+                funcContexts.peek().hasReturnOrExit = true;
+            }
         }
+
+        if (ifStatementDepth == 0) {
+            conditionalContainsReturn = false;
+        }
+
         imcStmts.add(new ImcLABEL(endL));
 
         ImcStmt imcSTMTS = new ImcSTMTS(imcStmts);
 
-        if (first) {
-            imcSTMTS = funcBody(imcSTMTS, arg.peek().RV);
-        }
+        //  if (first) {
+        //      imcSTMTS = functionBody(imcSTMTS, arg.peek().RV);
+        //  }
+        conditionalStatement = previousConditionalValue;
+        ifStatementDepth--;
 
-        conditionalStatement = false;
         ImcGen.stmtImc.put(ifStmt, imcSTMTS);
 
         return imcSTMTS;
@@ -360,10 +392,11 @@ public class ImcGenerator implements AstFullVisitor<Object, Stack<MemFrame>> {
     // ST7, ST8
     @Override
     public Object visit(AstWhileStmt whileStmt, Stack<MemFrame> arg) {
-        boolean first = funcContexts.peek().first;
-        funcContexts.peek().first = false;
+        //  boolean first = funcContexts.peek().first;
+        //  funcContexts.peek().first = false;
 
-        conditionalStatement = false;
+        boolean previousConditionalValue = conditionalStatement;
+        conditionalStatement = true;
 
         ImcExpr imcExpr = (ImcExpr) whileStmt.cond.accept(this, arg);
         ImcStmt imcStmt = (ImcStmt) whileStmt.stmt.accept(this, arg);
@@ -385,11 +418,11 @@ public class ImcGenerator implements AstFullVisitor<Object, Stack<MemFrame>> {
 
         ImcStmt imcSTMTS = new ImcSTMTS(imcStmts);
 
-        if (first) {
-            imcSTMTS = funcBody(imcSTMTS, arg.peek().RV);
-        }
+        //  if (first) {
+        //      imcSTMTS = functionBody(imcSTMTS, arg.peek().RV);
+        //  }
 
-        conditionalStatement = false;
+        conditionalStatement = previousConditionalValue;
         ImcGen.stmtImc.put(whileStmt, imcSTMTS);
 
         return imcSTMTS;
@@ -397,10 +430,11 @@ public class ImcGenerator implements AstFullVisitor<Object, Stack<MemFrame>> {
 
     @Override
     public Object visit(AstForStmt forStmt, Stack<MemFrame> arg) {
-        boolean first = funcContexts.peek().first;
-        funcContexts.peek().first = false;
+        //  boolean first = funcContexts.peek().first;
+        //  funcContexts.peek().first = false;
 
-        conditionalStatement = false;
+        boolean previousConditionalValue = conditionalStatement;
+        conditionalStatement = true;
 
         ImcStmt imcInitStmt = (ImcStmt) forStmt.init.accept(this, arg);
         ImcExpr imcExpr = (ImcExpr) forStmt.cond.accept(this, arg);
@@ -426,11 +460,11 @@ public class ImcGenerator implements AstFullVisitor<Object, Stack<MemFrame>> {
 
         ImcStmt imcSTMTS = new ImcSTMTS(imcStmts);
 
-        if (first) {
-            imcSTMTS = funcBody(imcSTMTS, arg.peek().RV);
-        }
+        //  if (first) {
+        //      imcSTMTS = functionBody(imcSTMTS, arg.peek().RV);
+        //  }
 
-        conditionalStatement = false;
+        conditionalStatement = previousConditionalValue;
         ImcGen.stmtImc.put(forStmt, imcSTMTS);
 
         return imcSTMTS;
@@ -439,8 +473,8 @@ public class ImcGenerator implements AstFullVisitor<Object, Stack<MemFrame>> {
     // ST9
     @Override
     public Object visit(AstBlockStmt blockStmt, Stack<MemFrame> arg) {
-        boolean first = funcContexts.peek().first;
-        funcContexts.peek().first = false;
+        //  boolean first = funcContexts.peek().first;
+        //  funcContexts.peek().first = false;
 
         Vector<ImcStmt> imcStmts = new Vector<>();
 
@@ -451,9 +485,9 @@ public class ImcGenerator implements AstFullVisitor<Object, Stack<MemFrame>> {
 
         ImcStmt imcSTMTS = new ImcSTMTS(imcStmts);
 
-        if (first) {
-            imcSTMTS = funcBody(imcSTMTS, arg.peek().RV);
-        }
+        //  if (first) {
+        //      imcSTMTS = functionBody(imcSTMTS, arg.peek().RV);
+        //  }
 
         ImcGen.stmtImc.put(blockStmt, imcSTMTS);
 
@@ -462,13 +496,15 @@ public class ImcGenerator implements AstFullVisitor<Object, Stack<MemFrame>> {
 
     @Override
     public Object visit(AstReturnStmt retStmt, Stack<MemFrame> arg) {
-        boolean first = funcContexts.peek().first;
-        funcContexts.peek().first = false;
-        //CHECKME:Do i need to check if there is a return elsewhere tho?
-        //      -  E.G this is inside an IF or While stmt, so we still need the additional back
+        //  boolean first = funcContexts.peek().first;
+        //funcContexts.peek().first = false;
         if (!conditionalStatement) {
-            funcContexts.peek().add_return = false;
+            funcContexts.peek().hasReturnOrExit = true;
+        } else if (ifStatementDepth == 0) {
+            conditionalContainsReturn = true;
         }
+
+
         Vector<ImcStmt> returnStms = new Vector<>();
 
         // FIXME: Why do we even have RV? isn't this just FP + 0?
@@ -479,9 +515,9 @@ public class ImcGenerator implements AstFullVisitor<Object, Stack<MemFrame>> {
         returnStms.add(new ImcJUMP(funcContexts.peek().exitL));
         ImcStmt imcSTMTS = new ImcSTMTS(returnStms);
 
-        if (first) {
-            imcSTMTS = funcBody(imcSTMTS, arg.peek().RV);
-        }
+        //  if (first) {
+        //      imcSTMTS = functionBody(imcSTMTS, arg.peek().RV);
+        //  }
 
         ImcGen.stmtImc.put(retStmt, imcSTMTS);
 
@@ -518,19 +554,18 @@ public class ImcGenerator implements AstFullVisitor<Object, Stack<MemFrame>> {
     }
 
     private int createChar(String value) {
-        int c = -1;
+        int c;
 
-        //Remove ' '
         int fst = value.indexOf('\'');
         int lst = value.lastIndexOf('\'') == -1 ? value.length() : value.lastIndexOf('\'');
         value = value.substring(fst + 1, lst);
 
-        if (value.length() == 1) { // Simple char
+        if (value.length() == 1) {
             c = value.charAt(0);
         } else if (value.length() == 2) {
             value = value.substring(value.indexOf("\\") + 1);
             c = value.indexOf('n') == -1 ? value.charAt(0) : 0x0A;
-        } else if (value.length() == 3) { // Escape sequence
+        } else if (value.length() == 3) {
             c = Integer.parseInt(value.substring(value.indexOf("\\") + 1), 16);
         } else {
             throw new Report.Error("Not a valid char" + value);
@@ -539,7 +574,7 @@ public class ImcGenerator implements AstFullVisitor<Object, Stack<MemFrame>> {
         return c;
     }
 
-    private long CheckNParse(String value) {
+    private long checkAndParse(String value) {
         try {
             return Long.parseLong(value);
         } catch (NumberFormatException e) {
@@ -547,8 +582,7 @@ public class ImcGenerator implements AstFullVisitor<Object, Stack<MemFrame>> {
         }
     }
 
-    private ImcStmt funcBody(ImcStmt mainStmt, MemTemp RV) {
-
+    private ImcStmt functionBody(ImcStmt mainStmt, MemTemp RV) {
         if (mainStmt instanceof ImcSTMTS mainSTMTS) {
             mainSTMTS.stmts.addFirst(new ImcLABEL(funcContexts.peek().entryL));
             mainSTMTS.stmts.addLast(new ImcLABEL(funcContexts.peek().exitL));
@@ -562,27 +596,28 @@ public class ImcGenerator implements AstFullVisitor<Object, Stack<MemFrame>> {
             mainStmt = new ImcSTMTS(stmtVector);
         }
 
-        if (funcContexts.peek().add_return) {
-            ImcStmt imcMOVE = new ImcMOVE(new ImcTEMP(RV), new ImcCONST(0));
-            int len = ((ImcSTMTS) mainStmt).stmts.size();
-            ((ImcSTMTS) mainStmt).stmts.add(len - 1, imcMOVE);
-            funcContexts.peek().add_return = false;
-        }
+        //RV or FP??
+        // if (funcContexts.peek().add_return) {
+        //     ImcStmt imcMOVE = new ImcMOVE(new ImcTEMP(RV), new ImcCONST(0));
+        //     int len = ((ImcSTMTS) mainStmt).stmts.size();
+        //     ((ImcSTMTS) mainStmt).stmts.add(len - 1, imcMOVE);
+        //     funcContexts.peek().add_return = false;
+        // }
 
-        funcContexts.peek().first = false;
+        //funcContexts.peek().first = false;
 
         return mainStmt;
     }
 
     private class FuncContext {
-        boolean first;
         MemLabel entryL;
         MemLabel exitL;
-        boolean add_return;
+        boolean first;
+        boolean hasReturnOrExit;
 
         FuncContext(MemLabel entryL, MemLabel exitL) {
             this.first = true;
-            this.add_return = true;
+            this.hasReturnOrExit = false;
             this.entryL = entryL;
             this.exitL = exitL;
         }
