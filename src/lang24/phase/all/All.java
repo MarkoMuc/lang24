@@ -42,6 +42,7 @@ public class All extends Phase {
     private void dataSegment() {
         //TODO: data can be closer to its first use
         Vector<LinDataChunk> chunks = ImcLin.dataChunks();
+        Vector<LinDataChunk> ROChunks = new Vector<>();
 
         if (chunks.isEmpty()) {
             return;
@@ -72,14 +73,24 @@ public class All extends Phase {
                     data = "0";
                     mmapGlobals.add(chunk);
                 } else {
-                    type = ".string";
-                    data = "\"" + chunk.init + "\"";
+                    ROChunks.add(chunk);
+                    continue;
                 }
             }
             writer.printf("%s:\t%s %s\n", chunk.label.name, type, data);
         }
 
         writer.println();
+
+        if(!ROChunks.isEmpty()) {
+            writer.println(".section .rodata");
+            writer.printf(".align %d\n", DATA_ALIGN);
+            for(LinDataChunk chunk : ROChunks) {
+                writer.printf("%s:\t.string \"%s\"\n", chunk.label.name, chunk.init);
+            }
+
+            writer.println();
+        }
     }
 
     private void mmapGenerate(LinDataChunk chunk) {
