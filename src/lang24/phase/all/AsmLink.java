@@ -129,18 +129,26 @@ public class AsmLink extends Phase {
 
     }
 
-    public void assembleAndLink(String path, boolean objectFileOnly) {
+    public void assembleAndLink(String path, boolean objectFileOnly, boolean debugModeOn) {
         this.errFile = new File("err.temp");
         String lib_path = find_lib();
         assembler(path, lib_path);
         getStd(lib_path);
         if(!objectFileOnly){
             linker(path, lib_path);
+        }else{
+            if (!this.errFile.delete()) {
+                System.err.println("Couldn't delete " + this.errFile.getAbsolutePath());
+            }
         }
-        if(!new File(path + ".s").delete()){
-            throw new Report.Error("Couldn't delete the temporary asm file.");
+
+        if(!debugModeOn){
+            if(!new File(path + ".s").delete()){
+                throw new Report.Error("Couldn't delete the temporary asm file.");
+            }
         }
-        if(objectFileOnly){
+
+        if(objectFileOnly || debugModeOn){
             return;
         }
         if(!new File(path + ".o").delete()){

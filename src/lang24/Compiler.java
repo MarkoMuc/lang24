@@ -37,7 +37,7 @@ public class Compiler {
 	/** Names of command line options. */
 	private static final HashSet<String> cmdLineOptNames = new HashSet<String>(
 			Arrays.asList("--src-file-name", "--dst-file-name", "--target-phase", "--logged-phase", "--xml",
-					"--xsl", "--num-regs", "--obj", "--asm", "--lib"));
+					"--xsl", "--num-regs", "--obj", "--asm", "--lib", "--dbg"));
 
 	/** Values of command line options indexed by their command line option name. */
 	private static final HashMap<String, String> cmdLineOptValues = new HashMap<String, String>();
@@ -257,9 +257,9 @@ public class Compiler {
 				if (cmdLineOptValues.get("--target-phase").equals("regall"))
 					break;
 
+				boolean compileAsLibrary = cmdLineOptValues.containsKey("--lib");
 				try(All all = new All()){
 					String path = cmdLineOptValues.get("--dst-file-name");
-					boolean compileAsLibrary = Boolean.parseBoolean(cmdLineOptValues.get("--library"));
 					if(path == null) path = cmdLineOptValues.get("--src-file-name");
 					all.allTogether(path, regAll, compileAsLibrary);
 				}
@@ -270,10 +270,11 @@ public class Compiler {
 
 				try(AsmLink asmLink = new AsmLink()){
 					String path = cmdLineOptValues.get("--dst-file-name");
-					boolean objectFileOnly = Boolean.parseBoolean(cmdLineOptValues.get("--obj")) ||
-										Boolean.parseBoolean(cmdLineOptValues.get("--lib"));
+					boolean objectFileOnly = cmdLineOptValues.containsKey("--obj") ||
+											compileAsLibrary;
+					boolean debugModeOn = cmdLineOptValues.containsKey("--dbg");
 					if(path == null) path = cmdLineOptValues.get("--src-file-name");
-					asmLink.assembleAndLink(path, objectFileOnly);
+					asmLink.assembleAndLink(path, objectFileOnly, debugModeOn);
 				}
 
 				break;
