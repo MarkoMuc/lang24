@@ -17,7 +17,7 @@ import lang24.data.mem.MemRelAccess;
 import lang24.data.type.*;
 import lang24.phase.seman.SemAn;
 
-import java.util.HashSet;
+import java.util.Arrays;
 
 /**
  * Computing memory layout: stack frames and variable accesses.
@@ -25,12 +25,23 @@ import java.util.HashSet;
  * @author bostjan.slivnik@fri.uni-lj.si
  */
 
-//TODO: Clean up code
 
 public class MemEvaluator implements AstFullVisitor<Object, MemEvaluator.Carry> {
 
+    private static final String[] STD_FUNCTIONS = {
+            "start",
+            "exit",
+            "getchar",
+            "getint",
+            "mmap",
+            "putcarr",
+            "putchar",
+            "putcstr",
+            "putint",
+            "read",
+            "write"
+    };
     private static int strCount = 0;
-    HashSet<String> GlobalNames = new HashSet<>();
 
     public static Long SizeOfType(SemType type) {
         long size = 0L;
@@ -86,15 +97,7 @@ public class MemEvaluator implements AstFullVisitor<Object, MemEvaluator.Carry> 
 
         long size = SizeOfType(type);
         if (arg == null) {
-            // CHECKME: I think this isn't needed
-            if (GlobalNames.contains(varDefn.name)) {
-                // Is this even needed? -> Shadowing in same scope, is this even allowed in our language?
-                Memory.varAccesses.put(varDefn, new MemAbsAccess(size, new MemLabel()));
-            } else {
-                GlobalNames.add(varDefn.name);
-                Memory.varAccesses.put(varDefn, new MemAbsAccess(size, new MemLabel(varDefn.name)));
-            }
-
+            Memory.varAccesses.put(varDefn, new MemAbsAccess(size, new MemLabel(varDefn.name)));
         } else {
             FuncCarry funcCarry = (FuncCarry) arg;
             funcCarry.LocalsSize += size;
@@ -117,13 +120,18 @@ public class MemEvaluator implements AstFullVisitor<Object, MemEvaluator.Carry> 
                 throw new Report.Error(funDefn, "Global function " + funDefn.name
                         + " must be of type int.");
             }
-            // CHECKME: I think this isn't needed
-            if (GlobalNames.contains(funDefn.name)) {
-                label = new MemLabel();
-            } else {
-                GlobalNames.add(funDefn.name);
-                label = new MemLabel(funDefn.name);
+
+            if (funDefn.name.equalsIgnoreCase("start")) {
+                throw new Report.Error(funDefn, "Global function start is a reserved and can't be used.");
             }
+
+            if (Arrays.asList(STD_FUNCTIONS).contains(funDefn.name.toLowerCase())
+                    && funDefn.stmt != null) {
+                throw new Report.Error(funDefn, "Global function " + funDefn.name
+                        + " is a reserved standard function so it can only be a function prototype.");
+            }
+
+            label = new MemLabel(funDefn.name);
         } else {
             funcCarry.depth = arg.depth + 1;
             label = new MemLabel();
