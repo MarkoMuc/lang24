@@ -280,10 +280,6 @@ public class Compiler {
 				break;
 			}
 
-			// Let's hope we ever come this far.
-			// But beware:
-			// 1. The generated translation of the source file might be erroneous :-o
-			// 2. The source file might not be what the programmer intended it to be ;-)
 			Report.info("Done.");
 		} catch (final Report.Error error) {
 			System.err.println(error.getMessage());
