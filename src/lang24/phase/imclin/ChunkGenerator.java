@@ -83,8 +83,7 @@ public class ChunkGenerator implements AstFullVisitor<Object, Object> {
         Vector<ImcStmt> linearStmts = new Vector<ImcStmt>();
         for (int s = 0; s < stmts.size(); s++) {
             ImcStmt stmt = stmts.get(s);
-            if (stmt instanceof ImcCJUMP) {
-                ImcCJUMP imcCJump = (ImcCJUMP)stmt;
+            if (stmt instanceof ImcCJUMP imcCJump) {
                 MemLabel negLabel = new MemLabel();
                 linearStmts.add(new ImcCJUMP(imcCJump.cond, imcCJump.posLabel, negLabel));
                 linearStmts.add(new ImcLABEL(negLabel));
@@ -97,4 +96,5 @@ public class ChunkGenerator implements AstFullVisitor<Object, Object> {
     }
 
     //* Permute
+
 }
