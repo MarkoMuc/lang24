@@ -52,7 +52,7 @@ public class ImcGenerator implements AstFullVisitor<Object, Stack<MemFrame>> {
 
         if (funDefn.stmt != null) {
             ImcStmt functionBodyStmt = (ImcStmt) funDefn.stmt.accept(this, arg);
-            functionBodyStmt = functionBody(functionBodyStmt, frame.RV);
+            functionBodyStmt = functionBody(functionBodyStmt);
             ImcGen.stmtImc.put(funDefn.stmt, functionBodyStmt);
 
             if (!funcContext.hasReturnOrExit &&
@@ -193,7 +193,6 @@ public class ImcGenerator implements AstFullVisitor<Object, Stack<MemFrame>> {
             throw new Report.Error(arrExpr, "This shouldn't happen.");
         }
 
-        // TODO: Maybe make it so if offset < LIMIT, just use a constant?
         ImcBINOP imcOffset = new ImcBINOP(ImcBINOP.Oper.MUL, idx, typeSize);
         ImcBINOP imcBin = new ImcBINOP(ImcBINOP.Oper.ADD, arr, imcOffset);
 
@@ -530,7 +529,7 @@ public class ImcGenerator implements AstFullVisitor<Object, Stack<MemFrame>> {
         }
     }
 
-    private ImcStmt functionBody(ImcStmt mainStmt, MemTemp RV) {
+    private ImcStmt functionBody(ImcStmt mainStmt) {
         if (mainStmt instanceof ImcSTMTS mainSTMTS) {
             mainSTMTS.stmts.addFirst(new ImcLABEL(funcContexts.peek().entryL));
             mainSTMTS.stmts.addLast(new ImcLABEL(funcContexts.peek().exitL));
