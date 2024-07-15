@@ -9,63 +9,41 @@ import lang24.data.mem.MemTemp;
 import java.util.Vector;
 
 public class ExprCanonizer implements ImcVisitor<ImcExpr, Vector<ImcStmt>> {
-    private boolean estmt = false;
-    public ExprCanonizer(){}
-    public ExprCanonizer(boolean estmt) {
-        this.estmt = estmt;
-    }
-
     @Override
     public ImcExpr visit(ImcBINOP binOp, Vector<ImcStmt> visArg) {
-        // Some extra logic for immediate here does not hurt tbh. Or should it be done in the next asm stage
-        // Saves values of both expressions into temps
-        ImcTEMP fstTemp = new ImcTEMP(new MemTemp());
         ImcExpr fstImc = binOp.fstExpr.accept(this, visArg);
-        visArg.add(new ImcMOVE(fstTemp, fstImc));
-
-        ImcTEMP sndTemp = new ImcTEMP(new MemTemp());
         ImcExpr sndImc = binOp.sndExpr.accept(this, visArg);
-        visArg.add(new ImcMOVE(sndTemp, sndImc));
 
-        // Evaluates the operation
         ImcTEMP resTemp = new ImcTEMP(new MemTemp());
         visArg.add(new ImcMOVE(resTemp,
-                new ImcBINOP(binOp.oper,fstTemp,sndTemp)));
+                new ImcBINOP(binOp.oper,fstImc, sndImc)));
 
         return resTemp;
     }
 
     @Override
     public ImcExpr visit(ImcCALL call, Vector<ImcStmt> visArg) {
-        boolean isEstmt = estmt;
-        estmt = false;
         Vector<ImcExpr> args = new Vector<>();
 
-        // Saves args into temps
-        // CHECKME: Why is it more than 1 ??????
         if( call.args.size() > 1) {
+            boolean containsCall = call.args.stream().anyMatch(expr -> expr instanceof ImcCALL);
             for (ImcExpr arg : call.args) {
                 if(arg instanceof ImcCONST imcCONST) {
                     args.add(imcCONST);
                 }else {
-                    MemTemp argTemp = new MemTemp();
-                    visArg.add(new ImcMOVE(
-                            new ImcTEMP(argTemp), arg.accept(this, visArg)));
-                    args.add(new ImcTEMP(argTemp));
+                    if(containsCall) {
+                        MemTemp argTemp = new MemTemp();
+                        visArg.add(new ImcMOVE(
+                                new ImcTEMP(argTemp), arg.accept(this, visArg)));
+                        args.add(new ImcTEMP(argTemp));
+                    }else{
+                        args.add(arg);
+                    }
                 }
             }
         }
 
-        ImcExpr out = new ImcCALL(call.label, call.offs, args);
-        if ( !isEstmt ) {
-            // Save result into temp and return it
-            ImcTEMP resTemp = new ImcTEMP(new MemTemp());
-            visArg.add(new ImcMOVE(resTemp,
-                    new ImcCALL(call.label, call.offs, args)));
-            out = resTemp;
-        }
-
-        return out;
+        return new ImcCALL(call.label, call.offs, args);
     }
 
     @Override
@@ -75,7 +53,6 @@ public class ExprCanonizer implements ImcVisitor<ImcExpr, Vector<ImcStmt>> {
 
     @Override
     public ImcExpr visit(ImcMEM mem, Vector<ImcStmt> visArg) {
-        // Canonize the address
         return new ImcMEM(mem.addr.accept(this, visArg));
     }
 
@@ -86,7 +63,6 @@ public class ExprCanonizer implements ImcVisitor<ImcExpr, Vector<ImcStmt>> {
 
     @Override
     public ImcExpr visit(ImcSEXPR sExpr, Vector<ImcStmt> visArg) {
-        // Canonize the stmt
         visArg.addAll(sExpr.stmt.accept(new StmtCanonizer(), null));
         return sExpr.expr.accept(this, visArg);
     }
