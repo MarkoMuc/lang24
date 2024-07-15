@@ -44,6 +44,7 @@ public class LiveAn extends Phase {
 
 		//Check possible jumps, calls do not matter, since all regs are saved at entry of the frame
 		// TODO:this should make sure that CALL is not a function/name
+		//		.matches("call (_|\\w)*"
 		if(instr.jumps() != null && !instr.toString().contains("call")){
 			for(MemLabel label : instr.jumps()){
 				Integer labelIdx = labels.get(label.name);
