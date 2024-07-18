@@ -23,8 +23,8 @@ import java.util.Vector;
 public class All extends Phase {
     private final int DATA_ALIGN = 6;
     private final int INSTR_ALIGN = 6;
-    private PrintWriter writer;
     private final HashSet<LinDataChunk> mmapGlobals = new HashSet<>();
+    private PrintWriter writer;
 
     public All() {
         super("all");
@@ -81,10 +81,10 @@ public class All extends Phase {
 
         writer.println();
 
-        if(!ROChunks.isEmpty()) {
+        if (!ROChunks.isEmpty()) {
             writer.println(".section .rodata");
             writer.printf(".align %d\n", DATA_ALIGN);
-            for(LinDataChunk chunk : ROChunks) {
+            for (LinDataChunk chunk : ROChunks) {
                 writer.printf("%s:\t.string \"%s\"\n", chunk.label.name, chunk.init);
             }
 
@@ -101,9 +101,9 @@ public class All extends Phase {
         printInstr("ld a0, 0(sp)\n");
         printInstr(String.format("la a1, %s\n", chunk.label.name));
         printInstr("sd a0, 0(a1)\n");
-        if(chunk.label.name.contains("__str")) {
+        if (chunk.label.name.contains("__str")) {
             Vector<Integer> data = createCharArray(chunk.init);
-            for(Integer c : data) {
+            for (Integer c : data) {
                 printInstr(String.format("li a1, %d\n", c));
                 printInstr("sb a1, 0(a0)\n");
                 printInstr("addi a0, a0, 1\n");
@@ -118,7 +118,7 @@ public class All extends Phase {
     private void entry(boolean compileAsLibrary) {
         writer.println(".section .text");
         writer.printf(".align %d\n", INSTR_ALIGN);
-        if(!compileAsLibrary) {
+        if (!compileAsLibrary) {
             writer.println(".global _start");
             writer.println("_start:");
         }
@@ -127,7 +127,7 @@ public class All extends Phase {
             mmapGenerate(chunk);
         }
 
-        if(!compileAsLibrary) {
+        if (!compileAsLibrary) {
             printInstr("call _main\n");
 
             printInstr("ld a0, 0(sp)\n");
@@ -150,7 +150,7 @@ public class All extends Phase {
             HashSet<String> usedRegs = codeToRegs.get(subroutine);
             long offset = 0;
             if (frame.label.name.equals("main") &&
-                frame.depth == 0){
+                    frame.depth == 0) {
                 mainSubroutine = true;
             }
 
@@ -168,7 +168,7 @@ public class All extends Phase {
             printInstr(String.format("addi fp, fp, %d\n", offset)); // Align FP back to the old SP
 
             offset = 8;
-            if(frame.argsSize > 1) {
+            if (frame.argsSize > 1) {
                 printInstr(String.format("addi sp, sp, -%d\n", offset));
                 printInstr("sd ra, 0(sp)\n"); // Saves return address
             }
@@ -217,7 +217,7 @@ public class All extends Phase {
                 printInstr(String.format("addi sp, sp, %d\n", offset));
             }
 
-            if(frame.argsSize > 1) {
+            if (frame.argsSize > 1) {
                 printInstr("ld ra, 0(sp)\n"); // Restores RA
                 printInstr(String.format("addi sp, sp, %d\n", offset));
             }
@@ -231,7 +231,7 @@ public class All extends Phase {
             writer.println();
         }
 
-        if(mainSubroutine && !compileAsLibrary) {
+        if (mainSubroutine && !compileAsLibrary) {
             throw new Report.Error("No main functions found at the global scope.");
         }
     }
@@ -252,31 +252,31 @@ public class All extends Phase {
         writer.close();
     }
 
-    private Vector<Integer> createCharArray(String value){
+    private Vector<Integer> createCharArray(String value) {
         Vector<Integer> chars = new Vector<>();
         boolean escape = false;
         StringBuilder v = new StringBuilder();
 
-        for(char c : value.toCharArray()){
-            if(!escape && c != '\\'){
-                chars.add((int)c);
-            }else{
-                if(escape){
-                    if(c == '\\'){
-                        chars.add((int)'\\');
+        for (char c : value.toCharArray()) {
+            if (!escape && c != '\\') {
+                chars.add((int) c);
+            } else {
+                if (escape) {
+                    if (c == '\\') {
+                        chars.add((int) '\\');
                         escape = false;
-                    }else if(c == 'n'){
-                        chars.add((int)'\n');
+                    } else if (c == 'n') {
+                        chars.add((int) '\n');
                         escape = false;
-                    }else if(c >= 'A' && c <= 'F'){
+                    } else if (c >= 'A' && c <= 'F') {
                         v.append(c);
-                        if(v.length() == 2){
+                        if (v.length() == 2) {
                             chars.add(Integer.parseInt(v.toString(), 16));
                             v.setLength(0);
                             escape = false;
                         }
                     }
-                }else{
+                } else {
                     escape = true;
                 }
             }
