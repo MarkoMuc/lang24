@@ -404,8 +404,10 @@ public class TypeResolver implements AstFullVisitor<SemType, TypeResolver.Contex
             type = SemAn.ofType.get(def);
         } else if (def instanceof AstTypDefn) {
             throw new Report.Error(nameExpr, "Type as expression error.");
-        } else {
-            type = SemAn.isType.get(def);
+        } else if (def instanceof AstFunDefn) {
+            throw new Report.Error(nameExpr, "Function call missing parenthesis error.");
+        }else {
+            throw new Report.Error(nameExpr, "Unknown name expression.");
         }
         SemAn.ofType.put(nameExpr, type);
 
