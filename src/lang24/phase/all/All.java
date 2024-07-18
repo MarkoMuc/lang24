@@ -168,8 +168,10 @@ public class All extends Phase {
             printInstr(String.format("addi fp, fp, %d\n", offset)); // Align FP back to the old SP
 
             offset = 8;
-            printInstr(String.format("addi sp, sp, -%d\n", offset));
-            printInstr("sd ra, 0(sp)\n"); // Saves return address
+            if(frame.argsSize > 1) {
+                printInstr(String.format("addi sp, sp, -%d\n", offset));
+                printInstr("sd ra, 0(sp)\n"); // Saves return address
+            }
 
             for (String reg : usedRegs) {
                 printInstr(String.format("addi sp, sp, -%d\n", offset));
@@ -215,8 +217,10 @@ public class All extends Phase {
                 printInstr(String.format("addi sp, sp, %d\n", offset));
             }
 
-            printInstr("ld ra, 0(sp)\n"); // Restores RA
-            printInstr(String.format("addi sp, sp, %d\n", offset));
+            if(frame.argsSize > 1) {
+                printInstr("ld ra, 0(sp)\n"); // Restores RA
+                printInstr(String.format("addi sp, sp, %d\n", offset));
+            }
 
             printInstr("ld fp, 0(sp)\n"); // Restores FP
 
