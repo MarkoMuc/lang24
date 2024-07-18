@@ -40,7 +40,6 @@ public class All extends Phase {
     }
 
     private void dataSegment() {
-        //TODO: data can be closer to its first use
         Vector<LinDataChunk> chunks = ImcLin.dataChunks();
         Vector<LinDataChunk> ROChunks = new Vector<>();
 
@@ -94,7 +93,6 @@ public class All extends Phase {
     }
 
     private void mmapGenerate(LinDataChunk chunk) {
-        //TODO: add \0 and a function that prints it this way
         printInstr(String.format("li a1, %d\n", chunk.size));
         printInstr("sd a1, 8(sp)\n");
         printInstr("addi a1, a1, 8\n");
@@ -224,7 +222,6 @@ public class All extends Phase {
 
             offset = frame.locsSize + 8;
             printInstr(String.format("addi sp, sp, %d\n", offset)); // Restores old SP
-            //TODO: RA only needs to be saved if changed
             printInstr("ret\n");
 
             writer.println();

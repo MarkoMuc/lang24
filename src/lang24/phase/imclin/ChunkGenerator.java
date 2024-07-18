@@ -71,9 +71,6 @@ public class ChunkGenerator implements AstFullVisitor<Object, Object> {
 
             // For declaration stmts
             funDefn.stmt.accept(this,null);
-        } else {
-            //TODO: is this needed?
-            // ImcLin.addCodeChunk(new LinCodeChunk(memFrame,imcStmtVector,entryLabel,exitLabel));
         }
 
         return null;
