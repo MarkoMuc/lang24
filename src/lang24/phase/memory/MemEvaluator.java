@@ -24,8 +24,6 @@ import java.util.Arrays;
  *
  * @author bostjan.slivnik@fri.uni-lj.si
  */
-
-
 public class MemEvaluator implements AstFullVisitor<Object, MemEvaluator.Carry> {
 
     private static final String[] STD_FUNCTIONS = {

@@ -41,36 +41,25 @@ public class ChunkGenerator implements AstFullVisitor<Object, Object> {
 
     @Override
     public Object visit(AstFunDefn funDefn, Object arg) {
-        //TODO: remove additional end label at the end of the function
-        Vector<ImcStmt> imcStmtVector = new Vector<>();
         MemFrame memFrame = Memory.frames.get(funDefn);
 
-        MemLabel entryLabel = new MemLabel();
-        MemLabel exitLabel = new MemLabel();
+        MemLabel entryLabel = ImcGen.entryLabel.get(funDefn);
+        MemLabel exitLabel = ImcGen.exitLabel.get(funDefn);
 
-        //Adds entry label for the function body
-        //Entry and exit label are already added beforehand in imcgen
-        // TODO: Only add function labels here?
-        imcStmtVector.add(new ImcLABEL(entryLabel));
-
-        if(funDefn.defns != null){
+        if (funDefn.defns != null) {
             funDefn.defns.accept(this, null);
         }
 
-        if(funDefn.stmt != null) {
+        if (funDefn.stmt != null) {
             ImcStmt imcStmt = ImcGen.stmtImc.get(funDefn.stmt);
-
             Vector<ImcStmt> canonized = imcStmt.accept(new StmtCanonizer(), null);
-            imcStmtVector.addAll(canonized);
 
-            imcStmtVector.add(new ImcJUMP(exitLabel));
-
-            Vector<ImcStmt> linStmts = LinImcCALL(imcStmtVector);
+            Vector<ImcStmt> linStmts = LinImcCALL(canonized);
 
             ImcLin.addCodeChunk(new LinCodeChunk(memFrame, linStmts, entryLabel, exitLabel));
 
             // For declaration stmts
-            funDefn.stmt.accept(this,null);
+            funDefn.stmt.accept(this, null);
         }
 
         return null;
@@ -85,9 +74,9 @@ public class ChunkGenerator implements AstFullVisitor<Object, Object> {
                 linearStmts.add(new ImcCJUMP(imcCJump.cond, imcCJump.posLabel, negLabel));
                 linearStmts.add(new ImcLABEL(negLabel));
                 linearStmts.add(new ImcJUMP(imcCJump.negLabel));
-            }
-            else
+            } else {
                 linearStmts.add(stmt);
+            }
         }
         return linearStmts;
     }

@@ -60,7 +60,6 @@ public class ImcGenerator implements AstFullVisitor<Object, Stack<MemFrame>> {
                 String errorString = String.format("Missing return statement in non void function: %s", funDefn.name);
                 throw new Report.Error(funDefn, errorString);
             }
-
         }
 
         funcContexts.pop();
@@ -451,24 +450,28 @@ public class ImcGenerator implements AstFullVisitor<Object, Stack<MemFrame>> {
 
     @Override
     public Object visit(AstReturnStmt retStmt, Stack<MemFrame> arg) {
+        Vector<ImcStmt> returnStms = new Vector<>();
+        ImcMEM saveTo = new ImcMEM(new ImcTEMP(arg.peek().FP));
+        ImcStmt imcStmt;
+
         if (!conditionalStatement) {
             funcContexts.peek().hasReturnOrExit = true;
         } else if (ifStatementDepth == 0) {
             conditionalContainsReturn = true;
         }
 
-
-        Vector<ImcStmt> returnStms = new Vector<>();
-
-        ImcMEM saveTo = new ImcMEM(new ImcTEMP(arg.peek().FP));
-
         returnStms.add(new ImcMOVE(saveTo, (ImcExpr) retStmt.expr.accept(this, arg)));
-        returnStms.add(new ImcJUMP(funcContexts.peek().exitL));
-        ImcStmt imcSTMTS = new ImcSTMTS(returnStms);
 
-        ImcGen.stmtImc.put(retStmt, imcSTMTS);
+        if (conditionalStatement) {
+            returnStms.add(new ImcJUMP(funcContexts.peek().exitL));
+            imcStmt = new ImcSTMTS(returnStms);
+        } else {
+            imcStmt = returnStms.getFirst();
+        }
 
-        return imcSTMTS;
+        ImcGen.stmtImc.put(retStmt, imcStmt);
+
+        return imcStmt;
     }
 
     @Override
