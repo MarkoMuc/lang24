@@ -335,7 +335,11 @@ public class ImcGenerator implements AstFullVisitor<Object, Stack<MemFrame>> {
         imcStmts.add(new ImcCJUMP(imcExpr, thenL, elseL));
         imcStmts.add(new ImcLABEL(thenL));
         imcStmts.add(stmt);
-        imcStmts.add(new ImcJUMP(endL));
+
+        if (ifStmt.elseStmt != null) {
+            imcStmts.add(new ImcJUMP(endL));
+        }
+
         imcStmts.add(new ImcLABEL(elseL));
 
         if (ifStmt.elseStmt != null) {
@@ -347,20 +351,20 @@ public class ImcGenerator implements AstFullVisitor<Object, Stack<MemFrame>> {
             if (ifStatementDepth == 0 && conditionalContainsReturn && ifContainsReturn) {
                 funcContexts.peek().hasReturnOrExit = true;
             }
+
+            imcStmts.add(new ImcLABEL(endL));
         }
 
         if (ifStatementDepth == 0) {
             conditionalContainsReturn = false;
         }
 
-        imcStmts.add(new ImcLABEL(endL));
-
         ImcStmt imcSTMTS = new ImcSTMTS(imcStmts);
+        ImcGen.stmtImc.put(ifStmt, imcSTMTS);
 
         conditionalStatement = previousConditionalValue;
         ifStatementDepth--;
 
-        ImcGen.stmtImc.put(ifStmt, imcSTMTS);
 
         return imcSTMTS;
     }
