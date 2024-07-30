@@ -16,7 +16,7 @@ public class ExprCanonizer implements ImcVisitor<ImcExpr, Vector<ImcStmt>> {
 
         ImcTEMP resTemp = new ImcTEMP(new MemTemp());
         visArg.add(new ImcMOVE(resTemp,
-                new ImcBINOP(binOp.oper,fstImc, sndImc)));
+                new ImcBINOP(binOp.oper, fstImc, sndImc)));
 
         return resTemp;
     }
@@ -25,18 +25,18 @@ public class ExprCanonizer implements ImcVisitor<ImcExpr, Vector<ImcStmt>> {
     public ImcExpr visit(ImcCALL call, Vector<ImcStmt> visArg) {
         Vector<ImcExpr> args = new Vector<>();
 
-        if( call.args.size() > 1) {
+        if (call.args.size() > 1) {
             boolean containsCall = call.args.stream().anyMatch(expr -> expr instanceof ImcCALL);
             for (ImcExpr arg : call.args) {
-                if(arg instanceof ImcCONST imcCONST) {
+                if (arg instanceof ImcCONST imcCONST) {
                     args.add(imcCONST);
-                }else {
-                    if(containsCall) {
+                } else {
+                    if (containsCall) {
                         MemTemp argTemp = new MemTemp();
                         visArg.add(new ImcMOVE(
                                 new ImcTEMP(argTemp), arg.accept(this, visArg)));
                         args.add(new ImcTEMP(argTemp));
-                    }else{
+                    } else {
                         args.add(arg);
                     }
                 }

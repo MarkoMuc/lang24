@@ -280,8 +280,6 @@ public class All extends Phase {
                     escape = true;
                 }
             }
-
-
         }
 
         return chars;
