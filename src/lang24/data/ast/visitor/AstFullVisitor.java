@@ -182,6 +182,16 @@ public interface AstFullVisitor<Result, Argument> extends AstVisitor<Result, Arg
 	}
 
 	@Override
+	default Result visit(AstVecForStmt vecForStmt, Argument arg) {
+		vecForStmt.name.accept(this, arg);
+		vecForStmt.lower.accept(this, arg);
+		vecForStmt.upper.accept(this, arg);
+		vecForStmt.step.accept(this, arg);
+		vecForStmt.stmt.accept(this, arg);
+		return null;
+	}
+
+	@Override
 	default Result visit(AstDecoratorStmt decStmt, Argument arg) {
 		if(decStmt.deps != null)
 			decStmt.deps.accept(this, arg);

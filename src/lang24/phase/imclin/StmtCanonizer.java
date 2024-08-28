@@ -76,6 +76,9 @@ public class StmtCanonizer implements ImcVisitor<Vector<ImcStmt>, Object> {
     @Override
     public Vector<ImcStmt> visit(ImcVectStmt imcVectStmt, Object accArg) {
         // TODO: Vectorize code
+        //  FIXME: remove meeee
+        //  THIS SHOULD NOT BE DONE HERE AT ALL, IMCSTMT do not even help here one bit
+        //  Much better to work straight with
         return imcVectStmt.stmts.accept(this, accArg);
     }
 }

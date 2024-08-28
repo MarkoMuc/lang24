@@ -100,6 +100,7 @@ returns [AstStmt s, Location l]:
     | if_statement { $s = $if_statement.s; $l = $if_statement.l; }
     | while_statement { $s = $while_statement.s; $l = $while_statement.l; }
     | for_statement { $s = $for_statement.s; $l = $for_statement.l; }
+    | vecfor_statement { $s = $vecfor_statement.s; $l = $vecfor_statement.l; }
     | return_statement { $s = $return_statement.s; $l = $return_statement.l; }
     | block_statement { $s = $block_statement.s; $l = $block_statement.l; }
     | decorator_statement { $s = $decorator_statement.s; $l = $decorator_statement.l; }
@@ -256,6 +257,16 @@ returns [AstForStmt s, Location l] :
 		$s = new AstForStmt($l, $a1.s, $expression.e, $a2.s, $statement.s);
 	}
 	;
+
+vecfor_statement
+returns [AstVecForStmt s, Location l] :
+	KVFOR LPAR ID SEMI lower=expression SEMI upper=expression SEMI step=expression RPAR COLON statement
+	{
+	    $l = loc($KVFOR, $statement.l);
+	    AstNameExpr name = new AstNameExpr(loc($ID), $ID.text);
+		$s = new AstVecForStmt($l, name, $lower.e, $upper.e, $step.e, $statement.s);
+	}
+	;   catch [RecognitionException e] {ThrowNewExcp(e, "For statements syntax is (name, lower_const, upper_const, step_const) ");}
 
 return_statement
 returns [AstReturnStmt s, Location l] :

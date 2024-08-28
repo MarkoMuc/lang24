@@ -173,7 +173,7 @@ public class TypeResolver implements AstFullVisitor<SemType, TypeResolver.Contex
         if (SizeType.actualType() instanceof SemIntType) {
             if (arrType.size instanceof AstAtomExpr IntConst
                     && IntConst.type == AstAtomExpr.Type.INT) {
-                Long LongSize = Long.parseLong(IntConst.value);
+                long LongSize = Long.parseLong(IntConst.value);
                 if (LongSize > 0 && LongSize < Math.pow(2.0, 63)) {
                     SemType array = new SemArrayType(ArrType, LongSize);
                     SemAn.isType.put(arrType, array);
@@ -550,6 +550,29 @@ public class TypeResolver implements AstFullVisitor<SemType, TypeResolver.Contex
             throw new Report.Error(forStmt, "For condition is not type bool.");
         }
         SemAn.ofType.put(forStmt, SemVoidType.type);
+
+        return SemVoidType.type;
+    }
+
+    @Override
+    public SemType visit(AstVecForStmt vecForStmt, Context arg) {
+        SemType name = vecForStmt.name.accept(this, null);
+        SemType lower = vecForStmt.lower.accept(this, null);
+        SemType upper = vecForStmt.upper.accept(this, null);
+        SemType step = vecForStmt.step.accept(this, null);
+        vecForStmt.stmt.accept(this, null);
+
+        if (!(name.actualType() instanceof SemIntType)) {
+            throw new Report.Error(vecForStmt, "For loop iteration variable must be of type int.");
+        }
+
+        if (!(lower.actualType() instanceof SemIntType &&
+                upper.actualType() instanceof SemIntType &&
+                step.actualType() instanceof SemIntType)) {
+            throw new Report.Error(vecForStmt, "For loop accepts three int expressions.");
+        }
+
+        SemAn.ofType.put(vecForStmt, SemVoidType.type);
 
         return SemVoidType.type;
     }

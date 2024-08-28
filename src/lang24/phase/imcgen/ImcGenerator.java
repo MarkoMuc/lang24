@@ -436,6 +436,47 @@ public class ImcGenerator implements AstFullVisitor<Object, Stack<MemFrame>> {
         return imcSTMTS;
     }
 
+    @Override
+    public Object visit(AstVecForStmt vecForStmt, Stack<MemFrame> arg) {
+        boolean previousConditionalValue = conditionalStatement;
+        conditionalStatement = true;
+
+        ImcExpr name = (ImcExpr) vecForStmt.name.accept(this, arg);
+        ImcExpr lower = (ImcExpr) vecForStmt.lower.accept(this, arg);
+        ImcExpr upper = (ImcExpr) vecForStmt.upper.accept(this, arg);
+        ImcExpr step = (ImcExpr) vecForStmt.step.accept(this, arg);
+        ImcStmt imcBodyStmt = (ImcStmt) vecForStmt.stmt.accept(this, arg);
+
+        MemLabel cond = new MemLabel();
+        MemLabel body = new MemLabel();
+        MemLabel end = new MemLabel();
+
+        Vector<ImcStmt> imcStmts = new Vector<>();
+
+        ImcStmt imcInitStmt = new ImcMOVE(name, lower);
+        ImcStmt imcStepStmt = new ImcMOVE(name, new ImcBINOP(ImcBINOP.Oper.ADD, name, step));
+        ImcExpr condExpr = new ImcBINOP(ImcBINOP.Oper.LTH, name, upper);
+
+
+        imcStmts.add(imcInitStmt);
+        imcStmts.add(new ImcLABEL(cond));
+        imcStmts.add(new ImcCJUMP(condExpr, body, end));
+
+        imcStmts.add(new ImcLABEL(body));
+        imcStmts.add(imcBodyStmt);
+
+        imcStmts.add(imcStepStmt);
+        imcStmts.add(new ImcJUMP(cond));
+        imcStmts.add(new ImcLABEL(end));
+
+        ImcStmt imcSTMTS = new ImcSTMTS(imcStmts);
+
+        conditionalStatement = previousConditionalValue;
+        ImcGen.stmtImc.put(vecForStmt, imcSTMTS);
+
+        return imcSTMTS;
+    }
+
     // ST9
     @Override
     public Object visit(AstBlockStmt blockStmt, Stack<MemFrame> arg) {

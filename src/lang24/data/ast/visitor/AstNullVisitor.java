@@ -139,6 +139,11 @@ public interface AstNullVisitor<Result, Argument> extends AstVisitor<Result, Arg
 	}
 
 	@Override
+	default Result visit(AstVecForStmt vecForStmt, Argument arg) {
+		return null;
+	}
+
+	@Override
 	default Result visit(AstDecoratorStmt decStmt, Argument arg) {return null;}
 	// lang24.data.ast.tree.type:
 
