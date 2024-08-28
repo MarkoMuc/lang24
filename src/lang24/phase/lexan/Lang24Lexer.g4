@@ -95,6 +95,7 @@ KRETURN: 'return' ;
 KVOID: 'void' ;
 KWHILE: 'while' ;
 KFOR: 'for' ;
+KVFOR: 'vfor' ;
 KTRUE: 'true';
 KFALSE: 'false';
 
