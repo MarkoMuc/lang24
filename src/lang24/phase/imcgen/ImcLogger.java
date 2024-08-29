@@ -211,6 +211,12 @@ public class ImcLogger implements AstNullVisitor<Object, Object> {
 	}
 
 	@Override
+	public Object visit(AstVecForStmt vecForStmt, Object arg) {
+		logAttributes(vecForStmt);
+		return null;
+	}
+
+	@Override
 	public Object visit(AstDecoratorStmt decStmt, Object arg) {
 		logAttributes(decStmt);
 		return null;
