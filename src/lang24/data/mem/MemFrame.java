@@ -13,13 +13,13 @@ public class MemFrame implements Loggable {
 	public final MemLabel label;
 
 	/** The function's static depth (global functions are at depth 0). */
-	public final long depth;
+	public long depth;
 
 	/** The size of the frame. */
-	public final long size;
+	public long size;
 
 	/** The size of the block of local variables within a frame. */
-	public final long locsSize;
+	public long locsSize;
 
 	/** The size of the block of (call, i.e., outgoing) arguments within a frame. */
 	public final long argsSize;
