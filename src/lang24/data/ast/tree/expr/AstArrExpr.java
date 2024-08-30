@@ -34,4 +34,8 @@ public class AstArrExpr extends AstExpr {
 		return visitor.visit(this, arg);
 	}
 
+	@Override
+	public String toString() {
+		return String.format("%s[%s]", arr, idx);
+	}
 }

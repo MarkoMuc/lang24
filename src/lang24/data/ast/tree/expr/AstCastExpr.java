@@ -35,4 +35,8 @@ public class AstCastExpr extends AstExpr {
 		return visitor.visit(this, arg);
 	}
 
+	@Override
+	public String toString() {
+		return "<" + type+ ">(" + expr + ")";
+	}
 }

@@ -29,4 +29,8 @@ public class AstNameExpr extends AstExpr {
 		return visitor.visit(this, arg);
 	}
 
+	@Override
+	public String toString() {
+		return name;
+	}
 }

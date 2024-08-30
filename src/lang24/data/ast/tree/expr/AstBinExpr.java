@@ -69,4 +69,24 @@ public class AstBinExpr extends AstExpr {
 		return visitor.visit(this, arg);
 	}
 
+	@Override
+	public String toString() {
+		String oper = switch (this.oper){
+			case ADD -> "+";
+			case OR -> "|";
+			case AND -> "&";
+			case EQU -> "==";
+			case NEQ -> "!=";
+			case LEQ -> "<=";
+			case GEQ -> ">=";
+			case LTH -> "<";
+			case GTH -> ">";
+			case DIV -> ":";
+			case MOD -> "%";
+			case SUB -> "-";
+			case MUL -> "*";
+		};
+
+		return fstExpr + oper + sndExpr;
+	}
 }

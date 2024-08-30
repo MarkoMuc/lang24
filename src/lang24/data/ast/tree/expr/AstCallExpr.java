@@ -35,4 +35,17 @@ public class AstCallExpr extends AstExpr {
 		return visitor.visit(this, arg);
 	}
 
+	@Override
+	public String toString() {
+		StringBuilder sb = new StringBuilder();
+		int i = 0;
+		for(AstExpr arg : args) {
+			if (i > 0){
+				sb.append(", ");
+			}
+			sb.append(arg.toString());
+			i++;
+		}
+		return name + "(" + sb + ")";
+	}
 }

@@ -34,4 +34,8 @@ public class AstCmpExpr extends AstExpr {
 		return visitor.visit(this, arg);
 	}
 
+	@Override
+	public String toString() {
+		return expr + "." + name;
+	}
 }

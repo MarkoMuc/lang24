@@ -40,4 +40,8 @@ public class AstSfxExpr extends AstExpr {
 		return visitor.visit(this, arg);
 	}
 
+	@Override
+	public String toString() {
+		return expr + "^";
+	}
 }

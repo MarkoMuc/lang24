@@ -46,4 +46,14 @@ public class AstPfxExpr extends AstExpr {
 		return visitor.visit(this, arg);
 	}
 
+	@Override
+	public String toString() {
+		String oper = switch (this.oper){
+			case ADD -> "+";
+			case SUB -> "-";
+			case NOT -> "!";
+			case PTR -> "^";
+		};
+		return oper + expr;
+	}
 }

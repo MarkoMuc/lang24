@@ -30,4 +30,8 @@ public class AstSizeofExpr extends AstExpr {
 		return visitor.visit(this, arg);
 	}
 
+	@Override
+	public String toString() {
+		return "Sizeof(" + type + ")";
+	}
 }
