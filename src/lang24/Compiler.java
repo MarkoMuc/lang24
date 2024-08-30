@@ -16,6 +16,7 @@ import lang24.phase.memory.*;
 import lang24.phase.imcgen.*;
 import lang24.phase.imclin.*;
 import lang24.phase.asmgen.*;
+import lang24.phase.vecan.*;
 
 /**
  * The LANG'24 compiler.
@@ -37,7 +38,7 @@ public class Compiler {
 	/** Names of command line options. */
 	private static final HashSet<String> cmdLineOptNames = new HashSet<String>(
 			Arrays.asList("--src-file-name", "--dst-file-name", "--target-phase", "--logged-phase", "--xml",
-					"--xsl", "--num-regs", "--obj", "--asm", "--lib", "--dbg"));
+					"--xsl", "--num-regs", "--obj", "--asm", "--lib", "--dbg", "--vec"));
 
 	/** Values of command line options indexed by their command line option name. */
 	private static final HashMap<String, String> cmdLineOptValues = new HashMap<String, String>();
@@ -206,6 +207,14 @@ public class Compiler {
 				}
 				if (cmdLineOptValues.get("--target-phase").equals("memory"))
 					break;
+
+				// Vector analysis
+				if(cmdLineOptValues.containsKey("--vec")){
+					try(VecAn vecAn = new VecAn()) {
+						// Finds references
+						Abstr.tree.accept(new FindRefs(), null);
+					}
+				}
 
 				// Intermediate code generation.
 				try (ImcGen imcGen = new ImcGen()) {
