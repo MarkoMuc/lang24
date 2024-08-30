@@ -19,7 +19,7 @@ public class AsmLink extends Phase {
     private final HashSet<String> stdFiles = new HashSet<>();
 
     public AsmLink() {
-        super("AsmLink");
+        super("asmlink");
     }
 
     private void getStd(String lib_path){
