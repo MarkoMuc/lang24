@@ -15,14 +15,20 @@ public class FindRefs implements AstFullVisitor<ArrRef, LoopDescriptor> {
     Stack<AstStmt> currStmt = new Stack<>();
     Stack<AstDefn> loopVars = new Stack<>();
     boolean inSubscript = false;
+    int stmtNum = 0;
 
     @Override
     public ArrRef visit(AstVecForStmt vecForStmt, LoopDescriptor arg) {
         Vector<LoopDescriptor> nested = null;
+        int oldStmtNum = stmtNum;
         int depth = 0;
+        stmtNum = 0;
+
         if (arg != null) {
-            depth = arg.depth + 1;
-            nested = arg.nest;
+            if(arg.vectorizable) {
+                depth = arg.depth + 1;
+                nested = arg.nest;
+            }
         }
 
         LoopDescriptor loopDescriptor = new LoopDescriptor(
@@ -33,8 +39,25 @@ public class FindRefs implements AstFullVisitor<ArrRef, LoopDescriptor> {
                 vecForStmt.step,
                 nested
         );
-        loopDescriptor.addLoop(arg);
-        loopVars.push(SemAn.definedAt.get(vecForStmt.name));
+
+        if(!(vecForStmt.lower instanceof AstAtomExpr &&
+                vecForStmt.upper instanceof AstAtomExpr &&
+                vecForStmt.step instanceof AstAtomExpr)) {
+            // CHECKME: should you still vectorize if the outside one cannot be vectorized?
+            //      IF you shouldn't does that mean to not add it to the loop nest? ->>>YESSS
+            loopDescriptor.vectorizable = false;
+        }else if(Integer.parseInt(((AstAtomExpr)vecForStmt.step).value) != 1) {
+            // FIXME: step normalized to 1
+            loopDescriptor.vectorizable = false;
+        }
+
+        if(arg !=null && arg.vectorizable) {
+            loopDescriptor.addLoop(arg);
+        }
+
+        if(loopDescriptor.vectorizable) {
+            loopVars.push(SemAn.definedAt.get(vecForStmt.name));
+        }
 
         vecForStmt.stmt.accept(this, loopDescriptor);
 
@@ -43,7 +66,10 @@ public class FindRefs implements AstFullVisitor<ArrRef, LoopDescriptor> {
             VecAn.loopDescriptors.put(vecForStmt, loopDescriptor);
         }
 
-        loopVars.pop();
+        if(arg != null && arg.vectorizable) {
+            loopVars.pop();
+        }
+        stmtNum = oldStmtNum;
 
         return null;
     }
@@ -63,11 +89,14 @@ public class FindRefs implements AstFullVisitor<ArrRef, LoopDescriptor> {
         arrExpr.idx.accept(this, arg);
         inSubscript = false;
 
-        if (arrExpr.arr instanceof AstNameExpr) {
+        if (arrExpr.arr instanceof AstNameExpr nameExpr) {
             ref = new ArrRef(
                     arrExpr.idx,
-                    arrExpr,
+                    nameExpr,
                     currStmt.peek(),
+                    SemAn.definedAt.get(nameExpr),
+                    arg,
+                    stmtNum,
                     arg.depth
             );
             arg.addArrayRef(ref);
@@ -132,7 +161,10 @@ public class FindRefs implements AstFullVisitor<ArrRef, LoopDescriptor> {
     @Override
     public ArrRef visit(AstExprStmt exprStmt, LoopDescriptor arg) {
         currStmt.push(exprStmt);
+        stmtNum++;
+
         exprStmt.expr.accept(this, arg);
+
         currStmt.pop();
 
         return null;
@@ -144,6 +176,7 @@ public class FindRefs implements AstFullVisitor<ArrRef, LoopDescriptor> {
             return null;
         }
 
+        stmtNum++;
         currStmt.push(assignStmt);
 
         assignStmt.src.accept(this, arg);
