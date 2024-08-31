@@ -376,9 +376,18 @@ returns [AstRecType.AstCmpDefn cmp]:
 
 array_type
 returns [AstArrType arr, Location l] :
-	LSBRAC intconst RSBRAC type
-	{ $l = loc($LSBRAC, $type.l); }
-	{ $arr = new AstArrType(loc($LSBRAC, $type.l), $type.t, $intconst.e); }
+    { Vector<AstExpr> dimensions = new Vector(); }
+	LSBRAC intconst RSBRAC
+	{ dimensions.add($intconst.e); }
+	(
+	    LSBRAC intconst RSBRAC
+	    { dimensions.add($intconst.e); }
+	)*
+	type
+	{
+	    $l = loc($LSBRAC, $type.l);
+	    $arr = new AstArrType(loc($LSBRAC, $type.l), $type.t, new AstNodes(dimensions));
+	}
 	;
 
 pointer_type

@@ -164,29 +164,39 @@ public class TypeResolver implements AstFullVisitor<SemType, TypeResolver.Contex
     @Override
     public SemType visit(AstArrType arrType, Context arg) {
         SemType ArrType = arrType.elemType.accept(this, null);
-        SemType SizeType = arrType.size.accept(this, null);
 
         if (ArrType instanceof SemVoidType) {
             throw new Report.Error(arrType, "Array type cannot be void.");
         }
 
-        if (SizeType.actualType() instanceof SemIntType) {
-            if (arrType.size instanceof AstAtomExpr IntConst
-                    && IntConst.type == AstAtomExpr.Type.INT) {
-                long LongSize = Long.parseLong(IntConst.value);
-                if (LongSize > 0 && LongSize < Math.pow(2.0, 63)) {
-                    SemType array = new SemArrayType(ArrType, LongSize);
-                    SemAn.isType.put(arrType, array);
-                    return array;
+        if(arrType.size.size() < 1){
+            throw new Report.Error(arrType, "Array size must be greater than zero.");
+        }
+
+        long fullSize = 1L;
+
+        for(AstExpr size : arrType.size){
+            SemType sizeType = size.accept(this, null);
+            if (sizeType.actualType() instanceof SemIntType) {
+                if (size instanceof AstAtomExpr IntConst
+                        && IntConst.type == AstAtomExpr.Type.INT) {
+                    long LongSize = Long.parseLong(IntConst.value);
+                    fullSize *= LongSize;
+                    if (!(LongSize > 0 && fullSize < Math.pow(2.0, 63))) {
+                        throw new Report.Error(arrType, "Array size must be in range 0 < X < 2^63-1.");
+                    }
                 } else {
-                    throw new Report.Error(arrType, "Array size must be in range 0 < X < 2^63-1.");
+                    throw new Report.Error(arrType, "Array size must be an integer.");
                 }
             } else {
-                throw new Report.Error(arrType, "Array size must be an integer.");
+                throw new Report.Error(arrType, "Array size must be an integer constant.");
             }
-        } else {
-            throw new Report.Error(arrType, "Array size must be an integer constant.");
         }
+
+        SemType array = new SemArrayType(ArrType, fullSize);
+        SemAn.isType.put(arrType, array);
+
+        return array;
     }
 
     @Override

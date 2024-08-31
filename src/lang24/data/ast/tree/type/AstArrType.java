@@ -1,6 +1,7 @@
 package lang24.data.ast.tree.type;
 
 import lang24.common.report.*;
+import lang24.data.ast.tree.AstNodes;
 import lang24.data.ast.tree.expr.*;
 import lang24.data.ast.visitor.*;
 
@@ -15,7 +16,7 @@ public class AstArrType extends AstType {
 	public final AstType elemType;
 
 	/** The number of elements. */
-	public final AstExpr size;
+	public final AstNodes<AstExpr> size;
 
 	/**
 	 * Constructs an array type.
@@ -24,7 +25,7 @@ public class AstArrType extends AstType {
 	 * @param elemType The type of elements in this array.
 	 * @param size     The number of elements.
 	 */
-	public AstArrType(final Location location, final AstType elemType, final AstExpr size) {
+	public AstArrType(final Location location, final AstType elemType, final AstNodes<AstExpr> size) {
 		super(location);
 		this.elemType = elemType;
 		this.size = size;

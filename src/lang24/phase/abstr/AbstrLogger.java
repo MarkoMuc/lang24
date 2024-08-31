@@ -451,7 +451,7 @@ public class AbstrLogger implements AstVisitor<Object, String> {
 		logger.addAttribute("id", Integer.toString(arrType.id));
 		logger.addAttribute("label", arrType.getClass().getSimpleName());
 		arrType.elemType.accept(this, null);
-		arrType.size.accept(this, null);
+		arrType.size.accept(this, "AstExpr");
 		for (AstVisitor<?, ?> subvisitor : subvisitors)
 			arrType.accept(subvisitor, null);
 		logger.endElement();
