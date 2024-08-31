@@ -159,13 +159,12 @@ public class All extends Phase {
 
             // Save FP and RA
             // CHECKME: When is direct offset addressing wrong, as in the offset is too large?
-
+            // FIXME: This will need to be fixed, since arrays that are 2k large are already too big!
             offset = frame.locsSize + 8;
-
-            printInstr(String.format("addi sp, sp, -%d\n", offset));
+            genADDI("sp", "sp", '-', offset);
             printInstr("sd fp, 0(sp)\n"); // Stores old FP
             printInstr("mv fp, sp\n");
-            printInstr(String.format("addi fp, fp, %d\n", offset)); // Align FP back to the old SP
+            genADDI("fp", "fp", '+', offset);
 
             offset = 8;
             if (frame.argsSize > 1) {
@@ -225,7 +224,7 @@ public class All extends Phase {
             printInstr("ld fp, 0(sp)\n"); // Restores FP
 
             offset = frame.locsSize + 8;
-            printInstr(String.format("addi sp, sp, %d\n", offset)); // Restores old SP
+            genADDI("sp", "sp", '+', offset);
             printInstr("ret\n");
 
             writer.println();
@@ -283,5 +282,19 @@ public class All extends Phase {
         }
 
         return chars;
+    }
+
+    private void genADDI(String reg1, String reg2, char sign, long offset){
+        final int MAXOFFSET = 2047;
+
+        while(offset > 2047){
+            printInstr(String.format("addi %s, %s, %c%d\n", reg1, reg2, sign, MAXOFFSET));
+            offset -= MAXOFFSET;
+        }
+
+        if(offset > 0) {
+            printInstr(String.format("addi %s, %s, %c%d\n", reg1, reg2, sign, offset));
+        }
+
     }
 }
