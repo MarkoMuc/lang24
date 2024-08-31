@@ -220,14 +220,23 @@ returns [AstAssignStmt s, Location l] :
 
 if_statement
 returns [AstIfStmt s, Location l] :
-	KIF expression KTHEN statement statement_else
+	KIF
+	{ AstExpr expr = null;}
+    (
+    LPAR expression RPAR
+    { expr = $expression.e; }
+    |
+    expression KTHEN
+    { expr = $expression.e; }
+    )
+	statement statement_else
 	{
 	    if ($statement_else.l == null){
 	        $l = loc($KIF, $statement_else.l);
 	    }else{
 	        $l = loc($KIF, $statement.l);
 		}
-		$s = new AstIfStmt($l, $expression.e, $statement.s, $statement_else.s);
+		$s = new AstIfStmt($l, expr, $statement.s, $statement_else.s);
 	}
 	;
 
@@ -242,7 +251,7 @@ returns [AstStmt s, Location l]:
 
 while_statement
 returns [AstWhileStmt s, Location l] :
-	KWHILE expression COLON statement
+	KWHILE LPAR expression RPAR COLON? statement
 	{
 	    $l = loc($KWHILE, $statement.l);
 		$s = new AstWhileStmt($l, $expression.e, $statement.s);
@@ -251,7 +260,7 @@ returns [AstWhileStmt s, Location l] :
 
 for_statement
 returns [AstForStmt s, Location l] :
-	KFOR LPAR a1=assign_statement expression SEMI a2=assign_statement RPAR COLON statement
+	KFOR LPAR a1=assign_statement expression SEMI a2=assign_statement RPAR COLON? statement
 	{
 	    $l = loc($KFOR, $statement.l);
 		$s = new AstForStmt($l, $a1.s, $expression.e, $a2.s, $statement.s);
@@ -260,7 +269,7 @@ returns [AstForStmt s, Location l] :
 
 vecfor_statement
 returns [AstVecForStmt s, Location l] :
-	KVFOR LPAR ID SEMI lower=expression SEMI upper=expression SEMI step=expression RPAR COLON statement
+	KVFOR LPAR ID SEMI lower=expression SEMI upper=expression SEMI step=expression RPAR COLON? statement
 	{
 	    $l = loc($KVFOR, $statement.l);
 	    AstNameExpr name = new AstNameExpr(loc($ID), $ID.text);
