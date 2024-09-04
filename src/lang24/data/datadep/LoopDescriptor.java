@@ -1,11 +1,13 @@
 package lang24.data.datadep;
 
 import lang24.data.ast.tree.expr.AstExpr;
+import lang24.data.ast.tree.stmt.AstVecForStmt;
 
 import java.util.Vector;
 
 public class LoopDescriptor {
     public int depth;
+    public AstVecForStmt loop;
     public AstExpr loopIndex;
     public AstExpr lowerBound;
     public AstExpr upperBound;
@@ -14,22 +16,28 @@ public class LoopDescriptor {
     public Vector<LoopDescriptor> nest = new Vector<>();
     public boolean vectorizable;
 
-    public LoopDescriptor(int depth, AstExpr loopIndex,
-                          AstExpr lowerBound, AstExpr upperBound, AstExpr step,
-                            Vector<LoopDescriptor> nested) {
-        this.depth = depth;
+    public LoopDescriptor(AstVecForStmt loop, AstExpr loopIndex, AstExpr lowerBound, AstExpr upperBound, AstExpr step) {
+        this.depth = 0;
+        this.loop = loop;
         this.loopIndex = loopIndex;
         this.lowerBound = lowerBound;
         this.upperBound = upperBound;
         this.step = step;
         this.vectorizable = true;
-        if(nested != null){
-            addLoops(nest);
-        }
     }
 
     public void addArrayRef(ArrRef arrayRef) {
         this.arrayRefs.add(arrayRef);
+    }
+
+    public void addInner(LoopDescriptor inner) {
+        this.arrayRefs.addAll(inner.arrayRefs);
+    }
+
+    public void addOuter(LoopDescriptor outer) {
+        this.depth = outer.depth + 1;
+        addLoops(outer.nest);
+        addLoop(outer);
     }
 
     public void addLoop(LoopDescriptor loop) {
@@ -39,7 +47,9 @@ public class LoopDescriptor {
     }
 
     public void addLoops(Vector<LoopDescriptor> loops) {
-        this.nest.addAll(loops);
+        if (loops != null) {
+            this.nest.addAll(loops);
+        }
     }
 
     @Override

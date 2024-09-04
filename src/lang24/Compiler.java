@@ -1,22 +1,39 @@
 package lang24;
 
-import java.io.*;
-import java.nio.file.*;
-import java.nio.file.attribute.*;
-import java.util.*;
-import lang24.common.report.*;
-import lang24.phase.all.*;
-import lang24.phase.lexan.*;
-import lang24.phase.livean.*;
-import lang24.phase.regall.*;
-import lang24.phase.synan.*;
-import lang24.phase.abstr.*;
+import lang24.common.report.Report;
+import lang24.phase.abstr.Abstr;
+import lang24.phase.abstr.AbstrLogger;
+import lang24.phase.all.All;
+import lang24.phase.all.AsmLink;
+import lang24.phase.asmgen.AsmGen;
+import lang24.phase.imcgen.ImcGen;
+import lang24.phase.imcgen.ImcGenerator;
+import lang24.phase.imcgen.ImcLogger;
+import lang24.phase.imclin.ChunkGenerator;
+import lang24.phase.imclin.ImcLin;
+import lang24.phase.imclin.Interpreter;
+import lang24.phase.lexan.LexAn;
+import lang24.phase.livean.LiveAn;
+import lang24.phase.memory.MemEvaluator;
+import lang24.phase.memory.MemLogger;
+import lang24.phase.memory.Memory;
+import lang24.phase.regall.RISCVRegisters;
+import lang24.phase.regall.RegAll;
 import lang24.phase.seman.*;
-import lang24.phase.memory.*;
-import lang24.phase.imcgen.*;
-import lang24.phase.imclin.*;
-import lang24.phase.asmgen.*;
-import lang24.phase.vecan.*;
+import lang24.phase.synan.SynAn;
+import lang24.phase.vecan.FindRefs;
+import lang24.phase.vecan.VecAn;
+
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.attribute.FileTime;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Vector;
 
 /**
  * The LANG'24 compiler.
@@ -208,11 +225,12 @@ public class Compiler {
 				if (cmdLineOptValues.get("--target-phase").equals("memory"))
 					break;
 
-				// Vector analysis
+				// Vector analysis.
 				if(cmdLineOptValues.containsKey("--vec")){
 					try(VecAn vecAn = new VecAn()) {
 						// Finds references
 						Abstr.tree.accept(new FindRefs(), null);
+						vecAn.createRefPairs();
 					}
 				}
 

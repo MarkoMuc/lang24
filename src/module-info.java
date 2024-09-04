@@ -41,6 +41,6 @@
  * @author bostjan.slivnik@fri.uni-lj.si
  */
 module lang24compiler {
-	requires java.xml;
-	requires antlr;
+    requires antlr;
+    requires java.sql;
 }

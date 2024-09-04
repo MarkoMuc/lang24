@@ -4,11 +4,21 @@ import lang24.data.ast.tree.defn.AstDefn;
 import lang24.data.ast.tree.expr.*;
 import lang24.data.ast.tree.stmt.*;
 import lang24.data.ast.visitor.AstFullVisitor;
-import lang24.data.datadep.*;
+import lang24.data.datadep.ArrRef;
+import lang24.data.datadep.LoopDescriptor;
 import lang24.phase.seman.SemAn;
 
 import java.util.Stack;
-import java.util.Vector;
+
+/*
+    FIXME: Currently only works with normalized linear loops meaning:
+        - no symbols in loop boundaries
+        - step = 1
+        - lower bound = 0
+        - upper bound is non-negative
+        - Only constants and loop increment variables
+      - triple nested loops, if the middle is not vectorizable, it still carries the first ones var
+ */
 
 public class FindRefs implements AstFullVisitor<ArrRef, LoopDescriptor> {
 
@@ -19,40 +29,39 @@ public class FindRefs implements AstFullVisitor<ArrRef, LoopDescriptor> {
 
     @Override
     public ArrRef visit(AstVecForStmt vecForStmt, LoopDescriptor arg) {
-        Vector<LoopDescriptor> nested = null;
         int oldStmtNum = stmtNum;
-        int depth = 0;
         stmtNum = 0;
 
-        if (arg != null) {
-            if(arg.vectorizable) {
-                depth = arg.depth + 1;
-                nested = arg.nest;
-            }
-        }
-
         LoopDescriptor loopDescriptor = new LoopDescriptor(
-                depth,
+                vecForStmt,
                 vecForStmt.name,
                 vecForStmt.lower,
                 vecForStmt.upper,
-                vecForStmt.step,
-                nested
+                vecForStmt.step
         );
 
-        if(!(vecForStmt.lower instanceof AstAtomExpr &&
-                vecForStmt.upper instanceof AstAtomExpr &&
-                vecForStmt.step instanceof AstAtomExpr)) {
+        if (vecForStmt.lower instanceof AstAtomExpr lower &&
+                vecForStmt.upper instanceof AstAtomExpr upper &&
+                vecForStmt.step instanceof AstAtomExpr step) {
+            // Forces linear and normalized loops only
+            if (Integer.parseInt(step.value) != 1 || Integer.parseInt(lower.value) > 0 ||
+                    Integer.parseInt(upper.value) < 0) {
+                loopDescriptor.vectorizable = false;
+            }
+        } else {
             // CHECKME: should you still vectorize if the outside one cannot be vectorized?
             //      IF you shouldn't does that mean to not add it to the loop nest? ->>>YESSS
-            loopDescriptor.vectorizable = false;
-        }else if(Integer.parseInt(((AstAtomExpr)vecForStmt.step).value) != 1) {
-            // FIXME: step normalized to 1
             loopDescriptor.vectorizable = false;
         }
 
         if(arg !=null && arg.vectorizable) {
-            loopDescriptor.addLoop(arg);
+            loopDescriptor.addOuter(arg);
+        }
+        Stack<AstDefn> oldStack = null;
+
+        if (arg != null && !arg.vectorizable) {
+            oldStack = loopVars;
+            loopVars = new Stack<>();
         }
 
         if(loopDescriptor.vectorizable) {
@@ -61,14 +70,24 @@ public class FindRefs implements AstFullVisitor<ArrRef, LoopDescriptor> {
 
         vecForStmt.stmt.accept(this, loopDescriptor);
 
-        if (loopDescriptor.vectorizable) {
-            System.out.println(loopDescriptor);
-            VecAn.loopDescriptors.put(vecForStmt, loopDescriptor);
+        if (oldStack != null) {
+            loopVars = oldStack;
         }
 
-        if(arg != null && arg.vectorizable) {
+        if (loopDescriptor.vectorizable) {
+            //System.out.printf("Location = [%s]%n", vecForStmt.location());
+            //System.out.println(loopDescriptor);
+            VecAn.loopDescriptors.put(vecForStmt, loopDescriptor);
+            if (arg == null || !arg.vectorizable) {
+                VecAn.loops.add(loopDescriptor);
+            }
+        }
+
+        if (arg != null && arg.vectorizable && loopDescriptor.vectorizable) {
+            arg.addInner(loopDescriptor);
             loopVars.pop();
         }
+
         stmtNum = oldStmtNum;
 
         return null;

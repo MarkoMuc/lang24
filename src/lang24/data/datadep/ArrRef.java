@@ -38,4 +38,12 @@ public class ArrRef {
 
         return String.format("%-20s |\tassign=%-5s | L%dS%d", expr, this.assign, this.depth, this.stmtNum);
     }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj instanceof ArrRef ref) {
+            return this.arrDefn == ref.arrDefn;
+        }
+        return false;
+    }
 }
