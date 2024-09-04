@@ -142,6 +142,18 @@ public class FindRefs implements AstFullVisitor<ArrRef, LoopDescriptor> {
     }
 
     @Override
+    public ArrRef visit(AstPfxExpr pfxExpr, LoopDescriptor arg) {
+        if (arg != null &&
+                !(pfxExpr.oper == AstPfxExpr.Oper.ADD ||
+                        pfxExpr.oper == AstPfxExpr.Oper.SUB ||
+                        pfxExpr.expr instanceof AstAtomExpr)) {
+            arg.vectorizable = false;
+        }
+
+        return null;
+    }
+
+    @Override
     public ArrRef visit(AstSfxExpr sfxExpr, LoopDescriptor arg) {
         if (arg != null) {
             arg.vectorizable = false;
