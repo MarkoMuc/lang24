@@ -5,7 +5,6 @@ import lang24.data.ast.tree.stmt.AstVecForStmt;
 import lang24.data.datadep.ArrRef;
 import lang24.data.datadep.LoopDescriptor;
 import lang24.data.datadep.Subscript;
-import lang24.data.datadep.SubscriptAnalyzer;
 import lang24.phase.Phase;
 
 import java.util.Vector;
@@ -17,7 +16,7 @@ public class VecAn extends Phase {
     public final static Vector<LoopDescriptor> loops = new Vector<>();
 
 
-    public VecAn(){
+    public VecAn() {
         super("vecan");
     }
 
@@ -51,8 +50,13 @@ public class VecAn extends Phase {
                 pair.sink.subscriptExpr.accept(new SubscriptAnalyzer(), s2);
                 s1.collect();
                 s2.collect();
-                System.out.println(s1);
-                System.out.println(s2);
+                System.out.print(s1);
+                System.out.print("->");
+                System.out.print(s2);
+                System.out.print(" vs ");
+                System.out.print(s1.toString2());
+                System.out.print("->");
+                System.out.println(s2.toString2());
             }
         }
     }
@@ -68,12 +72,11 @@ public class VecAn extends Phase {
 
         @Override
         public String toString() {
-            StringBuilder sb = new StringBuilder();
-            sb.append(source.arrExpr).append("[").append(source.subscriptExpr).append("]");
-            sb.append("->");
-            sb.append(sink.arrExpr).append("[").append(sink.subscriptExpr).append("]");
+            String sb = source.arrExpr + "[" + source.subscriptExpr + "]" +
+                    "->" +
+                    sink.arrExpr + "[" + sink.subscriptExpr + "]";
 
-            return sb.toString();
+            return sb;
         }
     }
 }

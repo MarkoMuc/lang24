@@ -1,33 +1,39 @@
 package lang24.data.datadep;
 
-import lang24.common.report.Report;
 import lang24.data.ast.tree.defn.AstDefn;
-import lang24.data.ast.tree.expr.AstAtomExpr;
 
+import java.util.HashMap;
 import java.util.Vector;
 import java.util.stream.Collectors;
 
 public class Subscript {
     public Vector<Term> terms = new Vector<>();
+    public HashMap<AstDefn, Term> termMap = new HashMap<>();
+    public Term constant;
 
-    public void addTerm(AstDefn variable, Integer coef) {
-        terms.add(new Term(variable, coef));
+    public Subscript() {
+        this.constant = new Term(0);
     }
 
-    public void addTerm(AstDefn variable, AstAtomExpr coef) {
-        terms.add(new Term(variable, coef));
+    public void addTermHash(Term term) {
+        if (term.variable == null) {
+            if (constant == null) {
+                constant = term;
+            } else {
+                this.constant.coefficient = constant.coefficient + term.coefficient;
+            }
+        } else {
+            if (this.termMap.containsKey(term.variable)) {
+                this.termMap.get(term.variable).coefficient += term.coefficient;
+            } else {
+                this.termMap.put(term.variable, term);
+            }
+        }
     }
 
-    public void addTerm(Integer coef) {
-        terms.add(new Term(coef));
-    }
-
-    public void addTerm(AstAtomExpr coef) {
-        terms.add(new Term(coef));
-    }
-
-    public void addTerm(AstDefn variable) {
-        terms.add(new Term(variable));
+    public void addTerm(Term term) {
+        this.terms.add(term);
+        addTermHash(term);
     }
 
     public void collect() {
@@ -44,9 +50,11 @@ public class Subscript {
         }
     }
 
+
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
+
         sb.append(terms.stream()
                 .filter(x -> x.variable != null)
                 .map(Term::toString)
@@ -56,60 +64,34 @@ public class Subscript {
                 .filter(x -> x.variable == null)
                 .map(Term::toString)
                 .collect(Collectors.joining("+")));
+
         if (sb.lastIndexOf("+") == sb.length() - 1) {
             sb.replace(sb.length() - 1, sb.length(), "");
+        }
+
+        if (sb.indexOf("+") == 0) {
+            sb.replace(0, 1, "");
         }
         return sb.toString();
     }
 
-    public class Term {
-        public AstDefn variable;
-        public Integer coefficient;
+    public String toString2() {
+        StringBuilder sb = new StringBuilder();
+        sb.append(termMap
+                .values()
+                .stream()
+                .map(Term::toString)
+                .collect(Collectors.joining("+")));
 
-        public Term(AstDefn variable, Integer coefficient) {
-            this.variable = variable;
-            this.coefficient = coefficient;
+        sb.append('+').append(constant.toString());
+
+        if (sb.lastIndexOf("+") == sb.length() - 1) {
+            sb.replace(sb.length() - 1, sb.length(), "");
         }
 
-        public Term(AstDefn variable) {
-            this.variable = variable;
-            this.coefficient = 1;
+        if (sb.indexOf("+") == 0) {
+            sb.replace(0, 1, "");
         }
-
-        public Term(Integer coefficient) {
-            this.variable = null;
-            this.coefficient = coefficient;
-        }
-
-        public Term(AstAtomExpr coef) {
-            if (coef.type != AstAtomExpr.Type.INT) {
-                throw new Report.InternalError();
-            }
-            this.variable = null;
-            this.coefficient = Integer.parseInt(coef.toString());
-        }
-
-        public Term(AstDefn variable, AstAtomExpr coef) {
-            if (coef.type != AstAtomExpr.Type.INT) {
-                throw new Report.InternalError();
-            }
-            this.variable = variable;
-            this.coefficient = Integer.parseInt(coef.toString());
-        }
-
-        @Override
-        public String toString() {
-            StringBuilder sb = new StringBuilder();
-
-            if (this.coefficient > 1 && this.variable == null) {
-                sb.append(coefficient);
-            }
-
-            if (this.variable != null) {
-                sb.append(variable.name);
-            }
-
-            return sb.toString();
-        }
+        return sb.toString();
     }
 }
