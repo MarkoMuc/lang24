@@ -10,9 +10,11 @@ public class Subscript {
     public Vector<Term> terms = new Vector<>();
     public HashMap<AstDefn, Term> termMap = new HashMap<>();
     public Term constant;
+    public ArrRef arrRef;
 
-    public Subscript() {
+    public Subscript(ArrRef arrRef) {
         this.constant = new Term(0);
+        this.arrRef = arrRef;
     }
 
     public void addTermHash(Term term) {
@@ -49,7 +51,6 @@ public class Subscript {
             terms.add(last);
         }
     }
-
 
     @Override
     public String toString() {

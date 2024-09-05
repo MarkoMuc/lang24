@@ -10,7 +10,10 @@ import lang24.data.datadep.Subscript;
 import lang24.data.datadep.Term;
 import lang24.phase.seman.SemAn;
 
-//FIXME: add neg numbers
+//FIXME: Issue with where a loop variable is defined. If it is defined in another loop,
+//      the AstDefn is linked to that loop and any other that uses it, when it should be linked with the
+//      loopDescriptor somehow
+
 public class SubscriptAnalyzer implements AstFullVisitor<Term, Subscript> {
 
     private Term previous1;
@@ -25,7 +28,7 @@ public class SubscriptAnalyzer implements AstFullVisitor<Term, Subscript> {
         Term fstTerm = binExpr.fstExpr.accept(this, arg);
         Term sndTerm = binExpr.sndExpr.accept(this, arg);
 
-        currStmt = binExpr;
+        currStmt = prevExpr;
 
         if (!(binExpr.oper == AstBinExpr.Oper.ADD
                 || binExpr.oper == AstBinExpr.Oper.MUL
@@ -98,13 +101,15 @@ public class SubscriptAnalyzer implements AstFullVisitor<Term, Subscript> {
                 if (previous1 != null) {
                     arg.terms.remove(previous1);
                     //arg.removeTermHash(previous1);
-                    arg.addTerm(new Term(previous1.variable, previous1.coefficient * fstTerm.coefficient));
+                    arg.addTerm(new Term(previous1.variable,
+                            previous1.coefficient * fstTerm.coefficient, previous1.depth));
                 }
 
                 if (previous2 != null) {
                     arg.terms.remove(previous2);
                     //arg.removeTermHash(previous2);
-                    arg.addTerm(new Term(previous2.variable, previous2.coefficient * fstTerm.coefficient));
+                    arg.addTerm(new Term(previous2.variable,
+                            previous2.coefficient * fstTerm.coefficient, previous2.depth));
                 }
                 previous1 = null;
                 previous2 = null;
@@ -128,14 +133,16 @@ public class SubscriptAnalyzer implements AstFullVisitor<Term, Subscript> {
                 if (previous1 != null) {
                     arg.terms.remove(previous1);
                     //arg.removeTermHash(previous1);
-                    Term a = new Term(previous1.variable, previous1.coefficient * sndTerm.coefficient);
+                    Term a = new Term(previous1.variable,
+                            previous1.coefficient * sndTerm.coefficient, previous1.depth);
                     arg.addTerm(a);
                 }
 
                 if (previous2 != null) {
                     arg.terms.remove(previous2);
                     //arg.removeTermHash(previous2);
-                    Term a = new Term(previous2.variable, previous2.coefficient * sndTerm.coefficient);
+                    Term a = new Term(previous2.variable,
+                            previous2.coefficient * sndTerm.coefficient, previous2.depth);
                     arg.addTerm(a);
                 }
 
@@ -159,7 +166,17 @@ public class SubscriptAnalyzer implements AstFullVisitor<Term, Subscript> {
 
     @Override
     public Term visit(AstPfxExpr pfxExpr, Subscript arg) {
-        Term num = new Term(pfxExpr);
+        Term num;
+
+        if (pfxExpr.expr instanceof AstAtomExpr) {
+            num = new Term(pfxExpr);
+        } else if (pfxExpr.expr instanceof AstNameExpr name) {
+            num = new Term(pfxExpr, SemAn.definedAt.get(name),
+                    VecAn.loopDescriptors.get(name).depth);
+        } else {
+            throw new Report.Error(pfxExpr, "Unknown expression type");
+        }
+
         if (currStmt == null) {
             arg.addTerm(num);
         }
@@ -169,7 +186,8 @@ public class SubscriptAnalyzer implements AstFullVisitor<Term, Subscript> {
 
     @Override
     public Term visit(AstNameExpr nameExpr, Subscript arg) {
-        Term name = new Term(SemAn.definedAt.get(nameExpr));
+        Term name = new Term(SemAn.definedAt.get(nameExpr),
+                VecAn.loopDescriptors.get(nameExpr).depth);
         if (currStmt == null) {
             arg.addTerm(name);
         }
