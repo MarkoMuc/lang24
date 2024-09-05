@@ -1,6 +1,5 @@
 package lang24.phase.vecan;
 
-import lang24.data.ast.tree.defn.AstDefn;
 import lang24.data.ast.tree.expr.*;
 import lang24.data.ast.tree.stmt.*;
 import lang24.data.ast.visitor.AstFullVisitor;
@@ -9,6 +8,7 @@ import lang24.data.datadep.LoopDescriptor;
 import lang24.phase.seman.SemAn;
 
 import java.util.Stack;
+import java.util.Vector;
 
 /*
     FIXME: Currently only works with normalized linear loops meaning:
@@ -23,7 +23,8 @@ import java.util.Stack;
 public class FindRefs implements AstFullVisitor<ArrRef, LoopDescriptor> {
 
     Stack<AstStmt> currStmt = new Stack<>();
-    Stack<AstDefn> loopVars = new Stack<>();
+    Vector<LoopDescriptor> loopVars = new Vector<>();
+
     boolean inSubscript = false;
     int stmtNum = 0;
 
@@ -57,27 +58,24 @@ public class FindRefs implements AstFullVisitor<ArrRef, LoopDescriptor> {
         if(arg !=null && arg.vectorizable) {
             loopDescriptor.addOuter(arg);
         }
-        Stack<AstDefn> oldStack = null;
 
+        Vector<LoopDescriptor> oldLoopDescriptors = null;
         if (arg != null && !arg.vectorizable) {
-            oldStack = loopVars;
-            loopVars = new Stack<>();
+            oldLoopDescriptors = loopVars;
+            loopVars = new Vector<>();
         }
 
         if(loopDescriptor.vectorizable) {
-            loopVars.push(SemAn.definedAt.get(vecForStmt.name));
+            loopVars.addLast(loopDescriptor);
         }
 
         vecForStmt.stmt.accept(this, loopDescriptor);
 
-        if (oldStack != null) {
-            loopVars = oldStack;
+        if (oldLoopDescriptors != null) {
+            loopVars = oldLoopDescriptors;
         }
 
         if (loopDescriptor.vectorizable) {
-            //System.out.printf("Location = [%s]%n", vecForStmt.location());
-            //System.out.println(loopDescriptor);
-            VecAn.loopDescriptors.put(vecForStmt, loopDescriptor);
             if (arg == null || !arg.vectorizable) {
                 VecAn.loops.add(loopDescriptor);
             }
@@ -85,7 +83,7 @@ public class FindRefs implements AstFullVisitor<ArrRef, LoopDescriptor> {
 
         if (arg != null && arg.vectorizable && loopDescriptor.vectorizable) {
             arg.addInner(loopDescriptor);
-            loopVars.pop();
+            loopVars.remove(loopDescriptor);
         }
 
         stmtNum = oldStmtNum;
@@ -132,8 +130,15 @@ public class FindRefs implements AstFullVisitor<ArrRef, LoopDescriptor> {
         if(arg != null){
             if(!arg.vectorizable){
                 return null;
-            } else if (inSubscript &&
-                    !loopVars.contains(SemAn.definedAt.get(nameExpr))) {
+            } else if (inSubscript) {
+                for (int i = loopVars.size() - 1; i >= 0; i--) {
+                    LoopDescriptor loop = loopVars.get(i);
+                    if (SemAn.definedAt.get(loop.loopIndex) ==
+                            SemAn.definedAt.get(nameExpr)) {
+                        VecAn.loopDescriptors.put(nameExpr, loop);
+                        return null;
+                    }
+                }
                 arg.vectorizable = false;
             }
         }
@@ -146,9 +151,11 @@ public class FindRefs implements AstFullVisitor<ArrRef, LoopDescriptor> {
         if (arg != null &&
                 !(pfxExpr.oper == AstPfxExpr.Oper.ADD ||
                         pfxExpr.oper == AstPfxExpr.Oper.SUB ||
-                        pfxExpr.expr instanceof AstAtomExpr)) {
+                        pfxExpr.expr instanceof AstAtomExpr ||
+                        pfxExpr.expr instanceof AstNameExpr)) {
             arg.vectorizable = false;
         }
+        pfxExpr.expr.accept(this, arg);
 
         return null;
     }

@@ -1,7 +1,7 @@
 package lang24.phase.vecan;
 
 import lang24.data.ast.attribute.Attribute;
-import lang24.data.ast.tree.stmt.AstVecForStmt;
+import lang24.data.ast.tree.expr.AstNameExpr;
 import lang24.data.datadep.ArrRef;
 import lang24.data.datadep.LoopDescriptor;
 import lang24.data.datadep.Subscript;
@@ -11,8 +11,7 @@ import java.util.Vector;
 
 public class VecAn extends Phase {
 
-    //CHECKME: Is this needed?
-    public final static Attribute<AstVecForStmt, LoopDescriptor> loopDescriptors = new Attribute<>();
+    public final static Attribute<AstNameExpr, LoopDescriptor> loopDescriptors = new Attribute<>();
     public final static Vector<LoopDescriptor> loops = new Vector<>();
 
 
@@ -37,27 +36,25 @@ public class VecAn extends Phase {
                 }
             }
             loopPairs.add(pairs);
+            analyzeSubscript(pairs, l);
         }
-        analyzeSubscript(loopPairs);
     }
 
-    private void analyzeSubscript(Vector<Vector<RefPair>> loopPairs) {
-        for (Vector<RefPair> pars : loopPairs) {
-            for (RefPair pair : pars) {
-                Subscript s1 = new Subscript();
-                pair.source.subscriptExpr.accept(new SubscriptAnalyzer(), s1);
-                Subscript s2 = new Subscript();
-                pair.sink.subscriptExpr.accept(new SubscriptAnalyzer(), s2);
-                s1.collect();
-                s2.collect();
-                System.out.print(s1);
-                System.out.print("->");
-                System.out.print(s2);
-                System.out.print(" vs ");
-                System.out.print(s1.toString2());
-                System.out.print("->");
-                System.out.println(s2.toString2());
-            }
+    private void analyzeSubscript(Vector<RefPair> loopPairs, LoopDescriptor loop) {
+        for (RefPair pair : loopPairs) {
+            Subscript s1 = new Subscript(pair.source);
+            pair.source.subscriptExpr.accept(new SubscriptAnalyzer(), s1);
+            Subscript s2 = new Subscript(pair.sink);
+            pair.sink.subscriptExpr.accept(new SubscriptAnalyzer(), s2);
+            s1.collect();
+            s2.collect();
+            System.out.print(s1);
+            System.out.print("->");
+            System.out.print(s2);
+            System.out.print(" vs ");
+            System.out.print(s1.toString2());
+            System.out.print("->");
+            System.out.println(s2.toString2());
         }
     }
 
