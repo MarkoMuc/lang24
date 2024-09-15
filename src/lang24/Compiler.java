@@ -230,7 +230,7 @@ public class Compiler {
 					try(VecAn vecAn = new VecAn()) {
 						// Finds references
 						Abstr.tree.accept(new FindRefs(), null);
-						vecAn.createRefPairs();
+						vecAn.loopAnalysis();
 					}
 				}
 

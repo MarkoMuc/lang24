@@ -2,6 +2,7 @@ package lang24.data.datadep;
 
 import lang24.data.ast.tree.defn.AstDefn;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Vector;
 import java.util.stream.Collectors;
@@ -11,10 +12,13 @@ public class Subscript {
     public HashMap<AstDefn, Term> termMap = new HashMap<>();
     public Term constant;
     public ArrRef arrRef;
+    public boolean linear;
+    public int variableCount = 0;
 
     public Subscript(ArrRef arrRef) {
         this.constant = new Term(0);
         this.arrRef = arrRef;
+        linear = true;
     }
 
     public void addTermHash(Term term) {
@@ -28,6 +32,7 @@ public class Subscript {
             if (this.termMap.containsKey(term.variable)) {
                 this.termMap.get(term.variable).coefficient += term.coefficient;
             } else {
+                variableCount++;
                 this.termMap.put(term.variable, term);
             }
         }
@@ -37,6 +42,23 @@ public class Subscript {
         this.terms.add(term);
         addTermHash(term);
     }
+
+    public Collection<Term> getTerms() {
+        return termMap.values();
+    }
+
+    public Term getConstant() {
+        return this.constant;
+    }
+
+    public boolean isLinear() {
+        return this.linear;
+    }
+
+    public void setNonLinear() {
+        this.linear = false;
+    }
+
 
     public void collect() {
         Vector<Term> tmp = terms.stream()

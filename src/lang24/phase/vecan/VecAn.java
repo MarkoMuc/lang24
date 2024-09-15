@@ -2,6 +2,7 @@ package lang24.phase.vecan;
 
 import lang24.data.ast.attribute.Attribute;
 import lang24.data.ast.tree.expr.AstNameExpr;
+import lang24.data.ast.tree.stmt.AstStmt;
 import lang24.data.datadep.ArrRef;
 import lang24.data.datadep.LoopDescriptor;
 import lang24.data.datadep.Subscript;
@@ -9,71 +10,88 @@ import lang24.phase.Phase;
 
 import java.util.Vector;
 
+
+/*
+ *   TODO: Subscript pairs
+ *       -> Since our language does not directly support multi dimensional arrays, there is always only one subscript pair!
+ */
+
 public class VecAn extends Phase {
 
     public final static Attribute<AstNameExpr, LoopDescriptor> loopDescriptors = new Attribute<>();
     public final static Vector<LoopDescriptor> loops = new Vector<>();
 
-
     public VecAn() {
         super("vecan");
     }
 
-    public void createRefPairs() {
-        Vector<Vector<RefPair>> loopPairs = new Vector<>();
-        for (LoopDescriptor l : loops) {
-            Vector<RefPair> pairs = new Vector<>();
-
-            int len = l.arrayRefs.size();
+    public void loopAnalysis() {
+        for (LoopDescriptor loopDescriptor : loops) {
+            int len = loopDescriptor.arrayRefs.size();
 
             for (int i = 0; i < len; i++) {
-                ArrRef source = l.arrayRefs.get(i);
+                ArrRef source = loopDescriptor.arrayRefs.get(i);
                 for (int j = i + 1; j < len; j++) {
-                    ArrRef sink = l.arrayRefs.get(j);
+                    ArrRef sink = loopDescriptor.arrayRefs.get(j);
                     if (source.equals(sink)) {
-                        pairs.add(new RefPair(source, sink));
+                        testDependence(source, sink, loopDescriptor);
+
                     }
                 }
             }
-            loopPairs.add(pairs);
-            analyzeSubscript(pairs, l);
         }
     }
 
-    private void analyzeSubscript(Vector<RefPair> loopPairs, LoopDescriptor loop) {
-        for (RefPair pair : loopPairs) {
-            Subscript s1 = new Subscript(pair.source);
-            pair.source.subscriptExpr.accept(new SubscriptAnalyzer(), s1);
-            Subscript s2 = new Subscript(pair.sink);
-            pair.sink.subscriptExpr.accept(new SubscriptAnalyzer(), s2);
-            s1.collect();
-            s2.collect();
-            System.out.print(s1);
-            System.out.print("->");
-            System.out.print(s2);
-            System.out.print(" vs ");
-            System.out.print(s1.toString2());
-            System.out.print("->");
-            System.out.println(s2.toString2());
+    private SubscriptPair createAndAnalyzeSubscriptPair(ArrRef source, ArrRef sink) {
+        //TODO: If a ref is nonlinear once, it is always non linear
+        //      -> Early break/continue whenever this same ArrRef is to be checked
+
+        Subscript sourceSubscript = new Subscript(source);
+        source.subscriptExpr.accept(new SubscriptAnalyzer(), sourceSubscript);
+        if (!sourceSubscript.isLinear()) {
+            return null;
         }
+
+        Subscript sinkSubscript = new Subscript(sink);
+        sink.subscriptExpr.accept(new SubscriptAnalyzer(), sinkSubscript);
+        if (!sourceSubscript.isLinear()) {
+            return null;
+        }
+        sourceSubscript.collect();
+        sinkSubscript.collect();
+        System.out.print(sourceSubscript);
+        System.out.print("->");
+        System.out.print(sinkSubscript);
+        System.out.print(" vs ");
+        System.out.print(sourceSubscript.toString2());
+        System.out.print("->");
+        System.out.println(sinkSubscript.toString2());
+
+        return new SubscriptPair(source.refStmt, sourceSubscript, sink.refStmt, sinkSubscript);
     }
 
-    private class RefPair {
-        ArrRef source;
-        ArrRef sink;
 
-        RefPair(ArrRef source, ArrRef sink) {
-            this.source = source;
-            this.sink = sink;
+    //FIXME: This should return DVset or null if dependence cannot be tested
+    private void testDependence(ArrRef source, ArrRef sink, LoopDescriptor loopDescriptor) {
+        SubscriptPair subscriptPair = createAndAnalyzeSubscriptPair(source, sink);
+        if (subscriptPair == null) {
+            return;
         }
 
-        @Override
-        public String toString() {
-            String sb = source.arrExpr + "[" + source.subscriptExpr + "]" +
-                    "->" +
-                    sink.arrExpr + "[" + sink.subscriptExpr + "]";
+    }
 
-            return sb;
+    private class SubscriptPair {
+        AstStmt sourceStmt;
+        AstStmt sinkStmt;
+        Subscript sourceSubscript;
+        Subscript sinkSubscript;
+
+        SubscriptPair(AstStmt sourceStmt, Subscript sourceSubscript, AstStmt sinkStmt, Subscript sinkSubscript) {
+            this.sourceStmt = sourceStmt;
+            this.sinkStmt = sinkStmt;
+            this.sourceSubscript = sourceSubscript;
+            this.sinkSubscript = sinkSubscript;
         }
+
     }
 }

@@ -37,7 +37,6 @@ public class Term {
         this.coefficient = Integer.parseInt(coef.toString());
     }
 
-    //TODO: make it so -variable is also valid, this sets value to -1
     public Term(AstPfxExpr coef) {
         if (coef.expr instanceof AstAtomExpr atom) {
             if (atom.type != AstAtomExpr.Type.INT) {

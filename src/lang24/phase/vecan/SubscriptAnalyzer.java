@@ -1,6 +1,5 @@
 package lang24.phase.vecan;
 
-import lang24.common.report.Report;
 import lang24.data.ast.tree.expr.AstAtomExpr;
 import lang24.data.ast.tree.expr.AstBinExpr;
 import lang24.data.ast.tree.expr.AstNameExpr;
@@ -22,6 +21,10 @@ public class SubscriptAnalyzer implements AstFullVisitor<Term, Subscript> {
 
     @Override
     public Term visit(AstBinExpr binExpr, Subscript arg) {
+        if (!arg.isLinear()) {
+            return null;
+        }
+
         AstBinExpr prevExpr = currStmt;
         currStmt = binExpr;
 
@@ -33,16 +36,16 @@ public class SubscriptAnalyzer implements AstFullVisitor<Term, Subscript> {
         if (!(binExpr.oper == AstBinExpr.Oper.ADD
                 || binExpr.oper == AstBinExpr.Oper.MUL
                 || binExpr.oper == AstBinExpr.Oper.SUB)) {
-            throw new Report.Error(binExpr, "Illegal operand");
+            arg.setNonLinear();
+            return null;
         }
 
         if (fstTerm == null && sndTerm == null) {
-            if (binExpr.oper == AstBinExpr.Oper.ADD) {
-                return null;
-            } else {
+            if (binExpr.oper != AstBinExpr.Oper.ADD) {
                 //IS this true?
-                throw new Report.Error(binExpr, "Ilegal operation multiplied");
+                arg.setNonLinear();
             }
+            return null;
         } else if (fstTerm != null && sndTerm != null) {
             if (binExpr.oper == AstBinExpr.Oper.ADD || binExpr.oper == AstBinExpr.Oper.SUB) {
                 if (fstTerm.variable == null && sndTerm.variable == null) {
@@ -75,11 +78,17 @@ public class SubscriptAnalyzer implements AstFullVisitor<Term, Subscript> {
                     return new Term(fstTerm.coefficient * sndTerm.coefficient);
                 } else if (fstTerm.variable != null && sndTerm.variable != null) {
                     // VAR * VAR
-                    throw new Report.Error(binExpr, "Two vars multiplied");
+                    arg.setNonLinear();
+                    return null;
                 } else {
                     // CONST * VAR
                     // VAR * CONST
-                    return new Term(fstTerm, sndTerm);
+                    Term t = new Term(fstTerm, sndTerm);
+                    if (currStmt == null) {
+                        arg.addTerm(t);
+                    } else {
+                        return t;
+                    }
                 }
             }
         } else if (fstTerm != null) {
@@ -95,7 +104,8 @@ public class SubscriptAnalyzer implements AstFullVisitor<Term, Subscript> {
                 return null;
             } else {
                 if (fstTerm.variable != null) {
-                    throw new Report.Error(binExpr, "Left side is var meaning and right side has var too and we cant multiply");
+                    arg.setNonLinear();
+                    return null;
                 }
 
                 if (previous1 != null) {
@@ -127,7 +137,8 @@ public class SubscriptAnalyzer implements AstFullVisitor<Term, Subscript> {
                 return null;
             } else {
                 if (sndTerm.variable != null) {
-                    throw new Report.Error(binExpr, "Right side is var meaning and left side has var too and we cant multiply");
+                    arg.setNonLinear();
+                    return null;
                 }
 
                 if (previous1 != null) {
@@ -174,7 +185,8 @@ public class SubscriptAnalyzer implements AstFullVisitor<Term, Subscript> {
             num = new Term(pfxExpr, SemAn.definedAt.get(name),
                     VecAn.loopDescriptors.get(name).depth);
         } else {
-            throw new Report.Error(pfxExpr, "Unknown expression type");
+            arg.setNonLinear();
+            return null;
         }
 
         if (currStmt == null) {
