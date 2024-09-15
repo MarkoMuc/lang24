@@ -51,7 +51,12 @@ public class SubscriptAnalyzer implements AstFullVisitor<Term, Subscript> {
                 if (fstTerm.variable == null && sndTerm.variable == null) {
                     // CONST + CONST
                     if (binExpr.oper == AstBinExpr.Oper.ADD) {
-                        return new Term(fstTerm.coefficient + sndTerm.coefficient);
+                        Term t = new Term(fstTerm.coefficient + sndTerm.coefficient);
+                        if (currStmt == null) {
+                            arg.addTerm(t);
+                            return null;
+                        }
+                        return t;
                     } else {
                         return new Term(fstTerm.coefficient - sndTerm.coefficient);
                     }
@@ -75,7 +80,12 @@ public class SubscriptAnalyzer implements AstFullVisitor<Term, Subscript> {
             } else {
                 if (fstTerm.variable == null && sndTerm.variable == null) {
                     // CONST * CONST
-                    return new Term(fstTerm.coefficient * sndTerm.coefficient);
+                    Term t = new Term(fstTerm.coefficient * sndTerm.coefficient);
+                    if (currStmt == null) {
+                        arg.addTerm(t);
+                    } else {
+                        return t;
+                    }
                 } else if (fstTerm.variable != null && sndTerm.variable != null) {
                     // VAR * VAR
                     arg.setNonLinear();
@@ -109,15 +119,11 @@ public class SubscriptAnalyzer implements AstFullVisitor<Term, Subscript> {
                 }
 
                 if (previous1 != null) {
-                    arg.terms.remove(previous1);
-                    //arg.removeTermHash(previous1);
                     arg.addTerm(new Term(previous1.variable,
                             previous1.coefficient * fstTerm.coefficient, previous1.depth));
                 }
 
                 if (previous2 != null) {
-                    arg.terms.remove(previous2);
-                    //arg.removeTermHash(previous2);
                     arg.addTerm(new Term(previous2.variable,
                             previous2.coefficient * fstTerm.coefficient, previous2.depth));
                 }
@@ -142,16 +148,12 @@ public class SubscriptAnalyzer implements AstFullVisitor<Term, Subscript> {
                 }
 
                 if (previous1 != null) {
-                    arg.terms.remove(previous1);
-                    //arg.removeTermHash(previous1);
                     Term a = new Term(previous1.variable,
                             previous1.coefficient * sndTerm.coefficient, previous1.depth);
                     arg.addTerm(a);
                 }
 
                 if (previous2 != null) {
-                    arg.terms.remove(previous2);
-                    //arg.removeTermHash(previous2);
                     Term a = new Term(previous2.variable,
                             previous2.coefficient * sndTerm.coefficient, previous2.depth);
                     arg.addTerm(a);
