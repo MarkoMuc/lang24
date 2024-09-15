@@ -7,11 +7,11 @@ import java.util.HashMap;
 import java.util.stream.Collectors;
 
 public class Subscript {
-    public HashMap<AstDefn, Term> termMap = new HashMap<>();
-    public Term constant;
-    public ArrRef arrRef;
-    public boolean linear;
-    public int variableCount = 0;
+    private final HashMap<AstDefn, Term> termMap = new HashMap<>();
+    private Term constant;
+    private final ArrRef arrRef;
+    private boolean linear;
+    private int variableCount = 0;
 
     public Subscript(ArrRef arrRef) {
         this.constant = new Term(0);
@@ -52,6 +52,9 @@ public class Subscript {
         this.linear = false;
     }
 
+    public int getVariableCount() {
+        return this.variableCount;
+    }
 
     @Override
     public String toString() {
