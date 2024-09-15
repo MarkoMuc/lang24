@@ -57,15 +57,7 @@ public class VecAn extends Phase {
         if (!sourceSubscript.isLinear()) {
             return null;
         }
-        sourceSubscript.collect();
-        sinkSubscript.collect();
-        System.out.print(sourceSubscript);
-        System.out.print("->");
-        System.out.print(sinkSubscript);
-        System.out.print(" vs ");
-        System.out.print(sourceSubscript.toString2());
-        System.out.print("->");
-        System.out.println(sinkSubscript.toString2());
+
 
         return new SubscriptPair(source.refStmt, sourceSubscript, sink.refStmt, sinkSubscript);
     }
@@ -77,6 +69,7 @@ public class VecAn extends Phase {
         if (subscriptPair == null) {
             return;
         }
+        System.out.println(subscriptPair);
 
     }
 
@@ -85,13 +78,25 @@ public class VecAn extends Phase {
         AstStmt sinkStmt;
         Subscript sourceSubscript;
         Subscript sinkSubscript;
+        public int numberOfIndexes;
 
         SubscriptPair(AstStmt sourceStmt, Subscript sourceSubscript, AstStmt sinkStmt, Subscript sinkSubscript) {
             this.sourceStmt = sourceStmt;
             this.sinkStmt = sinkStmt;
             this.sourceSubscript = sourceSubscript;
             this.sinkSubscript = sinkSubscript;
+            this.numberOfIndexes = Math.max(sourceSubscript.variableCount, sinkSubscript.variableCount);
         }
 
+        @Override
+        public String toString() {
+            StringBuilder sb = new StringBuilder();
+            sb.append(sourceSubscript);
+            sb.append("->");
+            sb.append(sinkSubscript);
+            sb.append('{').append(numberOfIndexes).append('}');
+
+            return sb.toString();
+        }
     }
 }
