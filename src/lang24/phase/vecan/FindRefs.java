@@ -76,6 +76,7 @@ public class FindRefs implements AstFullVisitor<ArrRef, LoopDescriptor> {
         }
 
         if (loopDescriptor.vectorizable) {
+            //The outermost loop / outermost vectorizable one is added
             if (arg == null || !arg.vectorizable) {
                 VecAn.loops.add(loopDescriptor);
             }

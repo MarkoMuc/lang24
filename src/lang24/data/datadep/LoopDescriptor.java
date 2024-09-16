@@ -13,6 +13,7 @@ public class LoopDescriptor {
     public AstExpr upperBound;
     public AstExpr step;
     public Vector<ArrRef> arrayRefs = new Vector<>();
+    //Nest contains all loops BEFORE this one
     public Vector<LoopDescriptor> nest = new Vector<>();
     public boolean vectorizable;
 
