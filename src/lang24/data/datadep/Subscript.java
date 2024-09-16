@@ -40,6 +40,10 @@ public class Subscript {
         return termMap.values();
     }
 
+    public boolean containsIndex(AstDefn idx) {
+        return termMap.containsKey(idx);
+    }
+
     public Term getConstant() {
         return this.constant;
     }
