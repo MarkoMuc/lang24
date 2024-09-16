@@ -3,11 +3,16 @@ package lang24.phase.vecan;
 import lang24.data.ast.attribute.Attribute;
 import lang24.data.ast.tree.defn.AstDefn;
 import lang24.data.ast.tree.expr.AstNameExpr;
-import lang24.data.datadep.*;
+import lang24.data.datadep.ArrRef;
+import lang24.data.datadep.LoopDescriptor;
+import lang24.data.datadep.Subscript;
+import lang24.data.datadep.SubscriptPair;
 import lang24.phase.Phase;
 import lang24.phase.seman.SemAn;
 
 import java.util.Vector;
+
+import static lang24.data.datadep.Partition.partition;
 
 
 /*
@@ -106,37 +111,5 @@ public class VecAn extends Phase {
 
         return new SubscriptPair(source.refStmt, sourceSubscript, sink.refStmt, sinkSubscript);
     }
-
-    private Vector<Partition> partition(Vector<SubscriptPair> pairs, Vector<AstDefn> loopIndexes) {
-        Vector<Partition> partitions = new Vector<>();
-        int numOfPartitions = pairs.size();
-        int n = loopIndexes.size();
-
-        for (var pair : pairs) {
-            partitions.add(new Partition(pair));
-        }
-
-        for (int i = 0; i < n; i++) {
-            Integer k = null;
-            for (int j = 0; j < numOfPartitions; j++) {
-                if (i == j) {
-                    continue;
-                }
-                Partition partition = partitions.get(j);
-                if (partition.pairContainsIndex(loopIndexes.get(i))) {
-                    if (k == null) {
-                        k = j;
-                    } else {
-                        partitions.get(k).mergePartitions(partition);
-                        partitions.remove(partition);
-                        numOfPartitions--;
-                    }
-                }
-            }
-        }
-
-        return partitions;
-    }
-
 
 }

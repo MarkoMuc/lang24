@@ -3,9 +3,10 @@ package lang24.data.datadep;
 import lang24.data.ast.tree.defn.AstDefn;
 
 import java.util.HashSet;
+import java.util.Vector;
 
 public class Partition {
-    HashSet<SubscriptPair> pairs;
+    private HashSet<SubscriptPair> pairs;
 
     public Partition() {
         this.pairs = new HashSet<>();
@@ -29,6 +30,38 @@ public class Partition {
             }
         }
         return false;
+    }
+
+
+    public static Vector<Partition> partition(Vector<SubscriptPair> pairs, Vector<AstDefn> loopIndexes) {
+        Vector<Partition> partitions = new Vector<>();
+        int numOfPartitions = pairs.size();
+        int n = loopIndexes.size();
+
+        for (var pair : pairs) {
+            partitions.add(new Partition(pair));
+        }
+
+        for (int i = 0; i < n; i++) {
+            Integer k = null;
+            for (int j = 0; j < numOfPartitions; j++) {
+                if (i == j) {
+                    continue;
+                }
+                Partition partition = partitions.get(j);
+                if (partition.pairContainsIndex(loopIndexes.get(i))) {
+                    if (k == null) {
+                        k = j;
+                    } else {
+                        partitions.get(k).mergePartitions(partition);
+                        partitions.remove(partition);
+                        numOfPartitions--;
+                    }
+                }
+            }
+        }
+
+        return partitions;
     }
 
     @Override
