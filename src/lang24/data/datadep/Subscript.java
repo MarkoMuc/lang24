@@ -40,8 +40,9 @@ public class Subscript {
         return termMap.values();
     }
 
-    public boolean containsIndex(AstDefn idx) {
-        return termMap.containsKey(idx);
+    public boolean containsIndex(AstDefn idx, int loopLevel) {
+        var term = termMap.get(idx);
+        return term != null && term.depth == loopLevel;
     }
 
     public Term getConstant() {

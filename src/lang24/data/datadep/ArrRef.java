@@ -36,7 +36,7 @@ public class ArrRef {
             expr =  "=" + expr;
         }
 
-        return String.format("%-20s |\tassign=%-5s | L%dS%d", expr, this.assign, this.depth, this.stmtNum);
+        return String.format("(L%dS%d|%s) %s", this.depth, this.stmtNum, this.assign, expr);
     }
 
     @Override

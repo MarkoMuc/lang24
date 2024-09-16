@@ -39,6 +39,7 @@ public class VecAn extends Phase {
                 for (int j = i + 1; j < len; j++) {
                     ArrRef sink = loopDescriptor.arrayRefs.get(j);
                     if (source.equals(sink)) {
+                        //FIXME: This should also check if they both have the same number of subscript pairs
                         var depExists = testDependence(source, sink, loopDescriptor);
                         if (depExists == null) {
                             loopDescriptor.vectorizable = false;
@@ -91,6 +92,7 @@ public class VecAn extends Phase {
     private SubscriptPair createAndAnalyzeSubscriptPair(ArrRef source, ArrRef sink) {
         //TODO: If a ref is nonlinear once, it is always non linear
         //      -> Early break/continue whenever this same ArrRef is to be checked
+        //TODO: This should create a Vector of SubscriptPairs, one for each position
 
         Subscript sourceSubscript = new Subscript(source);
         source.subscriptExpr.accept(new SubscriptAnalyzer(), sourceSubscript);

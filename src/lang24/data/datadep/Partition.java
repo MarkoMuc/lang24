@@ -17,17 +17,17 @@ public class Partition {
         this.pairs.addAll(other.pairs);
     }
 
-    public boolean pairContainsIndex(AstDefn idx) {
+    public boolean pairContainsIndex(AstDefn idx, int loopLevel) {
         for (var pair : pairs) {
-            if (pair.sourceSubscript.containsIndex(idx)) {
+            if (pair.sourceSubscript.containsIndex(idx, loopLevel)) {
                 return true;
-            } else if (pair.sinkSubscript.containsIndex(idx)) {
+            } else if (pair.sinkSubscript.containsIndex(idx, loopLevel)) {
                 return true;
             }
         }
+
         return false;
     }
-
 
     public static Vector<Partition> partition(Vector<SubscriptPair> pairs, Vector<AstDefn> loopIndexes) {
         Vector<Partition> partitions = new Vector<>();
@@ -45,7 +45,7 @@ public class Partition {
                     continue;
                 }
                 Partition partition = partitions.get(j);
-                if (partition.pairContainsIndex(loopIndexes.get(i))) {
+                if (partition.pairContainsIndex(loopIndexes.get(i), i)) {
                     if (k == null) {
                         k = j;
                     } else {
