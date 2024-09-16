@@ -6,11 +6,7 @@ import java.util.HashSet;
 import java.util.Vector;
 
 public class Partition {
-    private HashSet<SubscriptPair> pairs;
-
-    public Partition() {
-        this.pairs = new HashSet<>();
-    }
+    private final HashSet<SubscriptPair> pairs;
 
     public Partition(SubscriptPair pair) {
         this.pairs = new HashSet<>();

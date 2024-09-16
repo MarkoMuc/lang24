@@ -51,7 +51,7 @@ public class VecAn extends Phase {
         loops.removeAll(loops.stream().filter(f -> !f.vectorizable).toList());
     }
 
-    //FIXME: This should return DVset or null if dependence cannot be tested
+    //FIXME: This should return DV_set or null if dependence cannot be tested
     private Boolean testDependence(ArrRef source, ArrRef sink, LoopDescriptor loopDescriptor) {
         //TODO: In future this has to go through all idxExpressions
         SubscriptPair subscriptPair = createAndAnalyzeSubscriptPair(source, sink);
@@ -60,22 +60,17 @@ public class VecAn extends Phase {
         }
         Vector<AstDefn> loopIndexes = new Vector<>();
         Vector<LoopDescriptor> nest;
-        int depth;
+
         if (source.depth > sink.depth) {
-            depth = source.depth;
             nest = source.loop.nest;
             loopIndexes.addLast(SemAn.definedAt.get(source.loop.loopIndex));
         } else {
-            depth = sink.depth;
             nest = sink.loop.nest;
             loopIndexes.addLast(SemAn.definedAt.get(sink.loop.loopIndex));
-
         }
 
-        // Here i should take the most deep one, since it carries its own loop descriptor
+        // Here it should take the most deep one, since it carries its own loop descriptor
         // This loop descriptor holds the outermost ones in order
-
-        loopIndexes.add(SemAn.definedAt.get(loopDescriptor.loopIndex));
 
         for (var loop : nest.reversed()) {
             loopIndexes.addFirst(SemAn.definedAt.get(loop.loopIndex));
