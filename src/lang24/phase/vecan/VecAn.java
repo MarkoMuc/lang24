@@ -57,9 +57,12 @@ public class VecAn extends Phase {
                         } else if (!depExists) {
                             DVSet.getDirectionVectors().clear();
                         }
-                        DVSet.purgeIllegal();
-                        DDG.addDVSet(source, sink, DVSet);
+                        var fixedVectors = DVSet.purgeIllegal();
 
+                        if (!fixedVectors.isEmpty()) {
+                            DDG.addDVSet(sink, source, new DirectionVectorSet(fixedVectors));
+                        }
+                        DDG.addDVSet(source, sink, DVSet);
                     }
                 }
             }

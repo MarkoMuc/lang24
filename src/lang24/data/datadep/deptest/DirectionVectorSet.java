@@ -9,6 +9,10 @@ public class DirectionVectorSet {
         this.directionVectors = new Vector<>();
     }
 
+    public DirectionVectorSet(Vector<DirectionVector> directionVectors) {
+        this.directionVectors = directionVectors;
+    }
+
     public DirectionVectorSet(int size) {
         this.directionVectors = new Vector<>();
         this.directionVectors.add(DirectionVector.generateStartingDV(size));
@@ -25,8 +29,34 @@ public class DirectionVectorSet {
         this.directionVectors.add(directionVector);
     }
 
-    public void purgeIllegal() {
+    public Vector<DirectionVector> purgeIllegal() {
+        Vector<DirectionVector> toFix = new Vector<>();
+        for (var vec : this.directionVectors) {
+            for (var direction : vec.directions) {
+                if (direction.direction != DependenceDirection.Direction.EQU) {
+                    // Left most component is > -> Illegal
+                    if (direction.direction == DependenceDirection.Direction.MORE) {
+                        toFix.add(vec);
+                        break;
+                    }
+                }
+            }
+        }
+        this.directionVectors.removeAll(toFix);
 
+        for (var vec : toFix) {
+            //Flip
+            var tmpVec = new Vector<>(vec.size);
+            for (var direction : vec.directions) {
+                if (direction.direction == DependenceDirection.Direction.MORE) {
+                    direction.direction = DependenceDirection.Direction.LESS;
+                } else if (direction.direction == DependenceDirection.Direction.LESS) {
+                    direction.direction = DependenceDirection.Direction.MORE;
+                }
+            }
+        }
+
+        return toFix;
     }
 
     public int size() {
