@@ -23,8 +23,8 @@ public class Subscript {
 
     public void addTerm(Term term) {
         if (term.variable == null) {
-            if (constant == null) {
-                constant = term;
+            if (constant == null || constant.coefficient == 0) {
+                this.constant = term;
             } else {
                 this.constant.coefficient = constant.coefficient + term.coefficient;
             }

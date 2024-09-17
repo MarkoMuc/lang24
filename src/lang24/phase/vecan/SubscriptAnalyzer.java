@@ -13,6 +13,8 @@ import lang24.phase.seman.SemAn;
 //      the AstDefn is linked to that loop and any other that uses it, when it should be linked with the
 //      loopDescriptor somehow
 
+//CHECKME: Need to check what happens when there is more than 1 -symbol for constants
+
 public class SubscriptAnalyzer implements AstFullVisitor<Term, Subscript> {
 
     private Term previous1;
@@ -66,6 +68,7 @@ public class SubscriptAnalyzer implements AstFullVisitor<Term, Subscript> {
                 // VAR + VAR
                 if (prevExpr == null || prevExpr.oper != AstBinExpr.Oper.MUL) {
                     arg.addTerm(fstTerm);
+                    //FIXME: I can just do sndTerm.coef -1 here and should fix everything?
                     arg.addTerm(sndTerm);
                 }
 
