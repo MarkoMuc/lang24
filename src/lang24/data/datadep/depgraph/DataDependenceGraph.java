@@ -2,7 +2,7 @@ package lang24.data.datadep.depgraph;
 
 import lang24.data.ast.tree.stmt.AstStmt;
 import lang24.data.datadep.ArrRef;
-import lang24.data.datadep.DirectionVector;
+import lang24.data.datadep.DirectionVectorSet;
 
 import java.util.HashMap;
 import java.util.Vector;
@@ -36,7 +36,7 @@ public class DataDependenceGraph {
         return null;
     }
 
-    public void addDVSet(ArrRef source, ArrRef sink, Vector<DirectionVector> DVSet) {
+    public void addDVSet(ArrRef source, ArrRef sink, DirectionVectorSet DVSet) {
         var fstNode = getDGNode(source.depth, source.refStmt);
         var sndNode = getDGNode(sink.depth, sink.refStmt);
 
@@ -48,7 +48,7 @@ public class DataDependenceGraph {
             sndNode = new DDGNode(sink.refStmt, sink.depth, sink.stmtNum - 1);
         }
 
-        for (var dirVect : DVSet) {
+        for (var dirVect : DVSet.getDirectionVectors()) {
             var conn = new DDGConnection(fstNode, sndNode, dirVect);
             fstNode.addConnection(conn);
         }

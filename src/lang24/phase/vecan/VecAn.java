@@ -41,16 +41,21 @@ public class VecAn extends Phase {
                     ArrRef sink = loopDescriptor.arrayRefs.get(j);
                     if (source.equals(sink)) {
                         //FIXME: This should also check if they both have the same number of subscript pairs
-                        var DVSet = new Vector<DirectionVector>();
+                        var DVSet = new DirectionVectorSet(Math.max(source.depth, sink.depth));
                         var depExists = testDependence(source, sink, loopDescriptor, DVSet);
                         if (depExists == null) {
                             loopDescriptor.vectorizable = false;
                             break loopRefs;
+                        } else if (!depExists) {
+                            DVSet.getDirectionVectors().clear();
                         }
+                        DVSet.purgeIllegal();
                         DDG.addDVSet(source, sink, DVSet);
+
                     }
                 }
             }
+
             if (loopDescriptor.vectorizable) {
                 System.out.println(DDG);
             }
@@ -59,7 +64,8 @@ public class VecAn extends Phase {
     }
 
     //FIXME: This should return DV_set or null if dependence cannot be tested
-    private Boolean testDependence(ArrRef source, ArrRef sink, LoopDescriptor loopDescriptor, Vector<DirectionVector> DVSet) {
+    private Boolean testDependence(ArrRef source, ArrRef sink,
+                                   LoopDescriptor loopDescriptor, DirectionVectorSet DVSet) {
         //TODO: In future this has to go through all idxExpressions
 
         //Create and analyze partition pairs
@@ -103,21 +109,21 @@ public class VecAn extends Phase {
     }
 
     //TODO: add direction vector set
-    private boolean testSeparable(Partition partition, Vector<DirectionVector> DVSet) {
+    private boolean testSeparable(Partition partition, DirectionVectorSet DVSet) {
         boolean depExists;
         if (partition.getSize() > 1) {
             throw new Report.InternalError();
         }
 
         var subscriptPair = partition.getPairs().getFirst();
-        var DV = new Vector<DirectionVector>();
+        var DV = new DirectionVectorSet();
         if (subscriptPair.numberOfIndexes == 0) {
             return ZIVTest(subscriptPair);
         } else if (subscriptPair.numberOfIndexes == 1) {
-            depExists = SIVTest(subscriptPair, DVSet);
+            depExists = SIVTest(subscriptPair, DV);
         } else {
             //FIXME: Implement me
-            depExists = MIVTest(subscriptPair, DVSet);
+            depExists = MIVTest(subscriptPair, DV);
         }
 
         if (depExists) {
