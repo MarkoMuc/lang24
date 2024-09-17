@@ -21,11 +21,15 @@ public class DDGNode {
         this.connections.add(connection);
     }
 
+    public int getRealStmtNum() {
+        return stmtNum + 1;
+    }
+
     @Override
     public String toString() {
         var sb = new StringBuilder();
 
-        sb.append(String.format("NODE(L%dS%d) {\n", this.depth, this.stmtNum + 1));
+        sb.append(String.format("NODE(L%dS%d) {\n", this.depth, this.getRealStmtNum()));
         for (var conn : this.connections) {
             sb.append("\t").append(conn).append("\n");
         }

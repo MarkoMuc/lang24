@@ -16,7 +16,7 @@ public class DDGConnection {
     @Override
     public String toString() {
         var sb = new StringBuilder();
-        sb.append("->").append(String.format("L%dS%d: ", sink.depth, sink.stmtNum));
+        sb.append("->").append(String.format("L%dS%d: ", sink.depth, sink.getRealStmtNum()));
         sb.append(directionVector);
 
         return sb.toString();

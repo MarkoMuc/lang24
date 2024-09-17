@@ -39,21 +39,21 @@ public class DataDependenceGraph {
     public void addDVSet(ArrRef source, ArrRef sink, DirectionVectorSet DVSet) {
         var fstNode = getDGNode(source.depth, source.refStmt);
         var sndNode = getDGNode(sink.depth, sink.refStmt);
-
+        // "stmtNum - 1" is done to index the DDG Vector better, otherwise position 0 for every loop would be never used
         if (fstNode == null) {
             fstNode = new DDGNode(source.refStmt, source.depth, source.stmtNum - 1);
+            addDGNode(fstNode);
         }
 
         if (sndNode == null) {
             sndNode = new DDGNode(sink.refStmt, sink.depth, sink.stmtNum - 1);
+            addDGNode(sndNode);
         }
 
         for (var dirVect : DVSet.getDirectionVectors()) {
             var conn = new DDGConnection(fstNode, sndNode, dirVect);
             fstNode.addConnection(conn);
         }
-        addDGNode(fstNode);
-        addDGNode(sndNode);
     }
 
     @Override
