@@ -1,4 +1,4 @@
-package lang24.data.datadep;
+package lang24.data.datadep.deptest;
 
 import java.util.Vector;
 

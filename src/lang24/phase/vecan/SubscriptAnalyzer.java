@@ -5,8 +5,8 @@ import lang24.data.ast.tree.expr.AstBinExpr;
 import lang24.data.ast.tree.expr.AstNameExpr;
 import lang24.data.ast.tree.expr.AstPfxExpr;
 import lang24.data.ast.visitor.AstFullVisitor;
-import lang24.data.datadep.Subscript;
-import lang24.data.datadep.Term;
+import lang24.data.datadep.subscript.Subscript;
+import lang24.data.datadep.subscript.Term;
 import lang24.phase.seman.SemAn;
 
 //FIXME: Issue with where a loop variable is defined. If it is defined in another loop,

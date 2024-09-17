@@ -1,5 +1,5 @@
 /**
- * Classed for building a Data Dependence Graph
+ * Classes for building a Data Dependence Graph
  *
  * @author marko.muc12@gmail.com
  */

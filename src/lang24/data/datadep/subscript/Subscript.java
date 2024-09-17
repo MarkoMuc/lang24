@@ -1,6 +1,7 @@
-package lang24.data.datadep;
+package lang24.data.datadep.subscript;
 
 import lang24.data.ast.tree.defn.AstDefn;
+import lang24.data.datadep.ArrRef;
 
 import java.util.Collection;
 import java.util.HashMap;

@@ -2,7 +2,7 @@ package lang24.data.datadep.depgraph;
 
 import lang24.data.ast.tree.stmt.AstStmt;
 import lang24.data.datadep.ArrRef;
-import lang24.data.datadep.DirectionVectorSet;
+import lang24.data.datadep.deptest.DirectionVectorSet;
 
 import java.util.HashMap;
 import java.util.Vector;

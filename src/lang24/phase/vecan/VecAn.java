@@ -4,15 +4,20 @@ import lang24.common.report.Report;
 import lang24.data.ast.attribute.Attribute;
 import lang24.data.ast.tree.defn.AstDefn;
 import lang24.data.ast.tree.expr.AstNameExpr;
-import lang24.data.datadep.*;
+import lang24.data.datadep.ArrRef;
+import lang24.data.datadep.LoopDescriptor;
 import lang24.data.datadep.depgraph.DataDependenceGraph;
+import lang24.data.datadep.deptest.DirectionVectorSet;
+import lang24.data.datadep.subscript.Partition;
+import lang24.data.datadep.subscript.Subscript;
+import lang24.data.datadep.subscript.SubscriptPair;
 import lang24.phase.Phase;
 import lang24.phase.seman.SemAn;
 
 import java.util.Vector;
 
-import static lang24.data.datadep.DependenceTests.*;
-import static lang24.data.datadep.Partition.partition;
+import static lang24.data.datadep.deptest.DependenceTests.*;
+import static lang24.data.datadep.subscript.Partition.partition;
 
 
 /*

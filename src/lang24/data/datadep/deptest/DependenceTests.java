@@ -1,7 +1,8 @@
-package lang24.data.datadep;
+package lang24.data.datadep.deptest;
 
 import lang24.common.report.Report;
 import lang24.data.ast.tree.expr.AstAtomExpr;
+import lang24.data.datadep.subscript.SubscriptPair;
 
 import java.util.Objects;
 import java.util.Vector;

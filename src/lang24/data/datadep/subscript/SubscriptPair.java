@@ -1,6 +1,7 @@
-package lang24.data.datadep;
+package lang24.data.datadep.subscript;
 
 import lang24.data.ast.tree.stmt.AstStmt;
+import lang24.data.datadep.LoopDescriptor;
 
 import java.util.HashSet;
 import java.util.Vector;

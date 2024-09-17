@@ -1,6 +1,6 @@
 package lang24.data.datadep.depgraph;
 
-import lang24.data.datadep.DirectionVector;
+import lang24.data.datadep.deptest.DirectionVector;
 
 public class DDGConnection {
     public DDGNode source;
