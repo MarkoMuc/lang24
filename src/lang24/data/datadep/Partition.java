@@ -2,19 +2,27 @@ package lang24.data.datadep;
 
 import lang24.data.ast.tree.defn.AstDefn;
 
-import java.util.HashSet;
 import java.util.Vector;
 
+//FIXME: Do i need a Set??
 public class Partition {
-    private final HashSet<SubscriptPair> pairs;
+    private final Vector<SubscriptPair> pairs;
 
     public Partition(SubscriptPair pair) {
-        this.pairs = new HashSet<>();
+        this.pairs = new Vector<>();
         this.pairs.add(pair);
+    }
+
+    public int getSize() {
+        return pairs.size();
     }
 
     public void mergePartitions(Partition other) {
         this.pairs.addAll(other.pairs);
+    }
+
+    public Vector<SubscriptPair> getPairs() {
+        return this.pairs;
     }
 
     public boolean pairContainsIndex(AstDefn idx, int loopLevel) {

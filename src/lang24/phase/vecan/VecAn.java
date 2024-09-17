@@ -1,17 +1,16 @@
 package lang24.phase.vecan;
 
+import lang24.common.report.Report;
 import lang24.data.ast.attribute.Attribute;
 import lang24.data.ast.tree.defn.AstDefn;
 import lang24.data.ast.tree.expr.AstNameExpr;
-import lang24.data.datadep.ArrRef;
-import lang24.data.datadep.LoopDescriptor;
-import lang24.data.datadep.Subscript;
-import lang24.data.datadep.SubscriptPair;
+import lang24.data.datadep.*;
 import lang24.phase.Phase;
 import lang24.phase.seman.SemAn;
 
 import java.util.Vector;
 
+import static lang24.data.datadep.DependenceTests.*;
 import static lang24.data.datadep.Partition.partition;
 
 
@@ -55,23 +54,26 @@ public class VecAn extends Phase {
     //FIXME: This should return DV_set or null if dependence cannot be tested
     private Boolean testDependence(ArrRef source, ArrRef sink, LoopDescriptor loopDescriptor) {
         //TODO: In future this has to go through all idxExpressions
+
+        //Create and analyze partition pairs
         SubscriptPair subscriptPair = createAndAnalyzeSubscriptPair(source, sink);
         if (subscriptPair == null) {
             return null;
         }
+
+        // Create Partitions
         Vector<AstDefn> loopIndexes = new Vector<>();
         Vector<LoopDescriptor> nest;
 
         if (source.depth > sink.depth) {
             nest = source.loop.nest;
+            subscriptPair.setLoop(source.loop);
             loopIndexes.addLast(SemAn.definedAt.get(source.loop.loopIndex));
         } else {
             nest = sink.loop.nest;
+            subscriptPair.setLoop(sink.loop);
             loopIndexes.addLast(SemAn.definedAt.get(sink.loop.loopIndex));
         }
-
-        // Here it should take the most deep one, since it carries its own loop descriptor
-        // This loop descriptor holds the outermost ones in order
 
         for (var loop : nest.reversed()) {
             loopIndexes.addFirst(SemAn.definedAt.get(loop.loopIndex));
@@ -81,11 +83,52 @@ public class VecAn extends Phase {
             add(subscriptPair);
         }}, loopIndexes);
 
-        //System.out.println(subscriptPair);
         for (var part : partitions) {
             System.out.println(part);
         }
 
+        //Test separable
+        Vector<DirectionVector> DVSet = new Vector<>();
+        for (var partition : partitions) {
+            if (partition.getSize() == 1) {
+                if (!testSeparable(partition, DVSet)) {
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    }
+
+    //TODO: add direction vector set
+    private boolean testSeparable(Partition partition, Vector<DirectionVector> DVSet) {
+        boolean depExists;
+        if (partition.getSize() > 1) {
+            throw new Report.InternalError();
+        }
+
+        var subscriptPair = partition.getPairs().getFirst();
+        var DV = new Vector<DirectionVector>();
+        if (subscriptPair.numberOfIndexes == 0) {
+            return ZIVTest(subscriptPair);
+        } else if (subscriptPair.numberOfIndexes == 1) {
+            depExists = SIVTest(subscriptPair, DVSet);
+        } else {
+            //FIXME: Implement me
+            depExists = MIVTest(subscriptPair, DVSet);
+        }
+
+        if (depExists) {
+            mergeVectorsSets(subscriptPair.loopIndexLevels, DVSet, DV);
+        } else {
+            return false;
+        }
+
+        for (var vect : DVSet) {
+            System.out.println(vect);
+        }
+
+        //CHECKME:This returns true in case the linear element does not exist?????
         return true;
     }
 
@@ -93,7 +136,6 @@ public class VecAn extends Phase {
         //TODO: If a ref is nonlinear once, it is always non linear
         //      -> Early break/continue whenever this same ArrRef is to be checked
         //TODO: This should create a Vector of SubscriptPairs, one for each position
-
         Subscript sourceSubscript = new Subscript(source);
         source.subscriptExpr.accept(new SubscriptAnalyzer(), sourceSubscript);
         if (!sourceSubscript.isLinear()) {
@@ -106,7 +148,8 @@ public class VecAn extends Phase {
             return null;
         }
 
-        return new SubscriptPair(source.refStmt, sourceSubscript, sink.refStmt, sinkSubscript);
+        return new SubscriptPair(source.refStmt, sourceSubscript,
+                sink.refStmt, sinkSubscript, Math.max(source.depth, sink.depth));
     }
 
 }

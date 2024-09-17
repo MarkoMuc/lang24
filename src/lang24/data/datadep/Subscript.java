@@ -4,6 +4,7 @@ import lang24.data.ast.tree.defn.AstDefn;
 
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.Vector;
 import java.util.stream.Collectors;
 
 public class Subscript {
@@ -36,6 +37,10 @@ public class Subscript {
         }
     }
 
+    public Collection<AstDefn> getDefinitions() {
+        return termMap.keySet();
+    }
+
     public Collection<Term> getTerms() {
         return termMap.values();
     }
@@ -47,6 +52,13 @@ public class Subscript {
 
     public Term getConstant() {
         return this.constant;
+    }
+
+    public Term getVariable(int idx) {
+        if (idx >= this.variableCount) {
+            return null;
+        }
+        return new Vector<>(getTerms()).get(idx);
     }
 
     public boolean isLinear() {
