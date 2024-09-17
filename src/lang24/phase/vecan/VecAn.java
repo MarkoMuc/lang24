@@ -16,8 +16,11 @@ import static lang24.data.datadep.Partition.partition;
 
 
 /*
- *   TODO: Subscript pairs
- *       -> Since our language does not directly support multi dimensional arrays, there is always only one subscript pair!
+ *  TODO: Subscript pairs
+ *   -> Since our language does not directly support multi dimensional arrays, there is always only one subscript pair!
+ *  FIXME:
+ *   F1) This should also check if they both have the same number of subscripts
+ *   F2) Implement MIV
  */
 
 public class VecAn extends Phase {
@@ -40,7 +43,7 @@ public class VecAn extends Phase {
                 for (int j = i + 1; j < len; j++) {
                     ArrRef sink = loopDescriptor.arrayRefs.get(j);
                     if (source.equals(sink)) {
-                        //FIXME: This should also check if they both have the same number of subscript pairs
+                        //#F1
                         var DVSet = new DirectionVectorSet(Math.max(source.depth, sink.depth));
                         var depExists = testDependence(source, sink, loopDescriptor, DVSet);
                         if (depExists == null) {
@@ -63,7 +66,6 @@ public class VecAn extends Phase {
         loops.removeAll(loops.stream().filter(f -> !f.vectorizable).toList());
     }
 
-    //FIXME: This should return DV_set or null if dependence cannot be tested
     private Boolean testDependence(ArrRef source, ArrRef sink,
                                    LoopDescriptor loopDescriptor, DirectionVectorSet DVSet) {
         //TODO: In future this has to go through all idxExpressions
@@ -122,7 +124,7 @@ public class VecAn extends Phase {
         } else if (subscriptPair.numberOfIndexes == 1) {
             depExists = SIVTest(subscriptPair, DV);
         } else {
-            //FIXME: Implement me
+            //#F2
             depExists = MIVTest(subscriptPair, DV);
         }
 
