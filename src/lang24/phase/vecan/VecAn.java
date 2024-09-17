@@ -5,6 +5,7 @@ import lang24.data.ast.attribute.Attribute;
 import lang24.data.ast.tree.defn.AstDefn;
 import lang24.data.ast.tree.expr.AstNameExpr;
 import lang24.data.datadep.*;
+import lang24.data.datadep.depgraph.DataDependenceGraph;
 import lang24.phase.Phase;
 import lang24.phase.seman.SemAn;
 
@@ -31,28 +32,34 @@ public class VecAn extends Phase {
     public void loopAnalysis() {
         for (LoopDescriptor loopDescriptor : loops) {
             int len = loopDescriptor.arrayRefs.size();
-
+            var DDG = new DataDependenceGraph();
             loopRefs:
             for (int i = 0; i < len; i++) {
                 ArrRef source = loopDescriptor.arrayRefs.get(i);
+
                 for (int j = i + 1; j < len; j++) {
                     ArrRef sink = loopDescriptor.arrayRefs.get(j);
                     if (source.equals(sink)) {
                         //FIXME: This should also check if they both have the same number of subscript pairs
-                        var depExists = testDependence(source, sink, loopDescriptor);
+                        var DVSet = new Vector<DirectionVector>();
+                        var depExists = testDependence(source, sink, loopDescriptor, DVSet);
                         if (depExists == null) {
                             loopDescriptor.vectorizable = false;
                             break loopRefs;
                         }
+                        DDG.addDVSet(source, sink, DVSet);
                     }
                 }
+            }
+            if (loopDescriptor.vectorizable) {
+                System.out.println(DDG);
             }
         }
         loops.removeAll(loops.stream().filter(f -> !f.vectorizable).toList());
     }
 
     //FIXME: This should return DV_set or null if dependence cannot be tested
-    private Boolean testDependence(ArrRef source, ArrRef sink, LoopDescriptor loopDescriptor) {
+    private Boolean testDependence(ArrRef source, ArrRef sink, LoopDescriptor loopDescriptor, Vector<DirectionVector> DVSet) {
         //TODO: In future this has to go through all idxExpressions
 
         //Create and analyze partition pairs
@@ -83,12 +90,7 @@ public class VecAn extends Phase {
             add(subscriptPair);
         }}, loopIndexes);
 
-        for (var part : partitions) {
-            System.out.println(part);
-        }
-
         //Test separable
-        Vector<DirectionVector> DVSet = new Vector<>();
         for (var partition : partitions) {
             if (partition.getSize() == 1) {
                 if (!testSeparable(partition, DVSet)) {
@@ -122,10 +124,6 @@ public class VecAn extends Phase {
             mergeVectorsSets(subscriptPair.loopIndexLevels, DVSet, DV);
         } else {
             return false;
-        }
-
-        for (var vect : DVSet) {
-            System.out.println(vect);
         }
 
         //CHECKME:This returns true in case the linear element does not exist?????
