@@ -1,14 +1,18 @@
 package lang24.phase.seman;
 
-import lang24.common.logger.*;
-import lang24.data.ast.tree.*;
-import lang24.data.ast.tree.defn.*;
+import lang24.common.logger.Logger;
+import lang24.data.ast.tree.AstNode;
+import lang24.data.ast.tree.AstNodes;
+import lang24.data.ast.tree.defn.AstDefn;
+import lang24.data.ast.tree.defn.AstFunDefn;
+import lang24.data.ast.tree.defn.AstTypDefn;
+import lang24.data.ast.tree.defn.AstVarDefn;
 import lang24.data.ast.tree.expr.*;
 import lang24.data.ast.tree.stmt.*;
 import lang24.data.ast.tree.type.*;
-import lang24.data.ast.visitor.*;
+import lang24.data.ast.visitor.AstNullVisitor;
 import lang24.data.type.*;
-import lang24.data.type.visitor.*;
+import lang24.data.type.visitor.SemVisitor;
 
 /**
  * Semantic analysis logger.
@@ -118,6 +122,12 @@ public class SemAnLogger implements AstNullVisitor<Object, Object>, SemVisitor<O
 	@Override
 	public Object visit(AstArrExpr arrExpr, Object arg) {
 		logAttributes(arrExpr);
+		return null;
+	}
+
+	@Override
+	public Object visit(AstMultiArrExpr multiArrExpr, Object arg) {
+		logAttributes(multiArrExpr);
 		return null;
 	}
 

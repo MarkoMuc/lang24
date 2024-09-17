@@ -1,7 +1,10 @@
 package lang24.data.ast.visitor;
 
-import lang24.data.ast.tree.*;
-import lang24.data.ast.tree.defn.*;
+import lang24.data.ast.tree.AstNode;
+import lang24.data.ast.tree.AstNodes;
+import lang24.data.ast.tree.defn.AstFunDefn;
+import lang24.data.ast.tree.defn.AstTypDefn;
+import lang24.data.ast.tree.defn.AstVarDefn;
 import lang24.data.ast.tree.expr.*;
 import lang24.data.ast.tree.stmt.*;
 import lang24.data.ast.tree.type.*;
@@ -54,6 +57,11 @@ public interface AstNullVisitor<Result, Argument> extends AstVisitor<Result, Arg
 
 	@Override
 	public default Result visit(AstArrExpr arrExpr, Argument arg) {
+		return null;
+	}
+
+	@Override
+	default Result visit(AstMultiArrExpr multiArrExpr, Argument arg) {
 		return null;
 	}
 

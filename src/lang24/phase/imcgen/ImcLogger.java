@@ -1,16 +1,20 @@
 package lang24.phase.imcgen;
 
-import lang24.common.logger.*;
-import lang24.data.ast.tree.*;
-import lang24.data.ast.tree.defn.*;
+import lang24.common.logger.Logger;
+import lang24.data.ast.tree.AstNode;
+import lang24.data.ast.tree.AstNodes;
+import lang24.data.ast.tree.defn.AstFunDefn;
+import lang24.data.ast.tree.defn.AstTypDefn;
+import lang24.data.ast.tree.defn.AstVarDefn;
 import lang24.data.ast.tree.expr.*;
 import lang24.data.ast.tree.stmt.*;
 import lang24.data.ast.tree.type.*;
-import lang24.data.ast.visitor.*;
-import lang24.data.mem.*;
+import lang24.data.ast.visitor.AstNullVisitor;
+import lang24.data.imc.code.expr.ImcExpr;
+import lang24.data.imc.code.stmt.ImcStmt;
+import lang24.data.mem.MemFrame;
+import lang24.data.mem.MemLabel;
 import lang24.phase.memory.Memory;
-import lang24.data.imc.code.expr.*;
-import lang24.data.imc.code.stmt.*;
 
 /**
  * @author bostjan.slivnik@fri.uni-lj.si
@@ -109,6 +113,12 @@ public class ImcLogger implements AstNullVisitor<Object, Object> {
 	@Override
 	public Object visit(AstArrExpr arrExpr, Object arg) {
 		logAttributes(arrExpr);
+		return null;
+	}
+
+	@Override
+	public Object visit(AstMultiArrExpr multiArrExpr, Object arg) {
+		logAttributes(multiArrExpr);
 		return null;
 	}
 

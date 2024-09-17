@@ -1,6 +1,6 @@
 package lang24.phase.seman;
 
-import lang24.common.report.*;
+import lang24.common.report.Report;
 import lang24.data.ast.tree.AstNode;
 import lang24.data.ast.tree.AstNodes;
 import lang24.data.ast.tree.defn.AstDefn;
@@ -9,7 +9,7 @@ import lang24.data.ast.tree.defn.AstVarDefn;
 import lang24.data.ast.tree.expr.*;
 import lang24.data.ast.tree.stmt.AstAssignStmt;
 import lang24.data.ast.tree.stmt.AstDecoratorStmt;
-import lang24.data.ast.visitor.*;
+import lang24.data.ast.visitor.AstFullVisitor;
 /**
  * Lvalue resolver.
  * 
@@ -78,6 +78,20 @@ public class LValResolver implements AstFullVisitor<Object, Object> {
 			SemAn.isLVal.put(arrExpr, true);
 		}else {
 			throw new Report.Error(arrExpr,"Array l-val error.");
+		}
+		return null;
+	}
+
+	@Override
+	public Object visit(AstMultiArrExpr multiArrExpr, Object arg) {
+		multiArrExpr.arr.accept(this, null);
+		multiArrExpr.idxs.accept(this, null);
+		Boolean test = SemAn.isLVal.get(multiArrExpr.arr);
+
+		if (test != null && test) {
+			SemAn.isLVal.put(multiArrExpr, true);
+		} else {
+			throw new Report.Error(multiArrExpr, "Multi array l-val error.");
 		}
 		return null;
 	}

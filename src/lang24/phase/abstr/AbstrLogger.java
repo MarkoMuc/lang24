@@ -1,13 +1,17 @@
 package lang24.phase.abstr;
 
-import java.util.*;
-import lang24.common.logger.*;
-import lang24.data.ast.tree.*;
-import lang24.data.ast.tree.defn.*;
+import lang24.common.logger.Logger;
+import lang24.data.ast.tree.AstNode;
+import lang24.data.ast.tree.AstNodes;
+import lang24.data.ast.tree.defn.AstFunDefn;
+import lang24.data.ast.tree.defn.AstTypDefn;
+import lang24.data.ast.tree.defn.AstVarDefn;
 import lang24.data.ast.tree.expr.*;
 import lang24.data.ast.tree.stmt.*;
 import lang24.data.ast.tree.type.*;
-import lang24.data.ast.visitor.*;
+import lang24.data.ast.visitor.AstVisitor;
+
+import java.util.LinkedList;
 
 /**
  * Abstract syntax logger.
@@ -158,6 +162,25 @@ public class AbstrLogger implements AstVisitor<Object, String> {
 		arrExpr.idx.accept(this, null);
 		for (AstVisitor<?, ?> subvisitor : subvisitors)
 			arrExpr.accept(subvisitor, null);
+		logger.endElement();
+		return null;
+	}
+
+	public Object visit(AstMultiArrExpr multiArrExpr, String elemClassName) {
+		if (logger == null) {
+			return null;
+		}
+		logger.begElement("node");
+		multiArrExpr.location().log(logger);
+		logger.addAttribute("id", Integer.toString(multiArrExpr.id));
+		logger.addAttribute("label", multiArrExpr.getClass().getSimpleName());
+		multiArrExpr.arr.accept(this, null);
+		if (multiArrExpr.idxs != null) {
+			multiArrExpr.idxs.accept(this, "AstExpr");
+		}
+		for (AstVisitor<?, ?> subvisitor : subvisitors) {
+			multiArrExpr.accept(subvisitor, null);
+		}
 		logger.endElement();
 		return null;
 	}

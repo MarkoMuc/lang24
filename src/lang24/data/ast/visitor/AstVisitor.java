@@ -1,8 +1,11 @@
 package lang24.data.ast.visitor;
 
-import lang24.common.report.*;
-import lang24.data.ast.tree.*;
-import lang24.data.ast.tree.defn.*;
+import lang24.common.report.Report;
+import lang24.data.ast.tree.AstNode;
+import lang24.data.ast.tree.AstNodes;
+import lang24.data.ast.tree.defn.AstFunDefn;
+import lang24.data.ast.tree.defn.AstTypDefn;
+import lang24.data.ast.tree.defn.AstVarDefn;
 import lang24.data.ast.tree.expr.*;
 import lang24.data.ast.tree.stmt.*;
 import lang24.data.ast.tree.type.*;
@@ -55,6 +58,10 @@ public interface AstVisitor<Result, Argument> {
 
 	@SuppressWarnings({ "doclint:missing" })
 	public default Result visit(AstArrExpr arrExpr, Argument arg) {
+		throw new Report.InternalError();
+	}
+
+	public default Result visit(AstMultiArrExpr multiArrExpr, Argument arg) {
 		throw new Report.InternalError();
 	}
 

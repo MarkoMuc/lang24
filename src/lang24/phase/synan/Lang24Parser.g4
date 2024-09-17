@@ -510,8 +510,21 @@ returns [AstExpr e, Location l]:
 
 postfix_expr1
 [AstExpr left, Location ll] returns [AstExpr e, Location l]:
-	  LSBRAC expression RSBRAC
-	  { $l = loc($ll, $RSBRAC); $left = new AstArrExpr($l, $left, $expression.e); }
+      { Vector<AstExpr> idxs = new Vector<>(); }
+	  t1=LSBRAC expression t2=RSBRAC
+	  { idxs.add($expression.e);}
+      (
+	    LSBRAC e2=expression RSBRAC
+	    { idxs.add($e2.e); $l = loc($t1, $RSBRAC); }
+      )*
+	  {
+        if(idxs.size() > 1){
+            $left = new AstMultiArrExpr($l, $left, new AstNodes<AstExpr>(idxs));
+        }else{
+            $l = loc($ll, $t2);
+            $left = new AstArrExpr($l, $left, idxs.firstElement());
+        }
+	  }
 	  left2=postfix_expr1[$left, $l]
 	  { $e = $left2.e; $l = $left2.l;}
 	| POW

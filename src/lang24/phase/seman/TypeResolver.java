@@ -384,6 +384,40 @@ public class TypeResolver implements AstFullVisitor<SemType, TypeResolver.Contex
     }
 
     @Override
+    public SemType visit(AstMultiArrExpr multiArrExpr, Context arg) {
+        SemType Expr1Type = multiArrExpr.arr.accept(this, null);
+        SemType type = null;
+
+        for (var expr : multiArrExpr.idxs) {
+            SemType exprType = expr.accept(this, null);
+            if (!(exprType.actualType() instanceof SemIntType)) {
+                throw new Report.Error(expr, "Id expression in multi array expr " +
+                        multiArrExpr.location() + "must be type int.");
+            }
+        }
+
+        if (Expr1Type.actualType() instanceof SemPointerType ptrType) {
+            type = ptrType.baseType;
+            int count = 1;
+            int depth = multiArrExpr.idxs.size();
+
+            while (type.actualType() instanceof SemPointerType tmpPtrType && count < depth) {
+                type = tmpPtrType.baseType;
+                count++;
+            }
+
+            if (count < depth) {
+                throw new Report.Error(multiArrExpr, "Too many subscript in multi array expression.");
+            }
+        } else {
+            throw new Report.Error(multiArrExpr, "Multi array expression are only supported for pointers.");
+        }
+
+        SemAn.ofType.put(multiArrExpr, type);
+        return type;
+    }
+
+    @Override
     public SemType visit(AstCastExpr castExpr, Context arg) {
         SemType CastType = castExpr.type.accept(this, null);
         SemType ExprType = castExpr.expr.accept(this, null);

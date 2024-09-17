@@ -202,6 +202,38 @@ public class ImcGenerator implements AstFullVisitor<Object, Stack<MemFrame>> {
         return imcMEM;
     }
 
+    @Override
+    public Object visit(AstMultiArrExpr multiArrExpr, Stack<MemFrame> arg) {
+        ImcExpr arr = (ImcExpr) multiArrExpr.arr.accept(this, arg);
+
+        SemType semType = SemAn.ofType.get(multiArrExpr.arr).actualType();
+
+        ImcCONST typeSize = null;
+        ImcExpr imcMEM = arr;
+
+        if (semType instanceof SemPointerType ptrType) {
+            SemType type = ptrType;
+            for (var idx : multiArrExpr.idxs) {
+                ImcExpr idxImcExpr = (ImcExpr) idx.accept(this, arg);
+                typeSize = new ImcCONST(MemEvaluator.SizeOfType(ptrType.baseType));
+                ImcBINOP imcOffset = new ImcBINOP(ImcBINOP.Oper.MUL, idxImcExpr, typeSize);
+
+                imcMEM = new ImcMEM(new ImcBINOP(ImcBINOP.Oper.ADD, imcMEM, imcOffset));
+
+                if (type instanceof SemPointerType tmpType) {
+                    type = tmpType.baseType;
+                }
+            }
+        } else {
+            throw new Report.Error(multiArrExpr, "This shouldn't happen.");
+        }
+
+        ImcGen.exprImc.put(multiArrExpr, imcMEM);
+
+        return imcMEM;
+    }
+
+
     // EX9
     @Override
     public Object visit(AstCmpExpr cmpExpr, Stack<MemFrame> arg) {
