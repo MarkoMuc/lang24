@@ -9,8 +9,6 @@ import java.util.Vector;
 
 public class DependenceTests {
 
-
-    //FIXME: What should DV contain on the first iteration? Is it (*, *, *, *,*)?
     public static void mergeVectorsSets(Vector<Integer> levels, DirectionVectorSet DVSet, DirectionVectorSet DV) {
         var newDVSet = new DirectionVectorSet();
         int nI = levels.size();
@@ -21,7 +19,8 @@ public class DependenceTests {
                 //CHECKME: DO I really need to create a copy here???
                 var thisDV = DVSet.getDirectionVector(j).copy();
                 for (int k = 0; k < nI; k++) {
-                    thisDV.direction.set(levels.get(k), DV.getDirectionVector(i).direction.get(k));
+                    //CHECKME: Why does the proposed algorithm use .get(k)?
+                    thisDV.direction.set(levels.get(k), DV.getDirectionVector(i).direction.get(levels.get(k)));
                 }
                 newDVSet.addDirectionVector(thisDV);
             }
