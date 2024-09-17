@@ -8,24 +8,24 @@ import java.util.Vector;
 
 public class DependenceTests {
 
-    public static void mergeVectorsSets(Vector<Integer> levels, Vector<DirectionVector> DVSet, Vector<DirectionVector> DV) {
-        Vector<DirectionVector> newDVSet = new Vector<>();
+
+    //FIXME: What should DV contain on the first iteration? Is it (*, *, *, *,*)?
+    public static void mergeVectorsSets(Vector<Integer> levels, DirectionVectorSet DVSet, DirectionVectorSet DV) {
+        var newDVSet = new DirectionVectorSet();
         int nI = levels.size();
 
-        int lastNewDV = 0;
         //CHECKME: Does simplify here work?
         for (int i = 0; i < DV.size(); i++) {
             for (int j = 0; j < DVSet.size(); j++) {
                 //CHECKME: DO I really need to create a copy here???
-                var thisDV = DVSet.get(j).copy();
+                var thisDV = DVSet.getDirectionVector(j).copy();
                 for (int k = 0; k < nI; k++) {
-                    thisDV.direction.set(levels.get(k), DV.get(i).direction.get(k));
+                    thisDV.direction.set(levels.get(k), DV.getDirectionVector(i).direction.get(k));
                 }
-                lastNewDV++;
-                newDVSet.add(lastNewDV, thisDV);
+                newDVSet.addDirectionVector(thisDV);
             }
         }
-        DVSet = newDVSet;
+        DVSet.setDirectionVectors(newDVSet.getDirectionVectors());
     }
 
     public static boolean ZIVTest(SubscriptPair pair) {
@@ -33,7 +33,7 @@ public class DependenceTests {
     }
 
     //FIXME: fix SIV detection -> SIV MEANS ONLY ONE LOOP!
-    public static Boolean SIVTest(SubscriptPair pair, Vector<DirectionVector> DV) {
+    public static Boolean SIVTest(SubscriptPair pair, DirectionVectorSet DV) {
         var sourceIndex = pair.sourceSubscript.getVariable(0);
         var sinkIndex = pair.sinkSubscript.getVariable(0);
         var sourceConstant = pair.sourceSubscript.getConstant();
@@ -72,7 +72,7 @@ public class DependenceTests {
 
         if (vector != null) {
             vector.generateDirection(pair.innermostLevel, depth);
-            DV.add(vector);
+            DV.addDirectionVector(vector);
             return true;
         }
 
@@ -122,7 +122,7 @@ public class DependenceTests {
         return null;
     }
 
-    public static boolean MIVTest(SubscriptPair pair, Vector<DirectionVector> DV) {
+    public static boolean MIVTest(SubscriptPair pair, DirectionVectorSet DV) {
         //TODO:Implement delta test
         throw new Report.Error("MIV Test not implemented");
     }
