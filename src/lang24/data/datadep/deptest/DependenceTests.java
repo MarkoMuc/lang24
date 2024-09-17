@@ -20,7 +20,7 @@ public class DependenceTests {
                 var thisDV = DVSet.getDirectionVector(j).copy();
                 for (int k = 0; k < nI; k++) {
                     //CHECKME: Why does the proposed algorithm use .get(k)?
-                    thisDV.direction.set(levels.get(k), DV.getDirectionVector(i).direction.get(levels.get(k)));
+                    thisDV.directions.set(levels.get(k), DV.getDirectionVector(i).directions.get(levels.get(k)));
                 }
                 newDVSet.addDirectionVector(thisDV);
             }

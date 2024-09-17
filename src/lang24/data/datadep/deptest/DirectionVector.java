@@ -4,7 +4,7 @@ import java.util.Collections;
 import java.util.Vector;
 
 public class DirectionVector {
-    public Vector<DependenceDirection> direction;
+    public Vector<DependenceDirection> directions;
     public int startDistance;
     public int size;
 
@@ -16,16 +16,19 @@ public class DirectionVector {
     }
 
     private DirectionVector(Vector<DependenceDirection> starting) {
-        this.direction = starting;
+        this.directions = starting;
         this.size = starting.size();
         this.startDistance = 0;
     }
 
-    public void generateDirection(int size, int level) {
-        this.size = size + 1;
-        this.direction = createDirection(this.startDistance, this.size, level);
+    public void setDirections(Vector<DependenceDirection> directions) {
+        this.directions = directions;
     }
 
+    public void generateDirection(int size, int level) {
+        this.size = size + 1;
+        this.directions = createDirection(this.startDistance, this.size, level);
+    }
 
     public Vector<DependenceDirection> createDirection(int distance, int size, int level) {
         Vector<DependenceDirection> direction = new Vector<>(
@@ -46,8 +49,8 @@ public class DirectionVector {
 
     public DirectionVector copy() {
         var copy = new DirectionVector();
-        copy.direction = new Vector<>();
-        copy.direction.addAll(this.direction);
+        copy.directions = new Vector<>();
+        copy.directions.addAll(this.directions);
         copy.size = this.size;
         copy.startDistance = this.startDistance;
 
@@ -60,7 +63,7 @@ public class DirectionVector {
 
         sb.append('(');
         for (int i = 0; i < this.size; i++) {
-            sb.append(this.direction.get(i));
+            sb.append(this.directions.get(i));
 
             if (i != this.size - 1) {
                 sb.append(',');
