@@ -47,7 +47,7 @@ public class VecAn extends Phase {
 
                 for (int j = i + 1; j < len; j++) {
                     ArrRef sink = loopDescriptor.arrayRefs.get(j);
-                    if (source.equals(sink)) {
+                    if (source.equals(sink) && source.getSize() == sink.getSize()) {
                         //#F1
                         var DVSet = new DirectionVectorSet(Math.max(source.depth, sink.depth));
                         var depExists = testDependence(source, sink, loopDescriptor, DVSet);
@@ -79,8 +79,8 @@ public class VecAn extends Phase {
         //TODO: In future this has to go through all idxExpressions
 
         //Create and analyze partition pairs
-        SubscriptPair subscriptPair = createAndAnalyzeSubscriptPair(source, sink);
-        if (subscriptPair == null) {
+        Vector<SubscriptPair> subscriptPairs = createAndAnalyzeSubscriptPair(source, sink);
+        if (subscriptPairs == null) {
             return null;
         }
 
@@ -90,11 +90,15 @@ public class VecAn extends Phase {
 
         if (source.depth > sink.depth) {
             nest = source.loop.nest;
-            subscriptPair.setLoop(source.loop);
+            for (var pair : subscriptPairs) {
+                pair.setLoop(source.loop);
+            }
             loopIndexes.addLast(SemAn.definedAt.get(source.loop.loopIndex));
         } else {
             nest = sink.loop.nest;
-            subscriptPair.setLoop(sink.loop);
+            for (var pair : subscriptPairs) {
+                pair.setLoop(sink.loop);
+            }
             loopIndexes.addLast(SemAn.definedAt.get(sink.loop.loopIndex));
         }
 
@@ -102,9 +106,7 @@ public class VecAn extends Phase {
             loopIndexes.addFirst(SemAn.definedAt.get(loop.loopIndex));
         }
 
-        var partitions = partition(new Vector<>() {{
-            add(subscriptPair);
-        }}, loopIndexes);
+        var partitions = partition(subscriptPairs, loopIndexes);
 
         //Test separable
         for (var partition : partitions) {
@@ -112,6 +114,8 @@ public class VecAn extends Phase {
                 if (!testSeparable(partition, DVSet)) {
                     return false;
                 }
+            } else {
+                throw new Report.Error("Coupled subscript groups are not yet implemented");
             }
         }
 
@@ -146,24 +150,36 @@ public class VecAn extends Phase {
         return true;
     }
 
-    private SubscriptPair createAndAnalyzeSubscriptPair(ArrRef source, ArrRef sink) {
+    private Vector<SubscriptPair> createAndAnalyzeSubscriptPair(ArrRef source, ArrRef sink) {
         //TODO: If a ref is nonlinear once, it is always non linear
         //      -> Early break/continue whenever this same ArrRef is to be checked
-        //TODO: This should create a Vector of SubscriptPairs, one for each position
-        Subscript sourceSubscript = new Subscript(source);
-        source.subscriptExpr.accept(new SubscriptAnalyzer(), sourceSubscript);
-        if (!sourceSubscript.isLinear()) {
-            return null;
+        //CHECKME: I think returning source
+
+        var pairs = new Vector<SubscriptPair>();
+
+        for (int i = 0; i < source.getSize(); i++) {
+            Subscript sourceSubscript = new Subscript(source);
+            source.subscriptExprs.get(i).accept(new SubscriptAnalyzer(), sourceSubscript);
+
+            if (!sourceSubscript.isLinear()) {
+                return null;
+            }
+
+            Subscript sinkSubscript = new Subscript(sink);
+            sink.subscriptExprs.get(i).accept(new SubscriptAnalyzer(), sinkSubscript);
+
+            if (!sourceSubscript.isLinear()) {
+                return null;
+            }
+            pairs.add(new SubscriptPair(source.refStmt, sourceSubscript,
+                    sink.refStmt, sinkSubscript, Math.max(source.depth, sink.depth)));
         }
 
-        Subscript sinkSubscript = new Subscript(sink);
-        sink.subscriptExpr.accept(new SubscriptAnalyzer(), sinkSubscript);
-        if (!sourceSubscript.isLinear()) {
-            return null;
+        if (pairs.isEmpty()) {
+            throw new Report.Error("0 pairs in a subscript pair should not happen.");
         }
 
-        return new SubscriptPair(source.refStmt, sourceSubscript,
-                sink.refStmt, sinkSubscript, Math.max(source.depth, sink.depth));
+        return pairs;
     }
 
 }

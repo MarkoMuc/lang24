@@ -93,6 +93,43 @@ public class FindRefs implements AstFullVisitor<ArrRef, LoopDescriptor> {
     }
 
     @Override
+    public ArrRef visit(AstMultiArrExpr multiArrExpr, LoopDescriptor arg) {
+        ArrRef ref = null;
+        if (arg == null) {
+            return null;
+        }
+        if (inSubscript || !arg.vectorizable) {
+            arg.vectorizable = false;
+            return null;
+        }
+
+        inSubscript = true;
+        var idxs = new Vector<AstExpr>();
+        for (var idx : multiArrExpr.idxs) {
+            idx.accept(this, arg);
+            idxs.add(idx);
+        }
+        inSubscript = false;
+
+        if (multiArrExpr.arr instanceof AstNameExpr nameExpr) {
+            ref = new ArrRef(
+                    idxs,
+                    nameExpr,
+                    currStmt.peek(),
+                    SemAn.definedAt.get(nameExpr),
+                    arg,
+                    stmtNum,
+                    arg.depth
+            );
+            arg.addArrayRef(ref);
+        } else {
+            arg.vectorizable = false;
+        }
+
+        return ref;
+    }
+
+    @Override
     public ArrRef visit(AstArrExpr arrExpr, LoopDescriptor arg) {
         ArrRef ref = null;
         if (arg == null) {
