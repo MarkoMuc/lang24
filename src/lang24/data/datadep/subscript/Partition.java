@@ -4,7 +4,6 @@ import lang24.data.ast.tree.defn.AstDefn;
 
 import java.util.Vector;
 
-//FIXME: Do i need a Set??
 public class Partition {
     private final Vector<SubscriptPair> pairs;
 
@@ -49,9 +48,6 @@ public class Partition {
         for (int i = 0; i < n; i++) {
             Integer k = null;
             for (int j = 0; j < numOfPartitions; j++) {
-                if (i == j) {
-                    continue;
-                }
                 Partition partition = partitions.get(j);
                 if (partition.pairContainsIndex(loopIndexes.get(i), i)) {
                     if (k == null) {
