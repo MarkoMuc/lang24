@@ -4,9 +4,10 @@ import java.util.Collections;
 import java.util.Vector;
 
 public class DirectionVector {
-    public Vector<DependenceDirection> directions;
+    private Vector<DependenceDirection> directions;
     public int startDistance;
     public int size;
+    public int loopLevel;
 
     public DirectionVector() {
     }
@@ -19,15 +20,39 @@ public class DirectionVector {
         this.directions = starting;
         this.size = starting.size();
         this.startDistance = 0;
+        this.loopLevel = findLoopLevel();
+    }
+
+    private int findLoopLevel() {
+        var first = this.directions
+                .stream()
+                .filter(d -> d.direction != DependenceDirection.Direction.EQU)
+                .findFirst()
+                .orElse(null);
+
+        return this.directions.indexOf(first);
+    }
+
+    public void changeDirection(int idx, DependenceDirection newDirection) {
+        this.directions.set(idx, newDirection);
+        if (idx <= this.loopLevel || this.loopLevel == -1) {
+            this.loopLevel = findLoopLevel();
+        }
+    }
+
+    public DependenceDirection getDirection(int idx) {
+        return this.directions.get(idx);
     }
 
     public void setDirections(Vector<DependenceDirection> directions) {
         this.directions = directions;
+        this.loopLevel = findLoopLevel();
     }
 
     public void generateDirection(int size, int level) {
         this.size = size + 1;
         this.directions = createDirection(this.startDistance, this.size, level);
+        this.loopLevel = findLoopLevel();
     }
 
     public Vector<DependenceDirection> createDirection(int distance, int size, int level) {
@@ -53,6 +78,7 @@ public class DirectionVector {
         copy.directions.addAll(this.directions);
         copy.size = this.size;
         copy.startDistance = this.startDistance;
+        copy.loopLevel = this.loopLevel;
 
         return copy;
     }
@@ -69,8 +95,12 @@ public class DirectionVector {
                 sb.append(',');
             }
         }
-        sb.append(')');
+        sb.append(';').append(loopLevel).append(')');
 
         return sb.toString();
+    }
+
+    public Vector<DependenceDirection> getDirections() {
+        return this.directions;
     }
 }

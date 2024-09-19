@@ -20,7 +20,8 @@ public class DependenceTests {
                 var thisDV = DVSet.getDirectionVector(j).copy();
                 for (int k = 0; k < nI; k++) {
                     //CHECKME: Why does the proposed algorithm use .get(k)?
-                    thisDV.directions.set(levels.get(k), DV.getDirectionVector(i).directions.get(levels.get(k)));
+                    thisDV.changeDirection(levels.get(k), DV.getDirectionVector(i).getDirection(levels.get(k)));
+                    //thisDV.directions.set(levels.get(k), DV.getDirectionVector(i).directions.get(levels.get(k)));
                 }
                 newDVSet.addDirectionVector(thisDV);
             }
@@ -32,7 +33,7 @@ public class DependenceTests {
         return pair.sourceSubscript.getConstant().coefficient.equals(pair.sinkSubscript.getConstant().coefficient);
     }
 
-    //FIXME: fix SIV detection -> SIV MEANS ONLY ONE LOOP!
+    //FIXME: fix SIV detection -> SIV MEANS ONLY ONE LOOP! Not really? Only means it uses just one variable
     public static Boolean SIVTest(SubscriptPair pair, DirectionVectorSet DV) {
         var sourceIndex = pair.sourceSubscript.getVariable(0);
         var sinkIndex = pair.sinkSubscript.getVariable(0);

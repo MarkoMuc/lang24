@@ -32,7 +32,7 @@ public class DirectionVectorSet {
     public Vector<DirectionVector> purgeIllegal() {
         Vector<DirectionVector> toFix = new Vector<>();
         for (var vec : this.directionVectors) {
-            for (var direction : vec.directions) {
+            for (var direction : vec.getDirections()) {
                 if (direction.direction != DependenceDirection.Direction.EQU) {
                     // Left most component is > -> Illegal
                     if (direction.direction == DependenceDirection.Direction.MORE) {
@@ -47,7 +47,7 @@ public class DirectionVectorSet {
         for (var vec : toFix) {
             //Flip
             var tmpVec = new Vector<>(vec.size);
-            for (var direction : vec.directions) {
+            for (var direction : vec.getDirections()) {
                 if (direction.direction == DependenceDirection.Direction.MORE) {
                     direction.direction = DependenceDirection.Direction.LESS;
                 } else if (direction.direction == DependenceDirection.Direction.LESS) {
