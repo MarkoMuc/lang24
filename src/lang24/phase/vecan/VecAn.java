@@ -6,6 +6,7 @@ import lang24.data.ast.tree.defn.AstDefn;
 import lang24.data.ast.tree.expr.AstNameExpr;
 import lang24.data.datadep.ArrRef;
 import lang24.data.datadep.LoopDescriptor;
+import lang24.data.datadep.codegen.SCCDependenceGraph;
 import lang24.data.datadep.depgraph.DDGNode;
 import lang24.data.datadep.depgraph.DataDependenceGraph;
 import lang24.data.datadep.deptest.DirectionVectorSet;
@@ -76,13 +77,13 @@ public class VecAn extends Phase {
                 System.out.println("TSCC[" + TSCC.size() + "]");
                 int i = 1;
                 for (var region : TSCC) {
-                    System.out.println("REGION[" + i + "," + region.size() + "]:");
-                    for (var node : region) {
+                    System.out.println("REGION[" + i + "," + region.getSize() + "]:");
+                    for (var node : region.getNodes()) {
                         System.out.println(node);
                     }
                     i++;
                 }
-
+                codegen(0, DDG);
             }
         }
 
@@ -194,6 +195,16 @@ public class VecAn extends Phase {
         }
 
         return pairs;
+    }
+
+    public void codegen(int k, DataDependenceGraph D) {
+        var SCCset = D.TarjansSCC();
+        var SCCDependenceGraph = new SCCDependenceGraph();
+        SCCDependenceGraph.addSCCs(SCCset);
+        SCCDependenceGraph.buildGraph();
+
+        //var piblocks = SCCDependenceGraph.
+        System.out.println(SCCDependenceGraph);
     }
 
 }

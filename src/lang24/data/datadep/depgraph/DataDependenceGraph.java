@@ -9,7 +9,7 @@ import java.util.stream.Collectors;
 
 public class DataDependenceGraph {
     private HashMap<Integer, Vector<DDGNode>> graph;
-    private Vector<Vector<DDGNode>> TSCC = new Vector<>();
+    private Vector<StronglyConnectedComponent> TSCC = new Vector<>();
 
     public DataDependenceGraph() {
         this.graph = new HashMap<>();
@@ -99,14 +99,18 @@ public class DataDependenceGraph {
                 SCC.add(stack.pop());
             }
             SCC.add(stack.pop());
-            this.TSCC.add(new Vector<>(SCC));
+            this.TSCC.add(new StronglyConnectedComponent(SCC));
             return SCC;
         }
 
         return null;
     }
 
-    public Vector<Vector<DDGNode>> TarjansSCC() {
+    public Vector<StronglyConnectedComponent> TarjansSCC() {
+        if (!TSCC.isEmpty()) {
+            return this.TSCC;
+        }
+
         var vertexes = graph.values()
                 .stream()
                 .flatMap(Vector::stream)
