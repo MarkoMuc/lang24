@@ -267,6 +267,7 @@ public class Compiler {
 				if (cmdLineOptValues.get("--target-phase").equals("asmgen"))
 					break;
 
+				// Liveliness analysis
 				try(LiveAn livean = new LiveAn()){
 					livean.analysis();
 					livean.log();
@@ -274,27 +275,28 @@ public class Compiler {
 				if (cmdLineOptValues.get("--target-phase").equals("livean"))
 					break;
 
+				// Register allocation
 				RegAll regAll = null;
 				try(RegAll reg = new RegAll()){
 					reg.allocate();
 					reg.log();
 					regAll = reg;
 				}
-
 				if (cmdLineOptValues.get("--target-phase").equals("regall"))
 					break;
 
+				// Function prologue, epilogue, static data and _start
 				boolean compileAsLibrary = cmdLineOptValues.containsKey("--lib");
 				try(All all = new All()){
 					String path = cmdLineOptValues.get("--dst-file-name");
 					if(path == null) path = cmdLineOptValues.get("--src-file-name");
 					all.allTogether(path, regAll, compileAsLibrary);
 				}
-
 				if (cmdLineOptValues.containsKey("--asm")) {
 					break;
 				}
 
+				// Assembling and Linking
 				try(AsmLink asmLink = new AsmLink()){
 					String path = cmdLineOptValues.get("--dst-file-name");
 					boolean objectFileOnly = cmdLineOptValues.containsKey("--obj") ||
