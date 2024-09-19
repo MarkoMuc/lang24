@@ -6,6 +6,7 @@ import lang24.data.ast.tree.defn.AstDefn;
 import lang24.data.ast.tree.expr.AstNameExpr;
 import lang24.data.datadep.ArrRef;
 import lang24.data.datadep.LoopDescriptor;
+import lang24.data.datadep.depgraph.DDGNode;
 import lang24.data.datadep.depgraph.DataDependenceGraph;
 import lang24.data.datadep.deptest.DirectionVectorSet;
 import lang24.data.datadep.subscript.Partition;
@@ -44,9 +45,11 @@ public class VecAn extends Phase {
             loopRefs:
             for (int i = 0; i < len; i++) {
                 ArrRef source = loopDescriptor.arrayRefs.get(i);
+                DDG.addDGNode(new DDGNode(source.refStmt, source.depth, source.stmtNum - 1));
 
-                for (int j = i + 1; j < len; j++) {
+                for (int j = i; j < len; j++) {
                     ArrRef sink = loopDescriptor.arrayRefs.get(j);
+                    DDG.addDGNode(new DDGNode(sink.refStmt, sink.depth, sink.stmtNum - 1));
                     if (source.equals(sink) && source.getSize() == sink.getSize()) {
                         //#F1
                         var DVSet = new DirectionVectorSet(Math.max(source.depth, sink.depth));
@@ -69,8 +72,20 @@ public class VecAn extends Phase {
 
             if (loopDescriptor.vectorizable) {
                 System.out.println(DDG);
+                var TSCC = DDG.TarjansSCC();
+                System.out.println("TSCC[" + TSCC.size() + "]");
+                int i = 1;
+                for (var region : TSCC) {
+                    System.out.println("REGION[" + i + "," + region.size() + "]:");
+                    for (var node : region) {
+                        System.out.println(node);
+                    }
+                    i++;
+                }
+
             }
         }
+
         loops.removeAll(loops.stream().filter(f -> !f.vectorizable).toList());
     }
 
@@ -153,7 +168,6 @@ public class VecAn extends Phase {
     private Vector<SubscriptPair> createAndAnalyzeSubscriptPair(ArrRef source, ArrRef sink) {
         //TODO: If a ref is nonlinear once, it is always non linear
         //      -> Early break/continue whenever this same ArrRef is to be checked
-        //CHECKME: I think returning source
 
         var pairs = new Vector<SubscriptPair>();
 
