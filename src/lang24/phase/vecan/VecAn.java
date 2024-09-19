@@ -199,12 +199,14 @@ public class VecAn extends Phase {
 
     public void codegen(int k, DataDependenceGraph D) {
         var SCCset = D.TarjansSCC();
-        var SCCDependenceGraph = new SCCDependenceGraph();
-        SCCDependenceGraph.addSCCs(SCCset);
-        SCCDependenceGraph.buildGraph();
+        var sccDependenceGraph = new SCCDependenceGraph();
+        sccDependenceGraph.addSCCs(SCCset);
+        sccDependenceGraph.buildGraph();
 
-        //var piblocks = SCCDependenceGraph.
-        System.out.println(SCCDependenceGraph);
+        System.out.println(sccDependenceGraph);
+
+        var piblocks = sccDependenceGraph.topologicalSort();
+        System.out.println(sccDependenceGraph.toStringSorted());
     }
 
 }

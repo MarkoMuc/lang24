@@ -10,9 +10,11 @@ import java.util.Vector;
 public class SCCDependenceGraph {
     private HashMap<StronglyConnectedComponent, HashSet<StronglyConnectedComponent>> graph;
     private boolean addedNodes = false;
+    private Vector<StronglyConnectedComponent> sorted;
 
     public SCCDependenceGraph() {
         this.graph = new HashMap<>();
+        this.sorted = new Vector<>();
     }
 
     public void addSCCs(Vector<StronglyConnectedComponent> TSCCset) {
@@ -53,6 +55,40 @@ public class SCCDependenceGraph {
         }
     }
 
+
+    private void DFS(StronglyConnectedComponent node, Vector<StronglyConnectedComponent> flatGraph, boolean[] mark) {
+        int i = flatGraph.indexOf(node);
+        mark[i] = true;
+
+        for (var neighbor : this.graph.get(node)) {
+            if (!mark[flatGraph.indexOf(neighbor)]) {
+                DFS(neighbor, flatGraph, mark);
+            }
+        }
+
+        sorted.addFirst(node);
+    }
+
+
+    public Vector<StronglyConnectedComponent> topologicalSort() {
+        if (!this.sorted.isEmpty()) {
+            return this.sorted;
+        }
+
+        var flatGraph = new Vector<>(this.graph.keySet());
+        var mark = new boolean[flatGraph.size()];
+
+        this.sorted = new Vector<>(flatGraph.size());
+
+        for (var SCComponent : flatGraph) {
+            if (!mark[flatGraph.indexOf(SCComponent)]) {
+                DFS(SCComponent, flatGraph, mark);
+            }
+        }
+
+        return this.sorted;
+    }
+
     @Override
     public String toString() {
         var sb = new StringBuilder();
@@ -64,6 +100,23 @@ public class SCCDependenceGraph {
             int i = SCCs.indexOf(scc);
             sb.append("SCC").append(i).append("\n");
             sb.append(scc.toShortString());
+            for (var conn : this.graph.get(scc)) {
+                sb.append("=>").append(SCCs.indexOf(conn)).append("\n");
+            }
+        }
+
+        return sb.toString();
+    }
+
+    public String toStringSorted() {
+        var sb = new StringBuilder();
+        var SCCs = this.sorted;
+
+        sb.append("Sorted D_SCC[").append(SCCs.size()).append("]").append('\n');
+
+        for (var scc : SCCs) {
+            int i = SCCs.indexOf(scc);
+            sb.append("SCC").append(i).append("\n");
             for (var conn : this.graph.get(scc)) {
                 sb.append("=>").append(SCCs.indexOf(conn)).append("\n");
             }
