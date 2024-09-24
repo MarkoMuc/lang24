@@ -55,6 +55,14 @@ public class DirectionVector {
         this.loopLevel = findLoopLevel();
     }
 
+    public boolean setDirection(DependenceDirection.Direction direction, int idx) {
+        if (idx >= this.directions.size()) {
+            return false;
+        }
+        this.directions.set(idx, new DependenceDirection(direction));
+        return true;
+    }
+
     public Vector<DependenceDirection> createDirection(int distance, int size, int level) {
         Vector<DependenceDirection> direction = new Vector<>(
                 Collections.nCopies(size, new DependenceDirection(DependenceDirection.Direction.STAR)));

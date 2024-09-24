@@ -55,6 +55,10 @@ public class Subscript {
         return this.constant;
     }
 
+    public ArrRef getArrRef() {
+        return this.arrRef;
+    }
+
     public Term getVariable(int idx) {
         if (idx >= this.variableCount) {
             return null;

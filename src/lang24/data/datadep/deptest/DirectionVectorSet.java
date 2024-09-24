@@ -45,7 +45,7 @@ public class DirectionVectorSet {
         this.directionVectors.removeAll(toFix);
 
         for (var vec : toFix) {
-            //Flip
+            //CHECKME: check if this works correctly
             var tmpVec = new Vector<>(vec.size);
             for (var direction : vec.getDirections()) {
                 if (direction.direction == DependenceDirection.Direction.MORE) {
@@ -73,5 +73,9 @@ public class DirectionVectorSet {
 
     public void setDirectionVectors(Vector<DirectionVector> directionVectors) {
         this.directionVectors = directionVectors;
+    }
+
+    public void addDirectionVectors(DirectionVectorSet dvlist) {
+        this.directionVectors.addAll(dvlist.directionVectors);
     }
 }

@@ -47,7 +47,6 @@ public class ArrRef {
         return subscriptExprs.size();
     }
 
-
     @Override
     public String toString() {
         var sb = new StringBuilder();
