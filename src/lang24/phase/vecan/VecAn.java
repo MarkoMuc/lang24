@@ -50,6 +50,10 @@ public class VecAn extends Phase {
 
                 for (int j = i; j < len; j++) {
                     ArrRef sink = loopDescriptor.arrayRefs.get(j);
+                    if (!source.assign && !sink.assign) {
+                        // Both source and sink reference are reads
+                        continue;
+                    }
                     DDG.addDGNode(new DDGNode(sink.refStmt, sink.depth, sink.stmtNum - 1));
                     if (source.equals(sink) && source.getSize() == sink.getSize()) {
                         //#F1
