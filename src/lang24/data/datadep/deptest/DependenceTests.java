@@ -185,7 +185,8 @@ public class DependenceTests {
 
     private static boolean GCDTest(Subscript source, Subscript sink) {
         var gcdValue = gcdMultiple(source.getTerms(), sink.getTerms());
-        return (sink.getConstant().coefficient - source.getConstant().coefficient) / gcdValue == 0;
+        //FIXME: I think its correct now
+        return (sink.getConstant().coefficient - source.getConstant().coefficient) % gcdValue == 0;
     }
 
     private static boolean BanerjeeTest(SubscriptPair pair, DirectionVector DV) {
@@ -360,6 +361,8 @@ public class DependenceTests {
 
     private static int Zpos(int n) {
         if (n >= 0) {
+            return n;
+        } else {
             return 0;
         } else {
             return n;
