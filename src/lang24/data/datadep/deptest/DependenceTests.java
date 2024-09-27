@@ -113,9 +113,8 @@ public class DependenceTests {
         return null;
     }
 
-    //FIXME:Create direction vector
-    private static DirectionVector strongSIVTest(int constantDiff, int coefficient, int upperLimit, int lowerLimit) {
-        if (constantDiff % coefficient != 0) {
+    private static DirectionVector strongSIVTest(int constDiff, int coefficient, int upperLimit, int lowerLimit) {
+        if (constDiff % coefficient != 0) {
             return null;
         }
 
@@ -151,7 +150,8 @@ public class DependenceTests {
         } else {
             //FIXME:what gotta do here is this correct?
             var dvlist = new DirectionVectorSet();
-            dvlist = MIVDirectionVectorTest(pair, DirectionVector.generateStartingDV(pair.innermostLevel), 0, dvlist);
+            var startingDV = DirectionVector.generateStartingDV(pair.innermostLevel);
+            dvlist = MIVDirectionVectorTest(pair, startingDV, 0, dvlist);
             DVset.addDirectionVectors(dvlist);
         }
         return true;
@@ -159,7 +159,6 @@ public class DependenceTests {
 
     private static DirectionVectorSet MIVDirectionVectorTest(SubscriptPair pair, DirectionVector DV,
                                                              int depth, DirectionVectorSet DVlist) {
-        //FIXME: called with dir vector of all * and empty DVlist
         if (!BanerjeeTest(pair, DV)) {
             return DVlist;
         }
