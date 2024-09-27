@@ -99,12 +99,12 @@ public class DependenceTests {
         return null;
     }
 
-    private static DirectionVector weakZeroSIVTest(int constantDifference, int coeffcient, int upperLimit, int lowerLimit) {
-        if (constantDifference % coeffcient != 0) {
+    private static DirectionVector weakZeroSIVTest(int constDiff, int coefficient, int upperLimit, int lowerLimit) {
+        if (constDiff % coefficient != 0) {
             return null;
         }
 
-        int i = constantDifference / coeffcient;
+        int i = constDiff / coefficient;
 
         if (Math.abs(i) <= (upperLimit - lowerLimit)) {
             return new DirectionVector(i);
@@ -118,7 +118,7 @@ public class DependenceTests {
             return null;
         }
 
-        int dependenceDistance = constantDiff / coefficient;
+        int dependenceDistance = constDiff / coefficient;
         if (Math.abs(dependenceDistance) <= (upperLimit - lowerLimit)) {
             return new DirectionVector(dependenceDistance);
         }
@@ -162,8 +162,10 @@ public class DependenceTests {
         if (!BanerjeeTest(pair, DV)) {
             return DVlist;
         }
+
         if (depth == pair.innermostLevel) {
             //CHECKME: Merge or unite???
+            //FIXME: This is unite!
             DVlist.addDirectionVector(DV);
             return DVlist;
         }
@@ -208,6 +210,7 @@ public class DependenceTests {
         //          and the loop nest in them will be different(each will be missing the other ones loop)
         //          Or the nest might contain all of the loops aka too many of them? -> Check this!
         //          Also how do you handle the case, where one of them is a loop deeper?
+        //          Does this actually work correctly, we only need to calculate as many as the deepest variable
         var directions = DV.getDirections();
         var bound = new Bounds(0, 0);
 
