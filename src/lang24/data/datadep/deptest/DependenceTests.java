@@ -44,8 +44,9 @@ public class DependenceTests {
         var sourceConstant = pair.sourceSubscript.getConstant();
         var sinkConstant = pair.sinkSubscript.getConstant();
 
-        var upperBound = Integer.parseInt(((AstAtomExpr) pair.getLoop().upperBound).value) - 1;
-        var lowerBound = Integer.parseInt(((AstAtomExpr) pair.getLoop().lowerBound).value);
+        // Lower bound is raised by 1, otherwise it does not find correct dependence
+        var upperBound = Integer.parseInt(((AstAtomExpr) pair.getLoop().upperBound).value);
+        var lowerBound = Integer.parseInt(((AstAtomExpr) pair.getLoop().lowerBound).value) + 1;
 
         if (sinkIndex == null && sourceIndex == null) {
             throw new Report.Error("This should be a ZIV test");
