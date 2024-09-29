@@ -17,7 +17,6 @@ public class DependenceTests {
         var newDVSet = new DirectionVectorSet();
         int nI = levels.size();
 
-        //CHECKME: Does simplify here work?
         for (int i = 0; i < DV.size(); i++) {
             for (int j = 0; j < DVSet.size(); j++) {
                 //CHECKME: DO I really need to create a copy here???
@@ -73,7 +72,6 @@ public class DependenceTests {
             dependenceDistance = weakCrossingSIVTest(sinkConstant.coefficient - sourceConstant.coefficient,
                     sourceIndex.coefficient, upperBound, lowerBound);
         } else {
-            //TODO: Here should be an Exact SIV Test
             //FIXME: until done should return null to indicate that this loop will not be vectorized
             throw new Report.Error("Exact SIV Test not implemented");
             //return null;
@@ -94,7 +92,7 @@ public class DependenceTests {
         if (constantDifference % coeffcient == 0 || i % 1 == 0.5) {
             if (Math.abs(i) <= (upperLimit - lowerLimit)) {
                 //CHECKME: Is this cool?
-                return new DirectionVector(Math.round(i));
+                return Math.round(i);
             }
         }
 
@@ -122,7 +120,7 @@ public class DependenceTests {
 
         int dependenceDistance = constDiff / coefficient;
         if (Math.abs(dependenceDistance) <= (upperLimit - lowerLimit)) {
-            return new DirectionVector(dependenceDistance);
+            return dependenceDistance;
         }
 
         return null;
