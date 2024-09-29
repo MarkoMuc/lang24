@@ -43,7 +43,7 @@ public class ArrRef {
         this.assign = false;
     }
 
-    public int getSize() {
+    public int getSubscriptCount() {
         return subscriptExprs.size();
     }
 
