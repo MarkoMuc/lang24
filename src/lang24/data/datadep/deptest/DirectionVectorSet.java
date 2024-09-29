@@ -26,7 +26,9 @@ public class DirectionVectorSet {
     }
 
     public void addDirectionVector(DirectionVector directionVector) {
-        this.directionVectors.add(directionVector);
+        if (!this.containsDirectionVector(directionVector)) {
+            this.directionVectors.add(directionVector);
+        }
     }
 
     public Vector<DirectionVector> purgeIllegal() {
@@ -76,6 +78,28 @@ public class DirectionVectorSet {
     }
 
     public void addDirectionVectors(DirectionVectorSet dvlist) {
-        this.directionVectors.addAll(dvlist.directionVectors);
+        for (var vects : dvlist.directionVectors) {
+            this.addDirectionVector(vects);
+        }
+    }
+
+    private boolean containsDirectionVector(DirectionVector directionVector) {
+        for (DirectionVector dv : this.directionVectors) {
+            if (dv.getSize() == directionVector.getSize()) {
+                var same = true;
+
+                for (int i = 0; i < dv.getSize(); i++) {
+                    if (dv.getDirection(i).equals(directionVector.getDirection(i))) {
+                        same = false;
+                    }
+                }
+
+                if (same) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 }
