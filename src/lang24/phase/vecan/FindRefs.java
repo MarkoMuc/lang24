@@ -47,7 +47,16 @@ public class FindRefs implements AstFullVisitor<ArrRef, LoopDescriptor> {
                 loopDescriptor.vectorizable = false;
             }
         } else {
-            loopDescriptor.vectorizable = false;
+            // If an inner loop is not vectorizable, propagate it upwards
+            arg.vectorizable = false;
+            return null;
+        }
+
+        for (var loop : loopVars) {
+            if (SemAn.definedAt.get(loop.loopIndex) == SemAn.definedAt.get(loopDescriptor.loopIndex)) {
+                arg.vectorizable = false;
+                return null;
+            }
         }
 
         // Creates a loop nest by adding outer loops
@@ -55,38 +64,34 @@ public class FindRefs implements AstFullVisitor<ArrRef, LoopDescriptor> {
             loopDescriptor.addOuter(arg);
         }
 
-        Vector<LoopDescriptor> oldLoopDescriptors = null;
-        // If outer isnt vectorizable, create a new loop var nest
-        if (arg != null && !arg.vectorizable) {
-            oldLoopDescriptors = loopVars;
-            loopVars = new Vector<>();
-        }
-
-        // If this loop is vectorizable add itself to the nest
-        if(loopDescriptor.vectorizable) {
-            loopVars.addLast(loopDescriptor);
-        }
+        // Add itself to the nest
+        loopVars.addLast(loopDescriptor);
 
         // Check loop body
         vecForStmt.stmt.accept(this, loopDescriptor);
 
-        if (oldLoopDescriptors != null) {
-            loopVars = oldLoopDescriptors;
-        }
-
         if (loopDescriptor.vectorizable) {
-            // The outermost loop / outermost vectorizable one is added
-            if (arg == null || !arg.vectorizable) {
+            // The outermost loop is added
+            if (arg == null) {
                 VecAn.loops.add(loopDescriptor);
             }
+        } else if (arg != null) {
+            // Propagates inner loop not being vectorizable
+            arg.vectorizable = false;
+            return null;
+        } else {
+            return null;
         }
 
-        // Adds array references of the inner loops and removes it own loop variable
-        if (arg != null && arg.vectorizable && loopDescriptor.vectorizable) {
+        // Adds array references of the inner loops
+        if (arg != null) {
             arg.addInner(loopDescriptor);
-            loopVars.remove(loopDescriptor);
         }
 
+        // Removes its own loop variable which should be the last one in the row
+        loopVars.removeLast();
+
+        // Resets stmt number
         stmtNum = oldStmtNum;
 
         return null;
