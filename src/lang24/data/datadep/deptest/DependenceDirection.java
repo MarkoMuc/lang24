@@ -57,4 +57,22 @@ public class DependenceDirection {
 
         return sb.toString();
     }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj instanceof DependenceDirection dir) {
+            if (this.direction != dir.direction) {
+                return false;
+            }
+            if (this.distance == null) {
+                return dir.distance == null;
+            } else if (dir.distance == null) {
+                return false;
+            } else {
+                return this.distance.equals(dir.distance);
+            }
+
+        }
+        return false;
+    }
 }
