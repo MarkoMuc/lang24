@@ -177,7 +177,7 @@ public class DependenceTests {
 
         for (var dir : dirs) {
             //FIXME: what is i here? -> its depth right?
-            DV.setDirection(dir, depth);
+            DV.changeDirection(depth, dir);
             DVlist = MIVDirectionVectorTest(pair, DV, depth + 1, DVlist);
         }
         return DVlist;

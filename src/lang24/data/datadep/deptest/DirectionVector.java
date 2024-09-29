@@ -5,24 +5,123 @@ import java.util.Vector;
 
 public class DirectionVector {
     private Vector<DependenceDirection> directions;
-    public int startDistance;
     public int size;
     public int loopLevel;
 
     public DirectionVector() {
     }
 
-    public DirectionVector(int startDistance) {
-        this.startDistance = startDistance;
+    public DirectionVector(int distance, int size, int level) {
+        this.size = size;
+        this.directions = createDirectionVector(distance, this.size, level);
+        this.loopLevel = findLoopLevel();
     }
 
     private DirectionVector(Vector<DependenceDirection> starting) {
         this.directions = starting;
         this.size = starting.size();
-        this.startDistance = 0;
         this.loopLevel = findLoopLevel();
     }
 
+    public void setDirections(Vector<DependenceDirection> directions) {
+        this.directions = directions;
+        this.loopLevel = findLoopLevel();
+    }
+
+    public Vector<DependenceDirection> getDirections() {
+        return this.directions;
+    }
+
+    public DependenceDirection getDirection(int idx) {
+        return this.directions.get(idx);
+    }
+
+    public int getSize() {
+        return this.size;
+    }
+
+    /**
+     * Changes a certain direction
+     *
+     * @param idx          direction to change
+     * @param newDirection new direction as an direction enum
+     */
+    public void changeDirection(int idx, DependenceDirection.Direction newDirection) {
+        if (idx >= this.directions.size()) {
+            return;
+        }
+
+        this.directions.set(idx, new DependenceDirection(newDirection));
+
+        if (idx <= this.loopLevel || this.loopLevel == -1) {
+            this.loopLevel = findLoopLevel();
+        }
+    }
+
+    /**
+     * Changes a certain direction
+     *
+     * @param idx          direction to change
+     * @param newDirection new direction as an object
+     */
+    public void changeDirection(int idx, DependenceDirection newDirection) {
+        if (idx >= this.directions.size()) {
+            return;
+        }
+
+        this.directions.set(idx, newDirection);
+
+        if (idx <= this.loopLevel || this.loopLevel == -1) {
+            this.loopLevel = findLoopLevel();
+        }
+    }
+
+    /**
+     * @param distance first distance
+     * @param size     size of the vector
+     * @param level    loop level for which the distance has been calculated
+     * @return the vector of directions
+     */
+    public Vector<DependenceDirection> createDirectionVector(int distance, int size, int level) {
+        Vector<DependenceDirection> direction = new Vector<>(
+                Collections.nCopies(size, new DependenceDirection(DependenceDirection.Direction.STAR)));
+        direction.set(level, createDirection(distance));
+
+        return direction;
+    }
+
+    /**
+     * Creates a dependence direction from distance
+     * @return dependence direction
+     */
+    public DependenceDirection createDirection(int distance) {
+        return new DependenceDirection(DependenceDirection.findDirection(distance), distance);
+    }
+
+    /**
+     * Creates a deep copy of the direction vector
+     *
+     * @return copy of the direction vector
+     */
+    public DirectionVector copy() {
+        var copy = new DirectionVector();
+        var direction = new Vector<DependenceDirection>(this.size);
+        for (var dir : this.directions) {
+            direction.add(new DependenceDirection(dir.direction, dir.distance));
+        }
+
+        copy.setDirections(direction);
+        copy.size = this.size;
+        copy.loopLevel = this.loopLevel;
+
+        return copy;
+    }
+
+    /**
+     * Finds first non "=" direction which represents the dependence level
+     *
+     * @return dependence level
+     */
     private int findLoopLevel() {
         var first = this.directions
                 .stream()
@@ -33,62 +132,15 @@ public class DirectionVector {
         return this.directions.indexOf(first);
     }
 
-    public void changeDirection(int idx, DependenceDirection newDirection) {
-        this.directions.set(idx, newDirection);
-        if (idx <= this.loopLevel || this.loopLevel == -1) {
-            this.loopLevel = findLoopLevel();
-        }
-    }
-
-    public DependenceDirection getDirection(int idx) {
-        return this.directions.get(idx);
-    }
-
-    public void setDirections(Vector<DependenceDirection> directions) {
-        this.directions = directions;
-        this.loopLevel = findLoopLevel();
-    }
-
-    public void generateDirection(int size, int level) {
-        this.size = size + 1;
-        this.directions = createDirection(this.startDistance, this.size, level);
-        this.loopLevel = findLoopLevel();
-    }
-
-    public boolean setDirection(DependenceDirection.Direction direction, int idx) {
-        if (idx >= this.directions.size()) {
-            return false;
-        }
-        this.directions.set(idx, new DependenceDirection(direction));
-        return true;
-    }
-
-    public Vector<DependenceDirection> createDirection(int distance, int size, int level) {
-        Vector<DependenceDirection> direction = new Vector<>(
-                Collections.nCopies(size, new DependenceDirection(DependenceDirection.Direction.STAR)));
-        direction.set(level, createDirection(distance));
-
-        return direction;
-    }
-
+    /**
+     * Creates a starting direction vector of length size
+     * Starting vector contains only "*" [*, *, ..., *]
+     *
+     * @param size size of the vector to generate
+     */
     public static DirectionVector generateStartingDV(int size) {
         return new DirectionVector(new Vector<>(
                 Collections.nCopies(size + 1, new DependenceDirection(DependenceDirection.Direction.STAR))));
-    }
-
-    public DependenceDirection createDirection(int distance) {
-        return new DependenceDirection(DependenceDirection.findDirection(distance), distance);
-    }
-
-    public DirectionVector copy() {
-        var copy = new DirectionVector();
-        copy.directions = new Vector<>();
-        copy.directions.addAll(this.directions);
-        copy.size = this.size;
-        copy.startDistance = this.startDistance;
-        copy.loopLevel = this.loopLevel;
-
-        return copy;
     }
 
     @Override
@@ -106,9 +158,5 @@ public class DirectionVector {
         sb.append(';').append(loopLevel).append(')');
 
         return sb.toString();
-    }
-
-    public Vector<DependenceDirection> getDirections() {
-        return this.directions;
     }
 }
