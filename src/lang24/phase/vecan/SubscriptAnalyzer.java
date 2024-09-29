@@ -9,11 +9,7 @@ import lang24.data.datadep.subscript.Subscript;
 import lang24.data.datadep.subscript.Term;
 import lang24.phase.seman.SemAn;
 
-//FIXME: Issue with where a loop variable is defined. If it is defined in another loop,
-//      the AstDefn is linked to that loop and any other that uses it, when it should be linked with the
-//      loopDescriptor somehow
-
-//CHECKME: Need to check what happens when there is more than 1 -symbol for constants
+// CHECKME: Need to check what happens when there is more than 1 -symbol for constants
 
 public class SubscriptAnalyzer implements AstFullVisitor<Term, Subscript> {
 
@@ -44,7 +40,7 @@ public class SubscriptAnalyzer implements AstFullVisitor<Term, Subscript> {
 
         if (fstTerm == null && sndTerm == null) {
             if (binExpr.oper != AstBinExpr.Oper.ADD) {
-                //IS this true?
+                //Is this true?
                 arg.setNonLinear();
             }
             return null;
