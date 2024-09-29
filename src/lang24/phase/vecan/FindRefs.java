@@ -11,17 +11,14 @@ import java.util.Stack;
 import java.util.Vector;
 
 /*
-    FIXME: Currently only works with normalized linear loops meaning:
+    Currently only works with normalized linear loops meaning:
         - no symbols in loop boundaries
         - step = 1
         - lower bound = 0
         - upper bound is non-negative
         - Only constants and loop increment variables
-      - triple nested loops, if the middle is not vectorizable, it still carries the first ones var
  */
-
 public class FindRefs implements AstFullVisitor<ArrRef, LoopDescriptor> {
-
     Stack<AstStmt> currStmt = new Stack<>();
     Vector<LoopDescriptor> loopVars = new Vector<>();
 
@@ -50,25 +47,27 @@ public class FindRefs implements AstFullVisitor<ArrRef, LoopDescriptor> {
                 loopDescriptor.vectorizable = false;
             }
         } else {
-            // CHECKME: should you still vectorize if the outside one cannot be vectorized?
-            //      IF you shouldn't does that mean to not add it to the loop nest? ->>>YESSS
             loopDescriptor.vectorizable = false;
         }
 
+        // Creates a loop nest by adding outer loops
         if(arg !=null && arg.vectorizable) {
             loopDescriptor.addOuter(arg);
         }
 
         Vector<LoopDescriptor> oldLoopDescriptors = null;
+        // If outer isnt vectorizable, create a new loop var nest
         if (arg != null && !arg.vectorizable) {
             oldLoopDescriptors = loopVars;
             loopVars = new Vector<>();
         }
 
+        // If this loop is vectorizable add itself to the nest
         if(loopDescriptor.vectorizable) {
             loopVars.addLast(loopDescriptor);
         }
 
+        // Check loop body
         vecForStmt.stmt.accept(this, loopDescriptor);
 
         if (oldLoopDescriptors != null) {
@@ -76,12 +75,13 @@ public class FindRefs implements AstFullVisitor<ArrRef, LoopDescriptor> {
         }
 
         if (loopDescriptor.vectorizable) {
-            //The outermost loop / outermost vectorizable one is added
+            // The outermost loop / outermost vectorizable one is added
             if (arg == null || !arg.vectorizable) {
                 VecAn.loops.add(loopDescriptor);
             }
         }
 
+        // Adds array references of the inner loops and removes it own loop variable
         if (arg != null && arg.vectorizable && loopDescriptor.vectorizable) {
             arg.addInner(loopDescriptor);
             loopVars.remove(loopDescriptor);
@@ -164,7 +164,6 @@ public class FindRefs implements AstFullVisitor<ArrRef, LoopDescriptor> {
 
     @Override
     public ArrRef visit(AstNameExpr nameExpr, LoopDescriptor arg) {
-        //CHECKME: What should happen if outer loop isn't vectorizable but inner could be
         if(arg != null){
             if(!arg.vectorizable){
                 return null;
