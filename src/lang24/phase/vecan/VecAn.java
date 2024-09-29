@@ -213,4 +213,60 @@ public class VecAn extends Phase {
         System.out.println(sccDependenceGraph.toStringSorted());
     }
 
+    // Checks both subscripts and creates a subscript pair
+    private Vector<SubscriptPair> createAndAnalyzeSubscriptPair(ArrRef source, ArrRef sink) {
+        var pairs = new Vector<SubscriptPair>();
+
+        var commonLoops = findCommonLoops(source, sink);
+
+        for (int i = 0; i < source.getSubscriptCount(); i++) {
+            Subscript sourceSubscript = new Subscript(source);
+            source.subscriptExprs.get(i).accept(new SubscriptAnalyzer(), sourceSubscript);
+
+            if (!sourceSubscript.isLinear()) {
+                return null;
+            }
+
+            Subscript sinkSubscript = new Subscript(sink);
+            sink.subscriptExprs.get(i).accept(new SubscriptAnalyzer(), sinkSubscript);
+
+            if (!sourceSubscript.isLinear()) {
+                return null;
+            }
+
+            pairs.add(new SubscriptPair(sourceSubscript, sinkSubscript,
+                    Math.max(source.depth, sink.depth), commonLoops));
+        }
+
+        if (pairs.isEmpty()) {
+            throw new Report.Error("0 pairs in a subscript pair should not happen.");
+        }
+
+        return pairs;
+    }
+
+    // Common loops run to the deepest loop that carries the deepest reference of the two.
+    private Vector<LoopDescriptor> findCommonLoops(ArrRef source, ArrRef sink) {
+        var loops = new Vector<LoopDescriptor>();
+        LoopDescriptor stmtLoop;
+
+        if (source.depth > sink.depth) {
+            stmtLoop = source.loop;
+        } else {
+            stmtLoop = sink.loop;
+        }
+
+        if (stmtLoop.nest.isEmpty()) {
+            // We are at the outermost loop
+            loops.add(stmtLoop);
+            return loops;
+        } else {
+            // Add all outer loops
+            loops.addAll(stmtLoop.nest);
+            // Add innermost common loop
+            loops.add(stmtLoop);
+        }
+
+        return loops;
+    }
 }
