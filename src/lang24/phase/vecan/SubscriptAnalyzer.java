@@ -200,7 +200,7 @@ public class SubscriptAnalyzer implements AstFullVisitor<Term, Subscript> {
     @Override
     public Term visit(AstNameExpr nameExpr, Subscript arg) {
         Term name = new Term(SemAn.definedAt.get(nameExpr),
-                VecAn.loopDescriptors.get(nameExpr).depth);
+                VecAn.loopDescriptors.get(nameExpr));
         if (currStmt == null) {
             arg.addTerm(name);
         }

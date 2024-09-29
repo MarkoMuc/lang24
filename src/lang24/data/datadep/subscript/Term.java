@@ -4,9 +4,11 @@ import lang24.common.report.Report;
 import lang24.data.ast.tree.defn.AstDefn;
 import lang24.data.ast.tree.expr.AstAtomExpr;
 import lang24.data.ast.tree.expr.AstPfxExpr;
+import lang24.data.datadep.LoopDescriptor;
 
 public class Term {
     public AstDefn variable;
+    public LoopDescriptor loop;
     public Integer coefficient;
     public Integer depth;
 
@@ -16,9 +18,10 @@ public class Term {
         this.coefficient = coefficient;
     }
 
-    public Term(AstDefn variable, Integer depth) {
+    public Term(AstDefn variable, LoopDescriptor loop) {
         this.variable = variable;
-        this.depth = depth;
+        this.loop = loop;
+        this.depth = loop.depth;
         this.coefficient = 1;
     }
 

@@ -44,6 +44,12 @@ public class DependenceTests {
         var sourceConstant = pair.sourceSubscript.getConstant();
         var sinkConstant = pair.sinkSubscript.getConstant();
 
+        // Depth is the nesting level of the loop index variable we are testing
+        final int depth = Objects.requireNonNullElse(sourceIndex, sinkIndex).depth;
+
+        // Since SIV is tied to a single loop variable, get that loop variable
+        var commonLoop = Objects.requireNonNullElse(sourceIndex, sinkIndex).loop;
+
         // Lower bound is raised by 1, otherwise it does not find correct dependence
         var upperBound = Integer.parseInt(((AstAtomExpr) pair.getLoop().upperBound).value);
         var lowerBound = Integer.parseInt(((AstAtomExpr) pair.getLoop().lowerBound).value) + 1;
@@ -74,11 +80,8 @@ public class DependenceTests {
             //return null;
         }
 
-        int depth = Objects.requireNonNullElse(sinkIndex, sourceIndex).depth;
-
-        if (vector != null) {
-            vector.generateDirection(pair.innermostLevel, depth);
-            DV.addDirectionVector(vector);
+        if (dependenceDistance != null) {
+            DV.addDirectionVector(new DirectionVector(dependenceDistance, pair.innermostLevel, depth));
             return true;
         }
 
