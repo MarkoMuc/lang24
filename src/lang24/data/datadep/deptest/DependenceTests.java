@@ -37,7 +37,6 @@ public class DependenceTests {
         return pair.sourceSubscript.getConstant().coefficient.equals(pair.sinkSubscript.getConstant().coefficient);
     }
 
-    //FIXME: fix SIV detection -> SIV MEANS ONLY ONE LOOP! Not really? Only means it uses just one variable
     public static Boolean SIVTest(SubscriptPair pair, DirectionVectorSet DV) {
         var sourceIndex = pair.sourceSubscript.getVariable(0);
         var sinkIndex = pair.sinkSubscript.getVariable(0);
@@ -51,27 +50,27 @@ public class DependenceTests {
         var commonLoop = Objects.requireNonNullElse(sourceIndex, sinkIndex).loop;
 
         // Lower bound is raised by 1, otherwise it does not find correct dependence
-        var upperBound = Integer.parseInt(((AstAtomExpr) pair.getLoop().upperBound).value);
-        var lowerBound = Integer.parseInt(((AstAtomExpr) pair.getLoop().lowerBound).value) + 1;
+        var upperBound = Integer.parseInt(((AstAtomExpr) commonLoop.upperBound).value);
+        var lowerBound = Integer.parseInt(((AstAtomExpr) commonLoop.lowerBound).value) + 1;
 
         if (sinkIndex == null && sourceIndex == null) {
             throw new Report.Error("This should be a ZIV test");
         }
 
-        DirectionVector vector;
+        Integer dependenceDistance;
         if (sourceIndex == null) {
             // Same as sourceIndex.coefficient == 0
-            vector = weakZeroSIVTest(sourceConstant.coefficient - sinkConstant.coefficient,
+            dependenceDistance = weakZeroSIVTest(sourceConstant.coefficient - sinkConstant.coefficient,
                     sinkIndex.coefficient, upperBound, lowerBound);
         } else if (sinkIndex == null) {
             // Same as sinkIndex.coefficient == 0
-            vector = weakZeroSIVTest(sinkConstant.coefficient - sourceConstant.coefficient,
+            dependenceDistance = weakZeroSIVTest(sinkConstant.coefficient - sourceConstant.coefficient,
                     sourceIndex.coefficient, upperBound, lowerBound);
         } else if (sinkIndex.coefficient.equals(sourceIndex.coefficient)) {
-            vector = strongSIVTest(sourceConstant.coefficient - sinkConstant.coefficient,
+            dependenceDistance = strongSIVTest(sourceConstant.coefficient - sinkConstant.coefficient,
                     sourceIndex.coefficient, upperBound, lowerBound);
         } else if (sinkIndex.coefficient.equals(-sourceIndex.coefficient)) {
-            vector = weakCrossingSIVTest(sinkConstant.coefficient - sourceConstant.coefficient,
+            dependenceDistance = weakCrossingSIVTest(sinkConstant.coefficient - sourceConstant.coefficient,
                     sourceIndex.coefficient, upperBound, lowerBound);
         } else {
             //TODO: Here should be an Exact SIV Test
@@ -88,7 +87,7 @@ public class DependenceTests {
         return false;
     }
 
-    private static DirectionVector weakCrossingSIVTest(int constantDifference, int coeffcient, int upperLimit, int lowerLimit) {
+    private static Integer weakCrossingSIVTest(int constantDifference, int coeffcient, int upperLimit, int lowerLimit) {
         coeffcient = 2 * coeffcient;
         float i = (float) constantDifference / (float) coeffcient;
 
@@ -102,7 +101,7 @@ public class DependenceTests {
         return null;
     }
 
-    private static DirectionVector weakZeroSIVTest(int constDiff, int coefficient, int upperLimit, int lowerLimit) {
+    private static Integer weakZeroSIVTest(int constDiff, int coefficient, int upperLimit, int lowerLimit) {
         if (constDiff % coefficient != 0) {
             return null;
         }
@@ -110,13 +109,13 @@ public class DependenceTests {
         int i = constDiff / coefficient;
 
         if (Math.abs(i) <= (upperLimit - lowerLimit)) {
-            return new DirectionVector(i);
+            return i;
         }
 
         return null;
     }
 
-    private static DirectionVector strongSIVTest(int constDiff, int coefficient, int upperLimit, int lowerLimit) {
+    private static Integer strongSIVTest(int constDiff, int coefficient, int upperLimit, int lowerLimit) {
         if (constDiff % coefficient != 0) {
             return null;
         }
