@@ -13,11 +13,13 @@ public class Subscript {
     private Term constant;
     private final ArrRef arrRef;
     private boolean linear;
+    private int maxIndexDepth;
     private int variableCount = 0;
 
     public Subscript(ArrRef arrRef) {
         this.constant = new Term(0);
         this.arrRef = arrRef;
+        this.maxIndexDepth = -1;
         linear = true;
     }
 
@@ -34,6 +36,7 @@ public class Subscript {
             } else {
                 variableCount++;
                 this.termMap.put(term.variable, term);
+                this.maxIndexDepth = Math.max(maxIndexDepth, term.depth);
             }
         }
     }
@@ -76,6 +79,10 @@ public class Subscript {
 
     public int getVariableCount() {
         return this.variableCount;
+    }
+
+    public int getMaxIndexDepth() {
+        return this.maxIndexDepth;
     }
 
     @Override
