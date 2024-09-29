@@ -61,7 +61,7 @@ public class FindRefs implements AstFullVisitor<ArrRef, LoopDescriptor> {
 
         // Creates a loop nest by adding outer loops
         if(arg !=null && arg.vectorizable) {
-            loopDescriptor.addOuter(arg);
+            loopDescriptor.addOuterLoops(arg);
         }
 
         // Add itself to the nest
@@ -85,7 +85,7 @@ public class FindRefs implements AstFullVisitor<ArrRef, LoopDescriptor> {
 
         // Adds array references of the inner loops
         if (arg != null) {
-            arg.addInner(loopDescriptor);
+            arg.addInnerRefs(loopDescriptor);
         }
 
         // Removes its own loop variable which should be the last one in the row

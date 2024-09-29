@@ -31,11 +31,11 @@ public class LoopDescriptor {
         this.arrayRefs.add(arrayRef);
     }
 
-    public void addInner(LoopDescriptor inner) {
+    public void addInnerRefs(LoopDescriptor inner) {
         this.arrayRefs.addAll(inner.arrayRefs);
     }
 
-    public void addOuter(LoopDescriptor outer) {
+    public void addOuterLoops(LoopDescriptor outer) {
         this.depth = outer.depth + 1;
         addLoops(outer.nest);
         addLoop(outer);
@@ -59,8 +59,6 @@ public class LoopDescriptor {
         sb.append("LoopDescriptor {");
         sb.append("\n\t vectorizable= ").append(vectorizable);
         sb.append("\n\t depth= ").append(depth);
-        //FIXME: remove nested level should be same as depth
-        sb.append("\n\t nestedLevel= ").append(nest.size());
         sb.append("\n\t loopIndex= ").append(loopIndex);
         sb.append("\n\t lowerBound= ").append(lowerBound);
         sb.append("\n\t upperBound= ").append(upperBound);
