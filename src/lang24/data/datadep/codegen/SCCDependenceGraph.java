@@ -8,7 +8,7 @@ import java.util.HashSet;
 import java.util.Vector;
 
 /**
- * This class defines a dependence graph where:
+ * Class representing a dependence graph where:
  * - Vertices are Strongly Connected Components
  * - Edges are dependences spanning from one node inside an SCC
  * to another node inside another SCC
