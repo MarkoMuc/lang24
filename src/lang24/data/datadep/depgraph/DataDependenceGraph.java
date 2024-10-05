@@ -7,16 +7,39 @@ import lang24.data.datadep.deptest.DirectionVectorSet;
 import java.util.*;
 import java.util.stream.Collectors;
 
+//FIXME: The loop depth has changed now, needs to be shifted by 1 !!!
+
+/**
+ * Class representing a directed data dependence graph used in vector analysis.
+ * - Vertices are statements of this loop nest.
+ * - Edges represent data dependences.
+ *
+ * @author marko.muc12@gmail.com
+ */
 public class DataDependenceGraph {
+    /**
+     * HashMap representation of the graph, the Integer represents the depth of each loop in the loop nest.
+     **/
     private HashMap<Integer, Vector<DDGNode>> graph;
+
+    /** Vector of the strongly connected components that are part of this graph. **/
     private Vector<StronglyConnectedComponent> TSCC = new Vector<>();
 
+    /**
+     * Initializes an empty graph.
+     */
     public DataDependenceGraph() {
         this.graph = new HashMap<>();
     }
 
-    public void addDGNode(DDGNode node) {
+    /**
+     * Adds a DDGNode to this data dependence graph.
+     *
+     * @param node The DDGNode to add.
+     */
+    public void addDDGNode(DDGNode node) {
         var loop = graph.getOrDefault(node.depth, new Vector<>(10));
+
         if (node.stmtNum >= loop.size()) {
             loop.setSize(node.stmtNum + 1);
         } else {
@@ -24,11 +47,19 @@ public class DataDependenceGraph {
                 return;
             }
         }
+
         loop.set(node.stmtNum, node);
         graph.put(node.depth, loop);
     }
 
-    public DDGNode getDGNode(int depth, AstStmt stmt) {
+    /**
+     * Returns a certain DDGNode that is part of this graph.
+     *
+     * @param depth The loop that contains this statement.
+     * @param stmt  The statement itself.
+     * @return The DDGNode corresponding to this statement.
+     */
+    public DDGNode getDDGNode(int depth, AstStmt stmt) {
         var loop = graph.getOrDefault(depth, null);
         if (loop != null) {
             for (var node : loop) {
@@ -41,18 +72,25 @@ public class DataDependenceGraph {
         return null;
     }
 
+    /**
+     * Adds all direction vectors for this pair of array references.
+     *
+     * @param source    Source array reference.
+     * @param sink      Sink array reference.
+     * @param DVSet     Set of direction vectors.
+     */
     public void addDVSet(ArrRef source, ArrRef sink, DirectionVectorSet DVSet) {
-        var fstNode = getDGNode(source.depth, source.refStmt);
-        var sndNode = getDGNode(sink.depth, sink.refStmt);
+        var fstNode = getDDGNode(source.depth, source.refStmt);
+        var sndNode = getDDGNode(sink.depth, sink.refStmt);
         // "stmtNum - 1" is done to index the DDG Vector better, otherwise position 0 for every loop would be never used
         if (fstNode == null) {
             fstNode = new DDGNode(source.refStmt, source.depth, source.stmtNum - 1);
-            addDGNode(fstNode);
+            addDDGNode(fstNode);
         }
 
         if (sndNode == null) {
             sndNode = new DDGNode(sink.refStmt, sink.depth, sink.stmtNum - 1);
-            addDGNode(sndNode);
+            addDDGNode(sndNode);
         }
 
         for (var dirVect : DVSet.getDirectionVectors()) {
@@ -61,6 +99,19 @@ public class DataDependenceGraph {
         }
     }
 
+    /**
+     * Depth first search algorithm used as a helper function of the Tarjan's algorithm.
+     *
+     * @param flatGraph     A vector of all the nodes in this graph.
+     * @param node          The current node we are checking.
+     * @param num           Array of integers used by Tarjan's.
+     * @param lowest        Array of integers used by Tarjan's.
+     * @param visited       Array to mark visited nodes.
+     * @param counter       Counter used with lowest and num array.
+     * @param processed     Nodes already processed.
+     * @param stack         A stack of nodes that are part of the current SCC.
+     * @return A single SCC or null if not found yet.
+     */
     public Collection<DDGNode> DFS(Vector<DDGNode> flatGraph, DDGNode node, Vector<Integer> num, Vector<Integer> lowest, Vector<DDGNode> visited,
                                    int counter, Vector<DDGNode> processed, Stack<DDGNode> stack) {
         int nodeNum = flatGraph.indexOf(node);
@@ -106,6 +157,12 @@ public class DataDependenceGraph {
         return null;
     }
 
+    /**
+     * Runs the Tarjan's strongly connected components algorithm to find SCCs of this graph.
+     *  If SCCs have already been found, just returns.
+     *
+     * @return Vector containing all SCCs of this graph.
+     */
     public Vector<StronglyConnectedComponent> TarjansSCC() {
         if (!TSCC.isEmpty()) {
             return this.TSCC;
@@ -127,6 +184,7 @@ public class DataDependenceGraph {
                 DFS(vertexes, node, num, lowest, visited, counter, processed, stack);
             }
         }
+
         return this.TSCC;
     }
 
