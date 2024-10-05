@@ -7,23 +7,57 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Vector;
 
+/**
+ * This class defines a dependence graph where:
+ * - Vertices are Strongly Connected Components
+ * - Edges are dependences spanning from one node inside an SCC
+ * to another node inside another SCC
+ * - Resulting graph is an acyclic dependence graph
+ *
+ * @author marko.muc12@gmail.com
+ */
 public class SCCDependenceGraph {
+    /** Graph represented by a map that relates SCC with its edges. **/
     private HashMap<StronglyConnectedComponent, HashSet<StronglyConnectedComponent>> graph;
-    private boolean addedNodes = false;
+
+    /** Topological sort of the graph. **/
     private Vector<StronglyConnectedComponent> sorted;
 
+    /** Keeps from adding additional nodes after it is built once. **/
+    private boolean addedNodes;
+
+    /**
+     * Creates an empty dependence graph.
+     **/
     public SCCDependenceGraph() {
         this.graph = new HashMap<>();
         this.sorted = new Vector<>();
+        this.addedNodes = false;
     }
 
+    /**
+     * Adds all the SCCs to the graph.
+     * Throws an error if nodes have been added already.
+     *
+     * @param TSCCset Set of SCCs.
+     */
     public void addSCCs(Vector<StronglyConnectedComponent> TSCCset) {
+        if (this.addedNodes) {
+            throw new Report.Error("SCCDependenceGraph: SCCs already added.");
+        }
+
         for (var component : TSCCset) {
             this.graph.put(component, new HashSet<>());
         }
+
         this.addedNodes = true;
     }
 
+    /**
+     * Helper method for building the graph one component at a time.
+     *
+     * @param component The SCC component to add.
+     */
     private void connectSSCs(StronglyConnectedComponent component) {
         var connections = this.graph.get(component);
         for (var DGGNode : component.getNodes()) {
@@ -45,9 +79,13 @@ public class SCCDependenceGraph {
         }
     }
 
+    /**
+     * Builds the graph out of the SCCs.
+     * If SCCs have not been added it throws an Error.
+     */
     public void buildGraph() {
         if (!this.addedNodes) {
-            throw new Report.InternalError();
+            throw new Report.Error("SCCDependenceGraph: SCCs have not been added yet.");
         }
 
         for (var component : this.graph.keySet()) {
@@ -55,7 +93,13 @@ public class SCCDependenceGraph {
         }
     }
 
-
+    /**
+     * Depth first search used in topological sort.
+     *
+     * @param node          Current node.
+     * @param flatGraph    Vector of all SCCs.
+     * @param mark          Array of marks.
+     */
     private void DFS(StronglyConnectedComponent node, Vector<StronglyConnectedComponent> flatGraph, boolean[] mark) {
         int i = flatGraph.indexOf(node);
         mark[i] = true;
@@ -69,7 +113,11 @@ public class SCCDependenceGraph {
         sorted.addFirst(node);
     }
 
-
+    /**
+     * Topologically sorts the graph and stores it in the sorted vector.
+     *
+     * @return Vector of sorted nodes.
+     */
     public Vector<StronglyConnectedComponent> topologicalSort() {
         if (!this.sorted.isEmpty()) {
             return this.sorted;
@@ -89,6 +137,28 @@ public class SCCDependenceGraph {
         return this.sorted;
     }
 
+    /**
+     * toString method for the sorted nodes.
+     *
+     * @return String of the sorted graph.
+     */
+    public String toStringSorted() {
+        var sb = new StringBuilder();
+        var SCCs = this.sorted;
+
+        sb.append("Sorted D_SCC[").append(SCCs.size()).append("]").append('\n');
+
+        for (var scc : SCCs) {
+            int i = SCCs.indexOf(scc);
+            sb.append("SCC").append(i).append("\n");
+            for (var conn : this.graph.get(scc)) {
+                sb.append("=>").append(SCCs.indexOf(conn)).append("\n");
+            }
+        }
+
+        return sb.toString();
+    }
+
     @Override
     public String toString() {
         var sb = new StringBuilder();
@@ -100,23 +170,6 @@ public class SCCDependenceGraph {
             int i = SCCs.indexOf(scc);
             sb.append("SCC").append(i).append("\n");
             sb.append(scc.toShortString());
-            for (var conn : this.graph.get(scc)) {
-                sb.append("=>").append(SCCs.indexOf(conn)).append("\n");
-            }
-        }
-
-        return sb.toString();
-    }
-
-    public String toStringSorted() {
-        var sb = new StringBuilder();
-        var SCCs = this.sorted;
-
-        sb.append("Sorted D_SCC[").append(SCCs.size()).append("]").append('\n');
-
-        for (var scc : SCCs) {
-            int i = SCCs.indexOf(scc);
-            sb.append("SCC").append(i).append("\n");
             for (var conn : this.graph.get(scc)) {
                 sb.append("=>").append(SCCs.indexOf(conn)).append("\n");
             }
