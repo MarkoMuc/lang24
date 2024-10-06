@@ -2,7 +2,6 @@ package lang24.phase.vecan;
 
 import lang24.common.report.Report;
 import lang24.data.ast.attribute.Attribute;
-import lang24.data.ast.tree.defn.AstDefn;
 import lang24.data.ast.tree.expr.AstNameExpr;
 import lang24.data.datadep.ArrRef;
 import lang24.data.datadep.LoopDescriptor;
@@ -14,7 +13,6 @@ import lang24.data.datadep.subscript.Partition;
 import lang24.data.datadep.subscript.Subscript;
 import lang24.data.datadep.subscript.SubscriptPair;
 import lang24.phase.Phase;
-import lang24.phase.seman.SemAn;
 
 import java.util.Vector;
 
@@ -32,12 +30,13 @@ public class VecAn extends Phase {
 
     public void loopAnalysis() {
         for (LoopDescriptor loopDescriptor : loops) {
+            System.out.println(loopDescriptor);
             int len = loopDescriptor.arrayRefs.size();
             var DDG = new DataDependenceGraph();
             loopRefs:
             for (int i = 0; i < len; i++) {
                 ArrRef source = loopDescriptor.arrayRefs.get(i);
-                DDG.addDGNode(new DDGNode(source.refStmt, source.depth, source.stmtNum - 1));
+                DDG.addDDGNode(new DDGNode(source.refStmt, source.depth, source.stmtNum - 1));
 
                 for (int j = i; j < len; j++) {
                     ArrRef sink = loopDescriptor.arrayRefs.get(j);
@@ -48,7 +47,7 @@ public class VecAn extends Phase {
                     DDG.addDDGNode(new DDGNode(sink.refStmt, sink.depth, sink.stmtNum - 1));
                     if (source.equals(sink) && source.getSubscriptCount() == sink.getSubscriptCount()) {
                         var DVSet = new DirectionVectorSet(Math.max(source.depth, sink.depth));
-                        var depExists = testDependence(source, sink, loopDescriptor, DVSet);
+                        var depExists = testDependence(source, sink, DVSet);
                         if (depExists == null) {
                             loopDescriptor.vectorizable = false;
                             break loopRefs;
@@ -85,11 +84,8 @@ public class VecAn extends Phase {
         loops.removeAll(loops.stream().filter(f -> !f.vectorizable).toList());
     }
 
-    private Boolean testDependence(ArrRef source, ArrRef sink,
-                                   LoopDescriptor loopDescriptor, DirectionVectorSet DVSet) {
-        //TODO: In future this has to go through all idxExpressions
-
-        //Create and analyze partition pairs
+    private Boolean testDependence(ArrRef source, ArrRef sink, DirectionVectorSet DVSet) {
+        // Create and analyze partition pairs
         Vector<SubscriptPair> subscriptPairs = createAndAnalyzeSubscriptPair(source, sink);
         if (subscriptPairs == null) {
             // No linear pairs found, assume complete dependence
