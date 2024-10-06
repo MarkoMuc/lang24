@@ -29,32 +29,39 @@ public class FindRefs implements AstFullVisitor<ArrRef, LoopDescriptor> {
     public ArrRef visit(AstVecForStmt vecForStmt, LoopDescriptor arg) {
         int oldStmtNum = stmtNum;
         stmtNum = 0;
-
-        LoopDescriptor loopDescriptor = new LoopDescriptor(
-                vecForStmt,
-                vecForStmt.name,
-                vecForStmt.lower,
-                vecForStmt.upper,
-                vecForStmt.step
-        );
-
         if (vecForStmt.lower instanceof AstAtomExpr lower &&
                 vecForStmt.upper instanceof AstAtomExpr upper &&
                 vecForStmt.step instanceof AstAtomExpr step) {
             // Forces linear and normalized loops only
             if (Integer.parseInt(step.value) != 1 || Integer.parseInt(lower.value) > 0 ||
                     Integer.parseInt(upper.value) < 0) {
-                loopDescriptor.vectorizable = false;
+                if (arg != null) {
+                    arg.vectorizable = false;
+                }
+                return null;
             }
         } else {
             // If an inner loop is not vectorizable, propagate it upwards
-            arg.vectorizable = false;
+            if (arg != null) {
+                arg.vectorizable = false;
+            }
             return null;
         }
 
+        LoopDescriptor loopDescriptor = new LoopDescriptor(
+                vecForStmt,
+                vecForStmt.name,
+                Integer.parseInt(lower.value),
+                Integer.parseInt(upper.value),
+                Integer.parseInt(step.value)
+        );
+
+
         for (var loop : loopVars) {
             if (SemAn.definedAt.get(loop.loopIndex) == SemAn.definedAt.get(loopDescriptor.loopIndex)) {
-                arg.vectorizable = false;
+                if (arg != null) {
+                    arg.vectorizable = false;
+                }
                 return null;
             }
         }
