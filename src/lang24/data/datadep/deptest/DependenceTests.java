@@ -245,32 +245,32 @@ public class DependenceTests {
             }
 
             if (direction.direction == DependenceDirection.Direction.LESS) {
-                var lowerBound = Integer.parseInt(lowerLoops.get(i));
-                var upperBound = Integer.parseInt(upperLoops.get(i));
+                var lowerBound = lowerLoops.get(i);
+                var upperBound = upperLoops.get(i);
                 var partialBound = calculateLessDirection(sourceCoef, sinkCoef,
                         lowerBound, upperBound);
                 bound.leftSide += partialBound.leftSide;
                 bound.rightSide += partialBound.rightSide;
             } else if (direction.direction == DependenceDirection.Direction.MORE) {
-                var lowerBound = Integer.parseInt(lowerLoops.get(i));
-                var upperBound = Integer.parseInt(upperLoops.get(i));
+                var lowerBound = lowerLoops.get(i);
+                var upperBound = upperLoops.get(i);
                 var partialBound = calculateMoreDirection(sourceCoef, sinkCoef,
                         lowerBound, upperBound);
                 bound.leftSide += partialBound.leftSide;
                 bound.rightSide += partialBound.rightSide;
             } else if (direction.direction == DependenceDirection.Direction.EQU) {
-                var lowerBound = Integer.parseInt(lowerLoops.get(i));
-                var upperBound = Integer.parseInt(upperLoops.get(i));
+                var lowerBound = lowerLoops.get(i);
+                var upperBound = upperLoops.get(i);
                 var partialBound = calculateEquDirection(sourceCoef, sinkCoef,
                         lowerBound, upperBound);
                 bound.leftSide += partialBound.leftSide;
                 bound.rightSide += partialBound.rightSide;
             } else {
                 //FIXME: this loop limits
-                var sourceLowerBound = Integer.parseInt(lowerLoops.get(i));
-                var sourceUpperBound = Integer.parseInt(upperLoops.get(i));
-                var sinkLowerBound = Integer.parseInt(lowerLoops.get(i));
-                var sinkUpperBound = Integer.parseInt(upperLoops.get(i));
+                var sourceLowerBound = lowerLoops.get(i);
+                var sourceUpperBound = upperLoops.get(i);
+                var sinkLowerBound = lowerLoops.get(i);
+                var sinkUpperBound = upperLoops.get(i);
 
                 var partialBound = calculateStarDirection(sourceCoef, sinkCoef,
                         sourceLowerBound, sourceUpperBound, sinkLowerBound, sinkUpperBound);
