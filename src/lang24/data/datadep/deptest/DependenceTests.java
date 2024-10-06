@@ -1,7 +1,6 @@
 package lang24.data.datadep.deptest;
 
 import lang24.common.report.Report;
-import lang24.data.ast.tree.expr.AstAtomExpr;
 import lang24.data.datadep.LoopDescriptor;
 import lang24.data.datadep.subscript.Subscript;
 import lang24.data.datadep.subscript.SubscriptPair;
@@ -48,9 +47,8 @@ public class DependenceTests {
         // Since SIV is tied to a single loop variable, get that loop variable
         var commonLoop = Objects.requireNonNullElse(sourceIndex, sinkIndex).loop;
 
-        // Lower bound is raised by 1, otherwise it does not find correct dependence
-        var upperBound = Integer.parseInt(((AstAtomExpr) commonLoop.upperBound).value);
-        var lowerBound = Integer.parseInt(((AstAtomExpr) commonLoop.lowerBound).value) + 1;
+        var upperBound = commonLoop.upperBound;
+        var lowerBound = commonLoop.lowerBound;
 
         if (sinkIndex == null && sourceIndex == null) {
             throw new Report.Error("This should be a ZIV test");
@@ -217,11 +215,9 @@ public class DependenceTests {
 
         var lowerLoops = loopLimits.stream()
                 .map(t -> t.lowerBound)
-                .map(t -> ((AstAtomExpr) t).value)
                 .toList();
         var upperLoops = loopLimits.stream()
                 .map(t -> t.upperBound)
-                .map(t -> ((AstAtomExpr) t).value)
                 .toList();
 
         var source = pair.sourceSubscript;
