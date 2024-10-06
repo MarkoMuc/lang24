@@ -31,7 +31,7 @@ public class ArrRef {
     public LoopDescriptor loop;
 
     /** Loop depth. **/
-    public int depth;
+    private int depth;
 
     /** Statement number inside this loop. **/
     public int stmtNum;
@@ -89,6 +89,24 @@ public class ArrRef {
      */
     public int getSubscriptCount() {
         return subscriptExprs.size();
+    }
+
+    /**
+     * Returns depth as per theory.
+     *
+     * @return Depth.
+     */
+    public int getDepth() {
+        return this.depth;
+    }
+
+    /**
+     * Used in indexing arrays that depend on loop depth.
+     *
+     * @return Depth of this loop -1.
+     */
+    public int getDepthAsIdx() {
+        return this.depth - 1;
     }
 
     @Override

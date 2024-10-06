@@ -44,7 +44,7 @@ public class StronglyConnectedComponent {
         var sb = new StringBuilder();
 
         for (var node : nodes) {
-            sb.append("-> NODE(L").append(node.depth).append("S").append(node.stmtNum + 1).append(")\n");
+            sb.append("-> NODE(L").append(node.depth + 1).append("S").append(node.stmtNum + 1).append(")\n");
         }
 
         return sb.toString();

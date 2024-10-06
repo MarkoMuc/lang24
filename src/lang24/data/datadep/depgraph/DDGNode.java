@@ -12,7 +12,7 @@ import java.util.Vector;
  */
 public class DDGNode {
     /**
-     * The statement this nodes represents.
+     * The statement this node represents.
      **/
     public AstStmt stmt;
 
@@ -61,7 +61,7 @@ public class DDGNode {
     public String toString() {
         var sb = new StringBuilder();
 
-        sb.append(String.format("NODE(L%dS%d) {\n", this.depth, this.getRealStmtNum()));
+        sb.append(String.format("NODE(L%dS%d) {\n", this.depth + 1, this.getRealStmtNum()));
         for (var conn : this.connections) {
             sb.append("\t").append(conn).append("\n");
         }

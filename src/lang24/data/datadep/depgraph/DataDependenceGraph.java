@@ -7,8 +7,6 @@ import lang24.data.datadep.deptest.DirectionVectorSet;
 import java.util.*;
 import java.util.stream.Collectors;
 
-//FIXME: The loop depth has changed now, needs to be shifted by 1 !!!
-
 /**
  * Class representing a directed data dependence graph used in vector analysis.
  * - Vertices are statements of this loop nest.
@@ -80,16 +78,16 @@ public class DataDependenceGraph {
      * @param DVSet     Set of direction vectors.
      */
     public void addDVSet(ArrRef source, ArrRef sink, DirectionVectorSet DVSet) {
-        var fstNode = getDDGNode(source.depth, source.refStmt);
-        var sndNode = getDDGNode(sink.depth, sink.refStmt);
+        var fstNode = getDDGNode(source.getDepthAsIdx(), source.refStmt);
+        var sndNode = getDDGNode(sink.getDepthAsIdx(), sink.refStmt);
         // "stmtNum - 1" is done to index the DDG Vector better, otherwise position 0 for every loop would be never used
         if (fstNode == null) {
-            fstNode = new DDGNode(source.refStmt, source.depth, source.stmtNum - 1);
+            fstNode = new DDGNode(source.refStmt, source.getDepthAsIdx(), source.stmtNum - 1);
             addDDGNode(fstNode);
         }
 
         if (sndNode == null) {
-            sndNode = new DDGNode(sink.refStmt, sink.depth, sink.stmtNum - 1);
+            sndNode = new DDGNode(sink.refStmt, sink.getDepthAsIdx(), sink.stmtNum - 1);
             addDDGNode(sndNode);
         }
 

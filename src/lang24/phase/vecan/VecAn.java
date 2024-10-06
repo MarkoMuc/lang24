@@ -36,7 +36,7 @@ public class VecAn extends Phase {
             loopRefs:
             for (int i = 0; i < len; i++) {
                 ArrRef source = loopDescriptor.arrayRefs.get(i);
-                DDG.addDDGNode(new DDGNode(source.refStmt, source.depth, source.stmtNum - 1));
+                DDG.addDDGNode(new DDGNode(source.refStmt, source.getDepthAsIdx(), source.stmtNum - 1));
 
                 for (int j = i; j < len; j++) {
                     ArrRef sink = loopDescriptor.arrayRefs.get(j);
@@ -44,9 +44,9 @@ public class VecAn extends Phase {
                         // Both source and sink reference are reads
                         continue;
                     }
-                    DDG.addDDGNode(new DDGNode(sink.refStmt, sink.depth, sink.stmtNum - 1));
+                    DDG.addDDGNode(new DDGNode(sink.refStmt, sink.getDepthAsIdx(), sink.stmtNum - 1));
                     if (source.equals(sink) && source.getSubscriptCount() == sink.getSubscriptCount()) {
-                        var DVSet = new DirectionVectorSet(Math.max(source.depth, sink.depth));
+                        var DVSet = new DirectionVectorSet(Math.max(source.getDepth(), sink.getDepth()));
                         var depExists = testDependence(source, sink, DVSet);
                         if (depExists == null) {
                             loopDescriptor.vectorizable = false;
@@ -67,17 +67,17 @@ public class VecAn extends Phase {
 
             if (loopDescriptor.vectorizable) {
                 System.out.println(DDG);
-                var TSCC = DDG.TarjansSCC();
-                System.out.println("TSCC[" + TSCC.size() + "]");
-                int i = 1;
-                for (var region : TSCC) {
-                    System.out.println("REGION[" + i + "," + region.getSize() + "]:");
-                    for (var node : region.getNodes()) {
-                        System.out.println(node);
-                    }
-                    i++;
-                }
-                codegen(0, DDG);
+                //     var TSCC = DDG.TarjansSCC();
+                //     System.out.println("TSCC[" + TSCC.size() + "]");
+                //     int i = 1;
+                //     for (var region : TSCC) {
+                //         System.out.println("REGION[" + i + "," + region.getSize() + "]:");
+                //         for (var node : region.getNodes()) {
+                //             System.out.println(node);
+                //         }
+                //         i++;
+                //     }
+                //     codegen(0, DDG);
             }
         }
 
@@ -95,7 +95,7 @@ public class VecAn extends Phase {
 
         // Create Partitions
         var partitions = partition(subscriptPairs,
-                source.depth > sink.depth ? source.loop : sink.loop);
+                source.getDepth() > sink.getDepth() ? source.loop : sink.loop);
 
         //Test separable
         for (var partition : partitions) {
@@ -165,7 +165,7 @@ public class VecAn extends Phase {
     // Checks both subscripts and creates a subscript pair
     private Vector<SubscriptPair> createAndAnalyzeSubscriptPair(ArrRef source, ArrRef sink) {
         var pairs = new Vector<SubscriptPair>();
-        var deepestLoop = source.depth > sink.depth ? source.loop : sink.loop;
+        var deepestLoop = source.getDepth() > sink.getDepth() ? source.loop : sink.loop;
         var commonLoops = findCommonLoops(source, sink);
 
         for (int i = 0; i < source.getSubscriptCount(); i++) {
@@ -184,7 +184,7 @@ public class VecAn extends Phase {
             }
 
             pairs.add(new SubscriptPair(sourceSubscript, sinkSubscript,
-                    Math.max(source.depth, sink.depth), deepestLoop, commonLoops));
+                    Math.max(source.getDepth(), sink.getDepth()), deepestLoop, commonLoops));
         }
 
         if (pairs.isEmpty()) {
@@ -199,7 +199,7 @@ public class VecAn extends Phase {
         var loops = new Vector<LoopDescriptor>();
         LoopDescriptor stmtLoop;
 
-        if (source.depth > sink.depth) {
+        if (source.getDepth() > sink.getDepth()) {
             stmtLoop = source.loop;
         } else {
             stmtLoop = sink.loop;
