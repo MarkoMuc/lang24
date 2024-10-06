@@ -33,6 +33,7 @@ public class DirectionVector {
     }
 
     public DependenceDirection getDirection(int idx) {
+        idx = idx - 1;
         return this.directions.get(idx);
     }
 
@@ -47,6 +48,7 @@ public class DirectionVector {
      * @param newDirection new direction as an direction enum
      */
     public void changeDirection(int idx, DependenceDirection.Direction newDirection) {
+        idx = idx - 1;
         if (idx >= this.directions.size()) {
             return;
         }
@@ -65,6 +67,7 @@ public class DirectionVector {
      * @param newDirection new direction as an object
      */
     public void changeDirection(int idx, DependenceDirection newDirection) {
+        idx = idx - 1;
         if (idx >= this.directions.size()) {
             return;
         }
@@ -83,6 +86,7 @@ public class DirectionVector {
      * @return the vector of directions
      */
     public Vector<DependenceDirection> createDirectionVector(int distance, int size, int level) {
+        level = level - 1;
         Vector<DependenceDirection> direction = new Vector<>(
                 Collections.nCopies(size, new DependenceDirection(DependenceDirection.Direction.STAR)));
         direction.set(level, createDirection(distance));
@@ -128,8 +132,8 @@ public class DirectionVector {
                 .filter(d -> d.direction != DependenceDirection.Direction.EQU)
                 .findFirst()
                 .orElse(null);
-
-        return this.directions.indexOf(first);
+        //CHECKME: I think this should always be +1 to reflect theory
+        return this.directions.indexOf(first) + 1;
     }
 
     /**
@@ -140,7 +144,7 @@ public class DirectionVector {
      */
     public static DirectionVector generateStartingDV(int size) {
         return new DirectionVector(new Vector<>(
-                Collections.nCopies(size + 1, new DependenceDirection(DependenceDirection.Direction.STAR))));
+                Collections.nCopies(size, new DependenceDirection(DependenceDirection.Direction.STAR))));
     }
 
     @Override
