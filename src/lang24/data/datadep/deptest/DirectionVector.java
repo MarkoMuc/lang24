@@ -6,7 +6,7 @@ import java.util.Vector;
 public class DirectionVector {
     private Vector<DependenceDirection> directions;
     public int size;
-    public int loopLevel;
+    public int depLevel;
 
     public DirectionVector() {
     }
@@ -14,18 +14,18 @@ public class DirectionVector {
     public DirectionVector(int distance, int size, int level) {
         this.size = size;
         this.directions = createDirectionVector(distance, this.size, level);
-        this.loopLevel = findLoopLevel();
+        this.depLevel = findDependenceLevel();
     }
 
     private DirectionVector(Vector<DependenceDirection> starting) {
         this.directions = starting;
         this.size = starting.size();
-        this.loopLevel = findLoopLevel();
+        this.depLevel = findDependenceLevel();
     }
 
     public void setDirections(Vector<DependenceDirection> directions) {
         this.directions = directions;
-        this.loopLevel = findLoopLevel();
+        this.depLevel = findDependenceLevel();
     }
 
     public Vector<DependenceDirection> getDirections() {
@@ -55,8 +55,8 @@ public class DirectionVector {
 
         this.directions.set(idx, new DependenceDirection(newDirection));
 
-        if (idx <= this.loopLevel || this.loopLevel == -1) {
-            this.loopLevel = findLoopLevel();
+        if (idx <= this.depLevel || this.depLevel == -1) {
+            this.depLevel = findDependenceLevel();
         }
     }
 
@@ -74,8 +74,8 @@ public class DirectionVector {
 
         this.directions.set(idx, newDirection);
 
-        if (idx <= this.loopLevel || this.loopLevel == -1) {
-            this.loopLevel = findLoopLevel();
+        if (idx <= this.depLevel || this.depLevel == -1) {
+            this.depLevel = findDependenceLevel();
         }
     }
 
@@ -116,29 +116,30 @@ public class DirectionVector {
 
         copy.setDirections(direction);
         copy.size = this.size;
-        copy.loopLevel = this.loopLevel;
+        copy.depLevel = this.depLevel;
 
         return copy;
     }
 
     /**
-     * Finds first non "=" direction which represents the dependence level
+     * Finds first non "=" direction which represents the dependence level.
+     * Note that the loop level is raised by 1, to reflect theory.
      *
      * @return dependence level
      */
-    private int findLoopLevel() {
+    private int findDependenceLevel() {
         var first = this.directions
                 .stream()
                 .filter(d -> d.direction != DependenceDirection.Direction.EQU)
                 .findFirst()
                 .orElse(null);
-        //CHECKME: I think this should always be +1 to reflect theory
+
         return this.directions.indexOf(first) + 1;
     }
 
     /**
-     * Creates a starting direction vector of length size
-     * Starting vector contains only "*" [*, *, ..., *]
+     * Creates a starting direction vector of length size.
+     * Starting vector contains only "*" [*, *, ..., *].
      *
      * @param size size of the vector to generate
      */
@@ -159,7 +160,7 @@ public class DirectionVector {
                 sb.append(',');
             }
         }
-        sb.append(';').append(loopLevel).append(')');
+        sb.append(';').append(depLevel).append(')');
 
         return sb.toString();
     }
