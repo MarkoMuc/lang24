@@ -26,6 +26,16 @@ public class Partition {
         return this.pairs;
     }
 
+    public boolean pairContainsIndex(int idxDepth) {
+        for (var pair : pairs) {
+            if (pair.containsIndex(idxDepth)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     public boolean pairContainsIndex(AstDefn idx, int loopLevel) {
         for (var pair : pairs) {
             if (pair.sourceSubscript.containsIndex(idx, loopLevel)) {

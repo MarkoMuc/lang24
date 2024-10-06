@@ -19,6 +19,7 @@ public class SubscriptPair {
                          int maxNestLevel, LoopDescriptor loop, Vector<LoopDescriptor> commonLoops) {
         this.sourceSubscript = sourceSubscript;
         this.sinkSubscript = sinkSubscript;
+        this.loop = loop;
         this.numberOfIndexes = getNumberOfIndexes();
         this.loopIndexLevels = createLoopIndexLevels();
         this.commonLoops = commonLoops;
@@ -39,6 +40,10 @@ public class SubscriptPair {
 
     public ArrRef getSinkArrRef() {
         return this.sinkSubscript.getArrRef();
+    }
+
+    public boolean containsIndex(int idxDepth) {
+        return this.loopIndexLevels.contains(idxDepth);
     }
 
     private Vector<Integer> createLoopIndexLevels() {

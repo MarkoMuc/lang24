@@ -196,7 +196,7 @@ public class VecAn extends Phase {
     // Checks both subscripts and creates a subscript pair
     private Vector<SubscriptPair> createAndAnalyzeSubscriptPair(ArrRef source, ArrRef sink) {
         var pairs = new Vector<SubscriptPair>();
-
+        var deepestLoop = source.depth > sink.depth ? source.loop : sink.loop;
         var commonLoops = findCommonLoops(source, sink);
 
         for (int i = 0; i < source.getSubscriptCount(); i++) {
@@ -215,7 +215,7 @@ public class VecAn extends Phase {
             }
 
             pairs.add(new SubscriptPair(sourceSubscript, sinkSubscript,
-                    Math.max(source.depth, sink.depth), commonLoops));
+                    Math.max(source.depth, sink.depth), deepestLoop, commonLoops));
         }
 
         if (pairs.isEmpty()) {
