@@ -21,15 +21,6 @@ import java.util.Vector;
 import static lang24.data.datadep.deptest.DependenceTests.*;
 import static lang24.data.datadep.subscript.Partition.partition;
 
-
-/*
- *  TODO: Subscript pairs
- *   -> Since our language does not directly support multi dimensional arrays, there is always only one subscript pair!
- *  FIXME:
- *   F1) This should also check if they both have the same number of subscripts
- *   F2) Implement MIV
- */
-
 public class VecAn extends Phase {
 
     public final static Attribute<AstNameExpr, LoopDescriptor> loopDescriptors = new Attribute<>();
@@ -54,15 +45,15 @@ public class VecAn extends Phase {
                         // Both source and sink reference are reads
                         continue;
                     }
-                    DDG.addDGNode(new DDGNode(sink.refStmt, sink.depth, sink.stmtNum - 1));
-                    if (source.equals(sink) && source.getSize() == sink.getSize()) {
-                        //#F1
+                    DDG.addDDGNode(new DDGNode(sink.refStmt, sink.depth, sink.stmtNum - 1));
+                    if (source.equals(sink) && source.getSubscriptCount() == sink.getSubscriptCount()) {
                         var DVSet = new DirectionVectorSet(Math.max(source.depth, sink.depth));
                         var depExists = testDependence(source, sink, loopDescriptor, DVSet);
                         if (depExists == null) {
                             loopDescriptor.vectorizable = false;
                             break loopRefs;
                         } else if (!depExists) {
+                            //FIXME:Why not just continue?
                             DVSet.getDirectionVectors().clear();
                         }
                         var fixedVectors = DVSet.purgeIllegal();
@@ -101,6 +92,8 @@ public class VecAn extends Phase {
         //Create and analyze partition pairs
         Vector<SubscriptPair> subscriptPairs = createAndAnalyzeSubscriptPair(source, sink);
         if (subscriptPairs == null) {
+            // No linear pairs found, assume complete dependence
+            // TODO: Implement complete dependence in this cases
             return null;
         }
 
@@ -115,7 +108,8 @@ public class VecAn extends Phase {
                     return false;
                 }
             } else {
-                throw new Report.Error("Coupled subscript groups are not yet implemented");
+                // TODO: Implement complete dependence in this cases
+                throw new Report.Error("Coupled subscript groups are not implemented");
             }
         }
 
