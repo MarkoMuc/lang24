@@ -78,7 +78,7 @@ public class DependenceTests {
         }
 
         if (dependenceDistance != null) {
-            DV.addDirectionVector(new DirectionVector(dependenceDistance, pair.innermostLevel, depth));
+            DV.addDirectionVector(new DirectionVector(dependenceDistance, pair.maxNestLevel, depth));
             return true;
         }
 
@@ -150,7 +150,7 @@ public class DependenceTests {
         } else {
             //FIXME:what gotta do here is this correct?
             var dvlist = new DirectionVectorSet();
-            var startingDV = DirectionVector.generateStartingDV(pair.innermostLevel);
+            var startingDV = DirectionVector.generateStartingDV(pair.maxNestLevel);
             dvlist = MIVDirectionVectorTest(pair, startingDV, 0, dvlist);
             DVset.addDirectionVectors(dvlist);
         }
@@ -163,7 +163,7 @@ public class DependenceTests {
             return DVlist;
         }
 
-        if (depth == pair.innermostLevel) {
+        if (depth == pair.maxNestLevel) {
             //CHECKME: Merge or unite???
             //FIXME: This is unite!
             DVlist.addDirectionVector(DV);
