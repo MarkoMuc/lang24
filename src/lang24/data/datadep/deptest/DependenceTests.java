@@ -89,7 +89,7 @@ public class DependenceTests {
 
         if (constantDifference % coeffcient == 0 || i % 1 == 0.5) {
             if (Math.abs(i) <= (upperLimit - lowerLimit)) {
-                //CHECKME: Is this cool?
+                // FIXME: the rounding can cause a wrong direction?
                 return Math.round(i);
             }
         }
@@ -360,8 +360,6 @@ public class DependenceTests {
             return n;
         } else {
             return 0;
-        } else {
-            return n;
         }
     }
 
