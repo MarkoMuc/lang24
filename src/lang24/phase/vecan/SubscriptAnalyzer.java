@@ -184,7 +184,7 @@ public class SubscriptAnalyzer implements AstFullVisitor<Term, Subscript> {
             num = new Term(pfxExpr);
         } else if (pfxExpr.expr instanceof AstNameExpr name) {
             num = new Term(pfxExpr, SemAn.definedAt.get(name),
-                    VecAn.loopDescriptors.get(name).depth);
+                    VecAn.loopDescriptors.get(name).getDepth());
         } else {
             arg.setNonLinear();
             return null;

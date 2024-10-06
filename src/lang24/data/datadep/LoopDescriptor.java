@@ -38,7 +38,7 @@ public class LoopDescriptor {
     /**
      * Depth of this loop in the loop nest.
      **/
-    public int depth;
+    private int depth;
 
     /** Array refs of this and all loop nested in it. **/
     public Vector<ArrRef> arrayRefs = new Vector<>();
@@ -68,6 +68,24 @@ public class LoopDescriptor {
         this.upperBound = upperBound - 1;
         this.step = step;
         this.vectorizable = true;
+    }
+
+    /**
+     * Used in indexing arrays that depend on loop depth.
+     *
+     * @return Depth of this loop -1.
+     */
+    public int getDepthAsIdx() {
+        return this.depth - 1;
+    }
+
+    /**
+     * Depth of this loop as per theory.
+     *
+     * @return Returns depth of this loop.
+     */
+    public int getDepth() {
+        return this.depth;
     }
 
     /**

@@ -21,7 +21,7 @@ public class Term {
     public Term(AstDefn variable, LoopDescriptor loop) {
         this.variable = variable;
         this.loop = loop;
-        this.depth = loop.depth;
+        this.depth = loop.getDepth();
         this.coefficient = 1;
     }
 

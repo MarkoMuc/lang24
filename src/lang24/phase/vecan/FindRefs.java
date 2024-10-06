@@ -131,7 +131,7 @@ public class FindRefs implements AstFullVisitor<ArrRef, LoopDescriptor> {
                     SemAn.definedAt.get(nameExpr),
                     arg,
                     stmtNum,
-                    arg.depth
+                    arg.getDepth()
             );
             arg.addArrayRef(ref);
         } else {
@@ -164,7 +164,7 @@ public class FindRefs implements AstFullVisitor<ArrRef, LoopDescriptor> {
                     SemAn.definedAt.get(nameExpr),
                     arg,
                     stmtNum,
-                    arg.depth
+                    arg.getDepth()
             );
             arg.addArrayRef(ref);
         }else{
