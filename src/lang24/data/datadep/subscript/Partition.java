@@ -1,6 +1,8 @@
 package lang24.data.datadep.subscript;
 
 import lang24.data.ast.tree.defn.AstDefn;
+import lang24.data.datadep.LoopDescriptor;
+import lang24.phase.seman.SemAn;
 
 import java.util.Vector;
 
@@ -36,15 +38,22 @@ public class Partition {
         return false;
     }
 
-    public static Vector<Partition> partition(Vector<SubscriptPair> pairs, Vector<AstDefn> loopIndexes) {
+    public static Vector<Partition> partition(Vector<SubscriptPair> pairs, LoopDescriptor ld) {
         Vector<Partition> partitions = new Vector<>();
+        Vector<AstDefn> loopIndexes = new Vector<>();
         int numOfPartitions = pairs.size();
-        int n = loopIndexes.size();
+
+        loopIndexes.addLast(SemAn.definedAt.get(ld.loopIndex));
+
+        for (var loop : ld.nest.reversed()) {
+            loopIndexes.addFirst(SemAn.definedAt.get(loop.loopIndex));
+        }
 
         for (var pair : pairs) {
             partitions.add(new Partition(pair));
         }
 
+        int n = loopIndexes.size();
         for (int i = 0; i < n; i++) {
             Integer k = null;
             for (int j = 0; j < numOfPartitions; j++) {

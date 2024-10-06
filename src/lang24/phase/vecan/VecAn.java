@@ -105,28 +105,8 @@ public class VecAn extends Phase {
         }
 
         // Create Partitions
-        Vector<AstDefn> loopIndexes = new Vector<>();
-        Vector<LoopDescriptor> nest;
-
-        if (source.depth > sink.depth) {
-            nest = source.loop.nest;
-            for (var pair : subscriptPairs) {
-                pair.setLoop(source.loop);
-            }
-            loopIndexes.addLast(SemAn.definedAt.get(source.loop.loopIndex));
-        } else {
-            nest = sink.loop.nest;
-            for (var pair : subscriptPairs) {
-                pair.setLoop(sink.loop);
-            }
-            loopIndexes.addLast(SemAn.definedAt.get(sink.loop.loopIndex));
-        }
-
-        for (var loop : nest.reversed()) {
-            loopIndexes.addFirst(SemAn.definedAt.get(loop.loopIndex));
-        }
-
-        var partitions = partition(subscriptPairs, loopIndexes);
+        var partitions = partition(subscriptPairs,
+                source.depth > sink.depth ? source.loop : sink.loop);
 
         //Test separable
         for (var partition : partitions) {
