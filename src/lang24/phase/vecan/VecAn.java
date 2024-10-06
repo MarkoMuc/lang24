@@ -144,47 +144,29 @@ public class VecAn extends Phase {
         return true;
     }
 
-    private Vector<SubscriptPair> createAndAnalyzeSubscriptPair(ArrRef source, ArrRef sink) {
-        //TODO: If a ref is nonlinear once, it is always non linear
-        //      -> Early break/continue whenever this same ArrRef is to be checked
-
-        var pairs = new Vector<SubscriptPair>();
-
-        for (int i = 0; i < source.getSize(); i++) {
-            Subscript sourceSubscript = new Subscript(source);
-            source.subscriptExprs.get(i).accept(new SubscriptAnalyzer(), sourceSubscript);
-
-            if (!sourceSubscript.isLinear()) {
-                return null;
-            }
-
-            Subscript sinkSubscript = new Subscript(sink);
-            sink.subscriptExprs.get(i).accept(new SubscriptAnalyzer(), sinkSubscript);
-
-            if (!sourceSubscript.isLinear()) {
-                return null;
-            }
-            pairs.add(new SubscriptPair(source.refStmt, sourceSubscript,
-                    sink.refStmt, sinkSubscript, Math.max(source.depth, sink.depth)));
-        }
-
-        if (pairs.isEmpty()) {
-            throw new Report.Error("0 pairs in a subscript pair should not happen.");
-        }
-
-        return pairs;
-    }
-
     public void codegen(int k, DataDependenceGraph D) {
         var SCCset = D.TarjansSCC();
         var sccDependenceGraph = new SCCDependenceGraph();
         sccDependenceGraph.addSCCs(SCCset);
         sccDependenceGraph.buildGraph();
 
-        System.out.println(sccDependenceGraph);
 
         var piblocks = sccDependenceGraph.topologicalSort();
-        System.out.println(sccDependenceGraph.toStringSorted());
+
+        //FIXME: finish
+        for (var piblock : piblocks) {
+            if (piblock.getSize() > 1) {
+                // Is cyclic
+                //Gen level-k for statement
+                //var D_i = new Dependence graf without level-k edges
+                //codegen(piblock, k+1, D_i);
+                //level-K end
+            } else {
+                //Generate vector statement for pi in pi-k + 1 dimensions
+                //WHere pi-k is the number of loops containing pi_k
+                //generateVectorCOde()
+            }
+        }
     }
 
     // Checks both subscripts and creates a subscript pair
