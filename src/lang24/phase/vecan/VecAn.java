@@ -116,7 +116,6 @@ public class VecAn extends Phase {
         return true;
     }
 
-    //TODO: add direction vector set
     private boolean testSeparable(Partition partition, DirectionVectorSet DVSet) {
         boolean depExists;
         if (partition.getSize() > 1) {
@@ -130,7 +129,6 @@ public class VecAn extends Phase {
         } else if (subscriptPair.numberOfIndexes == 1) {
             depExists = SIVTest(subscriptPair, DV);
         } else {
-            //#F2
             depExists = MIVTest(subscriptPair, DV);
         }
 
@@ -140,7 +138,6 @@ public class VecAn extends Phase {
             return false;
         }
 
-        //CHECKME:This returns true in case the linear element does not exist?????
         return true;
     }
 
