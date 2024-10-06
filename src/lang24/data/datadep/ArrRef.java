@@ -7,17 +7,48 @@ import lang24.data.ast.tree.stmt.AstStmt;
 
 import java.util.Vector;
 
+/**
+ * Class representing the array reference inside a loop that will be checked for dependence.
+ *
+ * @author marko.muc12@gmail.com
+ */
 public class ArrRef {
+    /**
+     * The subscript expressions indexing this array.
+     **/
     public Vector<AstExpr> subscriptExprs;
+
+    /** AstNameExpr of this array. **/
     public AstNameExpr arrExpr;
+
+    /** AstStmt object of the statement that carries this expression. **/
     public AstStmt refStmt;
+
+    /** AstDefn object of this array variable. **/
     public AstDefn arrDefn;
+
+    /** LoopDescriptor carrying this reference. **/
     public LoopDescriptor loop;
+
+    /** Loop depth. **/
     public int depth;
+
+    /** Statement number inside this loop. **/
     public int stmtNum;
+
+    /** Write or read reference. **/
     public boolean assign;
 
-
+    /**
+     * Constructor for ArrRef with one subscript.
+     * @param subscriptExpr    The subscript of this reference.
+     * @param arrExpr           The AST object of the array expression.
+     * @param refStmt           The ASTS stmt carrying this expression.
+     * @param arrDefn           The definition of this array variable.
+     * @param loop              The loop this array reference resides in.
+     * @param stmtNum           Statement number of the statement.
+     * @param depth             The depth of this statement based on the nest.
+     */
     public ArrRef(AstExpr subscriptExpr, AstNameExpr arrExpr, AstStmt refStmt,
                   AstDefn arrDefn, LoopDescriptor loop, int stmtNum, int depth) {
         this.subscriptExprs = new Vector<>();
@@ -31,6 +62,16 @@ public class ArrRef {
         this.assign = false;
     }
 
+    /**
+     * Constructor for ArrRef with more than one subscript.
+     * @param subscriptExprs    All subscripts tied to this reference.
+     * @param arrExpr           The AST object of the array expression.
+     * @param refStmt           The ASTS stmt carrying this expression.
+     * @param arrDefn           The definition of this array variable.
+     * @param loop              The loop this array reference resides in.
+     * @param stmtNum           Statement number of the statement.
+     * @param depth             The depth of this statement based on the nest.
+     */
     public ArrRef(Vector<AstExpr> subscriptExprs, AstNameExpr arrExpr, AstStmt refStmt,
                   AstDefn arrDefn, LoopDescriptor loop, int stmtNum, int depth) {
         this.subscriptExprs = subscriptExprs;
@@ -43,6 +84,9 @@ public class ArrRef {
         this.assign = false;
     }
 
+    /**
+     * @return Returns the number of subscripts.
+     */
     public int getSubscriptCount() {
         return subscriptExprs.size();
     }
