@@ -40,6 +40,13 @@ public class VecAn extends Phase {
 
                 for (int j = i; j < len; j++) {
                     ArrRef sink = loopDescriptor.arrayRefs.get(j);
+                    if (i == j && source.assign) {
+                        // We are testing self output dependence.
+                        if (source.getDepth() <= source.getSubscriptCount()) {
+                            // If loops surrounding the ref. is LEQ to num. of subscript self output. cannot exist.
+                            continue;
+                        }
+                    }
                     if (!source.assign && !sink.assign) {
                         // Both source and sink reference are reads
                         continue;
@@ -86,7 +93,7 @@ public class VecAn extends Phase {
 
     private Boolean testDependence(ArrRef source, ArrRef sink, DirectionVectorSet DVSet) {
         // Create and analyze partition pairs
-        Vector<SubscriptPair> subscriptPairs = createAndAnalyzeSubscriptPair(source, sink);
+        Vector<SubscriptPair> subscriptPairs = createAndAnalyzeSubscriptPairs(source, sink);
         if (subscriptPairs == null) {
             // No linear pairs found, assume complete dependence
             // TODO: Implement complete dependence in this cases
