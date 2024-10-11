@@ -17,6 +17,7 @@ import lang24.data.type.*;
 import lang24.phase.memory.MemEvaluator;
 import lang24.phase.memory.Memory;
 import lang24.phase.seman.SemAn;
+import lang24.phase.vecan.VecAn;
 
 import java.util.Stack;
 import java.util.Vector;
@@ -480,7 +481,6 @@ public class ImcGenerator implements AstFullVisitor<Object, Stack<MemFrame>> {
         ImcExpr lower = (ImcExpr) vecForStmt.lower.accept(this, arg);
         ImcExpr upper = (ImcExpr) vecForStmt.upper.accept(this, arg);
         ImcExpr step = (ImcExpr) vecForStmt.step.accept(this, arg);
-        ImcStmt imcBodyStmt = (ImcStmt) vecForStmt.stmt.accept(this, arg);
 
         MemLabel cond = new MemLabel();
         MemLabel body = new MemLabel();
@@ -491,6 +491,20 @@ public class ImcGenerator implements AstFullVisitor<Object, Stack<MemFrame>> {
         ImcStmt imcInitStmt = new ImcMOVE(name, lower);
         ImcStmt imcStepStmt = new ImcMOVE(name, new ImcBINOP(ImcBINOP.Oper.ADD, name, step));
         ImcExpr condExpr = new ImcBINOP(ImcBINOP.Oper.LTH, name, upper);
+
+        // Vectorizable statement
+        if (VecAn.graphs.get(vecForStmt) != null) {
+            // Body can only be an ASSIGN statement, since all possible ESTMT arent allower
+            // Or a block statement containing ASSIGN statements
+            // I need to pass in loop header and current depth also
+            // I need a system to return generated IMC statements -> I already return Imc objects
+            // Statements are also just pulled together by IMCStmts, which will get split in the next part anyways
+            //ImcStmt imcBodyStmt = (ImcStmt) vecForStmt.stmt.accept(this, arg);
+            ImcStmt vect = (ImcStmt) vecForStmt.accept(new ImcVecGen(), arg);
+            ImcGen.stmtImc.put(vecForStmt, vect);
+            return vect;
+        }
+        ImcStmt imcBodyStmt = (ImcStmt) vecForStmt.stmt.accept(this, arg);
 
 
         imcStmts.add(imcInitStmt);
@@ -604,7 +618,7 @@ public class ImcGenerator implements AstFullVisitor<Object, Stack<MemFrame>> {
         return c;
     }
 
-    private long checkAndParse(String value) {
+    public static long checkAndParse(String value) {
         try {
             return Long.parseLong(value);
         } catch (NumberFormatException e) {

@@ -2,6 +2,7 @@ package lang24.phase.imclin;
 
 import lang24.data.imc.code.expr.ImcMEM;
 import lang24.data.imc.code.expr.ImcTEMP;
+import lang24.data.imc.code.expr.ImcVecMEM;
 import lang24.data.imc.code.stmt.*;
 import lang24.data.imc.visitor.ImcVisitor;
 import lang24.data.mem.MemTemp;
@@ -76,12 +77,29 @@ public class StmtCanonizer implements ImcVisitor<Vector<ImcStmt>, Object> {
         return imcStmts;
     }
 
+
     @Override
-    public Vector<ImcStmt> visit(ImcVectStmt imcVectStmt, Object accArg) {
-        // TODO: Vectorize code
-        //  FIXME: remove meeee
-        //  THIS SHOULD NOT BE DONE HERE AT ALL, IMCSTMT do not even help here one bit
-        //  Much better to work straight with
-        return imcVectStmt.stmts.accept(this, accArg);
+    public Vector<ImcStmt> visit(ImcVecMOVE vecMove, Object visArg) {
+        Vector<ImcStmt> stmts = new Vector<>();
+        MemTemp dstTemp = new MemTemp();
+
+        if (vecMove.dst instanceof ImcVecMEM) {
+            stmts.add(new ImcMOVE(
+                    new ImcTEMP(dstTemp),
+                    ((ImcMEM) vecMove.dst.accept(new ExprCanonizer(), stmts)).addr
+            ));
+
+            stmts.add(new ImcMOVE(
+                    new ImcMEM(new ImcTEMP(dstTemp)),
+                    vecMove.src.accept(new ExprCanonizer(), stmts)
+            ));
+        } else if (vecMove.dst instanceof ImcTEMP) {
+            stmts.add(new ImcMOVE(
+                    vecMove.dst.accept(new ExprCanonizer(), stmts),
+                    vecMove.src.accept(new ExprCanonizer(), stmts)
+            ));
+        }
+
+        return stmts;
     }
 }

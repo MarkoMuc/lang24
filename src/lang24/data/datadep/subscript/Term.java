@@ -3,6 +3,7 @@ package lang24.data.datadep.subscript;
 import lang24.common.report.Report;
 import lang24.data.ast.tree.defn.AstDefn;
 import lang24.data.ast.tree.expr.AstAtomExpr;
+import lang24.data.ast.tree.expr.AstExpr;
 import lang24.data.ast.tree.expr.AstPfxExpr;
 import lang24.data.datadep.LoopDescriptor;
 
@@ -11,18 +12,21 @@ import lang24.data.datadep.LoopDescriptor;
  */
 public class Term {
     public AstDefn variable;
+    public AstExpr name;
     public LoopDescriptor loop;
     public Integer coefficient;
     public Integer depth;
 
-    public Term(AstDefn variable, Integer coefficient, Integer depth) {
+    public Term(AstDefn variable, AstExpr name, Integer coefficient, Integer depth) {
         this.variable = variable;
+        this.name = name;
         this.depth = depth;
         this.coefficient = coefficient;
     }
 
-    public Term(AstDefn variable, LoopDescriptor loop) {
+    public Term(AstDefn variable, AstExpr name, LoopDescriptor loop) {
         this.variable = variable;
+        this.name = name;
         this.loop = loop;
         this.depth = loop.getDepth();
         this.coefficient = 1;
@@ -61,8 +65,9 @@ public class Term {
         }
     }
 
-    public Term(AstPfxExpr coef, AstDefn name, Integer depth) {
-        this.variable = name;
+    public Term(AstPfxExpr coef, AstDefn variable, AstExpr name, Integer depth) {
+        this.variable = variable;
+        this.name = name;
         this.depth = depth;
         if (coef.oper == AstPfxExpr.Oper.ADD) {
             this.coefficient = 1;
@@ -75,6 +80,7 @@ public class Term {
 
     public Term(Term t1, Term t2) {
         this.variable = t1.variable == null ? t2.variable : t1.variable;
+        this.name = t1.name == null ? t2.name : t1.name;
         this.depth = t1.variable == null ? t2.depth : t1.depth;
         this.coefficient = t1.coefficient * t2.coefficient;
     }

@@ -22,6 +22,7 @@ import java.util.Vector;
 public class FindRefs implements AstFullVisitor<ArrRef, LoopDescriptor> {
     Stack<AstStmt> currStmt = new Stack<>();
     Vector<LoopDescriptor> loopVars = new Vector<>();
+    Stack<AstVecForStmt> descStack;
 
     boolean inSubscript = false;
     int stmtNum = 0;
@@ -56,7 +57,10 @@ public class FindRefs implements AstFullVisitor<ArrRef, LoopDescriptor> {
                 Integer.parseInt(upper.value),
                 Integer.parseInt(step.value)
         );
-
+        if (descStack == null) {
+            descStack = new Stack<>();
+        }
+        descStack.push(vecForStmt);
 
         for (var loop : loopVars) {
             if (SemAn.definedAt.get(loop.loopIndex) == SemAn.definedAt.get(loopDescriptor.loopIndex)) {
@@ -82,6 +86,7 @@ public class FindRefs implements AstFullVisitor<ArrRef, LoopDescriptor> {
             // The outermost loop is added
             if (arg == null) {
                 VecAn.loops.add(loopDescriptor);
+                VecAn.outerToNest.put(vecForStmt, new Vector<>(descStack));
             }
         } else if (arg != null) {
             // Propagates inner loop not being vectorizable
@@ -274,6 +279,9 @@ public class FindRefs implements AstFullVisitor<ArrRef, LoopDescriptor> {
 
         if (dstSrc != null) {
             dstSrc.assign = true;
+        } else {
+            // Assign statement can only be used on array expressions
+            arg.vectorizable = false;
         }
 
         return null;
@@ -317,5 +325,19 @@ public class FindRefs implements AstFullVisitor<ArrRef, LoopDescriptor> {
             stmt.accept(this, arg);
         }
         return null;
+    }
+
+    @Override
+    public ArrRef visit(AstAtomExpr atomExpr, LoopDescriptor arg) {
+        if (arg != null && atomExpr.type != AstAtomExpr.Type.INT) {
+            arg.vectorizable = false;
+        }
+        return null;
+    }
+
+    @Override
+    public ArrRef visit(AstBinExpr binExpr, LoopDescriptor arg) {
+        // If contains illegal operand
+        return AstFullVisitor.super.visit(binExpr, arg);
     }
 }

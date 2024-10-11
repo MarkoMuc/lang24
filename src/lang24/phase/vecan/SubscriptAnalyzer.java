@@ -65,7 +65,6 @@ public class SubscriptAnalyzer implements AstFullVisitor<Term, Subscript> {
                 // VAR + VAR
                 if (prevExpr == null || prevExpr.oper != AstBinExpr.Oper.MUL) {
                     arg.addTerm(fstTerm);
-                    //FIXME: I can just do sndTerm.coef -1 here and should fix everything?
                     arg.addTerm(sndTerm);
                 }
 
@@ -120,11 +119,13 @@ public class SubscriptAnalyzer implements AstFullVisitor<Term, Subscript> {
 
                 if (previous1 != null) {
                     arg.addTerm(new Term(previous1.variable,
+                            previous1.name,
                             previous1.coefficient * fstTerm.coefficient, previous1.depth));
                 }
 
                 if (previous2 != null) {
                     arg.addTerm(new Term(previous2.variable,
+                            previous2.name,
                             previous2.coefficient * fstTerm.coefficient, previous2.depth));
                 }
                 previous1 = null;
@@ -149,12 +150,14 @@ public class SubscriptAnalyzer implements AstFullVisitor<Term, Subscript> {
 
                 if (previous1 != null) {
                     Term a = new Term(previous1.variable,
+                            previous1.name,
                             previous1.coefficient * sndTerm.coefficient, previous1.depth);
                     arg.addTerm(a);
                 }
 
                 if (previous2 != null) {
                     Term a = new Term(previous2.variable,
+                            previous2.name,
                             previous2.coefficient * sndTerm.coefficient, previous2.depth);
                     arg.addTerm(a);
                 }
@@ -184,7 +187,7 @@ public class SubscriptAnalyzer implements AstFullVisitor<Term, Subscript> {
         if (pfxExpr.expr instanceof AstAtomExpr) {
             num = new Term(pfxExpr);
         } else if (pfxExpr.expr instanceof AstNameExpr name) {
-            num = new Term(pfxExpr, SemAn.definedAt.get(name),
+            num = new Term(pfxExpr, SemAn.definedAt.get(name), name,
                     VecAn.loopDescriptors.get(name).getDepth());
         } else {
             arg.setNonLinear();
@@ -201,6 +204,7 @@ public class SubscriptAnalyzer implements AstFullVisitor<Term, Subscript> {
     @Override
     public Term visit(AstNameExpr nameExpr, Subscript arg) {
         Term name = new Term(SemAn.definedAt.get(nameExpr),
+                nameExpr,
                 VecAn.loopDescriptors.get(nameExpr));
         if (currStmt == null) {
             arg.addTerm(name);

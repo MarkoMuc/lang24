@@ -14,7 +14,7 @@ import java.util.stream.Collectors;
 public class Subscript {
     private final HashMap<AstDefn, Term> termMap = new HashMap<>();
     private Term constant;
-    private final ArrRef arrRef;
+    private ArrRef arrRef;
     private boolean linear;
     private int maxIndexDepth;
     private int variableCount = 0;
@@ -25,6 +25,13 @@ public class Subscript {
         this.maxIndexDepth = -1;
         linear = true;
     }
+
+    public Subscript() {
+        this.constant = new Term(0);
+        this.maxIndexDepth = -1;
+        linear = true;
+    }
+
 
     public void addTerm(Term term) {
         if (term.variable == null) {

@@ -3,6 +3,7 @@ package lang24.phase.imclin;
 import lang24.data.imc.code.expr.*;
 import lang24.data.imc.code.stmt.ImcMOVE;
 import lang24.data.imc.code.stmt.ImcStmt;
+import lang24.data.imc.code.stmt.ImcVecMOVE;
 import lang24.data.imc.visitor.ImcVisitor;
 import lang24.data.mem.MemTemp;
 
@@ -72,6 +73,9 @@ public class ExprCanonizer implements ImcVisitor<ImcExpr, Vector<ImcStmt>> {
 
     @Override
     public ImcExpr visit(ImcTEMP temp, Vector<ImcStmt> visArg) {
+        if (temp instanceof ImcVecTEMP) {
+            return new ImcVecTEMP(temp.temp);
+        }
         return new ImcTEMP(temp.temp);
     }
 
@@ -79,4 +83,23 @@ public class ExprCanonizer implements ImcVisitor<ImcExpr, Vector<ImcStmt>> {
     public ImcExpr visit(ImcUNOP unOp, Vector<ImcStmt> visArg) {
         return new ImcUNOP(unOp.oper, unOp.subExpr.accept(this, visArg));
     }
+
+    @Override
+    public ImcExpr visit(ImcVecBINOP binOp, Vector<ImcStmt> visArg) {
+        ImcExpr fstImc = binOp.fstExpr.accept(this, visArg);
+        ImcExpr sndImc = binOp.sndExpr.accept(this, visArg);
+        ImcVecTEMP resTemp = new ImcVecTEMP(new MemTemp());
+        visArg.add(new ImcVecMOVE(resTemp,
+                new ImcVecBINOP(binOp.oper, fstImc, sndImc)));
+
+        return resTemp;
+    }
+
+    @Override
+    public ImcExpr visit(ImcVecMEM vecMem, Vector<ImcStmt> visArg) {
+        return new ImcVecMEM(vecMem.addr.accept(this, visArg),
+                vecMem.start.accept(this, visArg),
+                vecMem.end.accept(this, visArg));
+    }
+
 }

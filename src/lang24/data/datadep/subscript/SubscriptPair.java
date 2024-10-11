@@ -15,11 +15,12 @@ public class SubscriptPair {
     private LoopDescriptor loop;
     public int numberOfIndexes;
     public int maxNestLevel;
+    public int minNestLevel;
     public Vector<Integer> loopIndexLevels;
     public Vector<LoopDescriptor> commonLoops;
 
     public SubscriptPair(Subscript sourceSubscript, Subscript sinkSubscript,
-                         int maxNestLevel, LoopDescriptor loop, Vector<LoopDescriptor> commonLoops) {
+                         int maxNestLevel, int minNestLevel, LoopDescriptor loop, Vector<LoopDescriptor> commonLoops) {
         this.sourceSubscript = sourceSubscript;
         this.sinkSubscript = sinkSubscript;
         this.loop = loop;
@@ -27,6 +28,7 @@ public class SubscriptPair {
         this.loopIndexLevels = createLoopIndexLevels();
         this.commonLoops = commonLoops;
         this.maxNestLevel = maxNestLevel;
+        this.minNestLevel = minNestLevel;
     }
 
     public LoopDescriptor getLoop() {

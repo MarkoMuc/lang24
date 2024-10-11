@@ -2,10 +2,11 @@ package lang24.phase.vecan;
 
 import lang24.common.report.Report;
 import lang24.data.ast.attribute.Attribute;
+import lang24.data.ast.tree.expr.AstExpr;
 import lang24.data.ast.tree.expr.AstNameExpr;
+import lang24.data.ast.tree.stmt.AstVecForStmt;
 import lang24.data.datadep.ArrRef;
 import lang24.data.datadep.LoopDescriptor;
-import lang24.data.datadep.codegen.SCCDependenceGraph;
 import lang24.data.datadep.depgraph.DDGNode;
 import lang24.data.datadep.depgraph.DataDependenceGraph;
 import lang24.data.datadep.deptest.DirectionVectorSet;
@@ -14,6 +15,7 @@ import lang24.data.datadep.subscript.Subscript;
 import lang24.data.datadep.subscript.SubscriptPair;
 import lang24.phase.Phase;
 
+import java.util.HashMap;
 import java.util.Vector;
 
 import static lang24.data.datadep.deptest.DependenceTests.*;
@@ -25,8 +27,12 @@ import static lang24.data.datadep.subscript.Partition.partition;
 
 public class VecAn extends Phase {
 
+    // There can be multiple ones bdw
     public final static Attribute<AstNameExpr, LoopDescriptor> loopDescriptors = new Attribute<>();
     public final static Vector<LoopDescriptor> loops = new Vector<>();
+    public final static HashMap<AstVecForStmt, DataDependenceGraph> graphs = new HashMap<>();
+    public final static HashMap<AstVecForStmt, Vector<AstVecForStmt>> outerToNest = new HashMap<>();
+    public final static HashMap<AstExpr, Subscript> exprToSubscript = new HashMap<>();
 
     public VecAn() {
         super("vecan");
@@ -34,7 +40,6 @@ public class VecAn extends Phase {
 
     public void loopAnalysis() {
         for (LoopDescriptor loopDescriptor : loops) {
-            System.out.println(loopDescriptor);
             int len = loopDescriptor.arrayRefs.size();
             var DDG = new DataDependenceGraph();
             loopRefs:
@@ -57,7 +62,7 @@ public class VecAn extends Phase {
                     }
                     DDG.addDDGNode(new DDGNode(sink.refStmt, sink.getDepthAsIdx(), sink.stmtNum - 1));
                     if (source.equals(sink) && source.getSubscriptCount() == sink.getSubscriptCount()) {
-                        var DVSet = new DirectionVectorSet(Math.max(source.getDepth(), sink.getDepth()));
+                        var DVSet = new DirectionVectorSet(Math.min(source.getDepth(), sink.getDepth()));
                         var depExists = testDependence(source, sink, DVSet);
                         if (depExists == null) {
                             loopDescriptor.vectorizable = false;
@@ -77,18 +82,7 @@ public class VecAn extends Phase {
             }
 
             if (loopDescriptor.vectorizable) {
-                System.out.println(DDG);
-                //     var TSCC = DDG.TarjansSCC();
-                //     System.out.println("TSCC[" + TSCC.size() + "]");
-                //     int i = 1;
-                //     for (var region : TSCC) {
-                //         System.out.println("REGION[" + i + "," + region.getSize() + "]:");
-                //         for (var node : region.getNodes()) {
-                //             System.out.println(node);
-                //         }
-                //         i++;
-                //     }
-                //     codegen(0, DDG);
+                VecAn.graphs.put(loopDescriptor.loop, DDG);
             }
         }
 
@@ -106,7 +100,7 @@ public class VecAn extends Phase {
 
         // Create Partitions
         var partitions = partition(subscriptPairs,
-                source.getDepth() > sink.getDepth() ? source.loop : sink.loop);
+                source.getDepth() > sink.getDepth() ? sink.loop : source.loop);
 
         //Test separable
         for (var partition : partitions) {
@@ -148,54 +142,35 @@ public class VecAn extends Phase {
         return true;
     }
 
-    public void codegen(int k, DataDependenceGraph D) {
-        var SCCset = D.TarjansSCC();
-        var sccDependenceGraph = new SCCDependenceGraph();
-        sccDependenceGraph.addSCCs(SCCset);
-        sccDependenceGraph.buildGraph();
-
-
-        var piblocks = sccDependenceGraph.topologicalSort();
-
-        //FIXME: finish
-        for (var piblock : piblocks) {
-            if (piblock.getSize() > 1) {
-                // Is cyclic
-                //Gen level-k for statement
-                //var D_i = new Dependence graf without level-k edges
-                //codegen(piblock, k+1, D_i);
-                //level-K end
-            } else {
-                //Generate vector statement for pi in pi-k + 1 dimensions
-                //WHere pi-k is the number of loops containing pi_k
-                //generateVectorCOde()
-            }
-        }
-    }
-
     // Checks both subscripts and creates a subscript pair
     private Vector<SubscriptPair> createAndAnalyzeSubscriptPairs(ArrRef source, ArrRef sink) {
         var pairs = new Vector<SubscriptPair>();
-        var deepestLoop = source.getDepth() > sink.getDepth() ? source.loop : sink.loop;
+        var deepestLoop = source.getDepth() > sink.getDepth() ? sink.loop : source.loop;
         var commonLoops = findCommonLoops(source, sink);
 
         for (int i = 0; i < source.getSubscriptCount(); i++) {
             Subscript sourceSubscript = new Subscript(source);
-            source.subscriptExprs.get(i).accept(new SubscriptAnalyzer(), sourceSubscript);
+            AstExpr sourceExpr = source.subscriptExprs.get(i);
+            sourceExpr.accept(new SubscriptAnalyzer(), sourceSubscript);
 
             if (!sourceSubscript.isLinear()) {
                 return null;
             }
 
             Subscript sinkSubscript = new Subscript(sink);
-            sink.subscriptExprs.get(i).accept(new SubscriptAnalyzer(), sinkSubscript);
+            AstExpr sinkExpr = sink.subscriptExprs.get(i);
+            sinkExpr.accept(new SubscriptAnalyzer(), sinkSubscript);
 
             if (!sourceSubscript.isLinear()) {
                 return null;
             }
+            VecAn.exprToSubscript.put(sourceExpr, sourceSubscript);
+            VecAn.exprToSubscript.put(sinkExpr, sinkSubscript);
 
             pairs.add(new SubscriptPair(sourceSubscript, sinkSubscript,
-                    Math.max(source.getDepth(), sink.getDepth()), deepestLoop, commonLoops));
+                    Math.max(source.getDepth(), sink.getDepth()),
+                    Math.min(source.getDepth(), sink.getDepth()),
+                    deepestLoop, commonLoops));
         }
 
         if (pairs.isEmpty()) {
@@ -211,9 +186,9 @@ public class VecAn extends Phase {
         LoopDescriptor stmtLoop;
 
         if (source.getDepth() > sink.getDepth()) {
-            stmtLoop = source.loop;
-        } else {
             stmtLoop = sink.loop;
+        } else {
+            stmtLoop = source.loop;
         }
 
         if (stmtLoop.nest.isEmpty()) {

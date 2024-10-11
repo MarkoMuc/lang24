@@ -1,6 +1,6 @@
 package lang24.data.imc.visitor;
 
-import lang24.common.report.*;
+import lang24.common.report.Report;
 import lang24.data.imc.code.expr.*;
 import lang24.data.imc.code.stmt.*;
 
@@ -15,6 +15,18 @@ import lang24.data.imc.code.stmt.*;
 public interface ImcVisitor<Result, Arg> {
 
 	public default Result visit(ImcBINOP binOp, Arg visArg) {
+		throw new Report.InternalError();
+	}
+
+	public default Result visit(ImcVecBINOP binOp, Arg visArg) {
+		throw new Report.InternalError();
+	}
+
+	public default Result visit(ImcVecMOVE vecMOVE, Arg visArg) {
+		throw new Report.InternalError();
+	}
+
+	public default Result visit(ImcVecMEM vecMem, Arg visArg) {
 		throw new Report.InternalError();
 	}
 
