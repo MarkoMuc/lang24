@@ -76,11 +76,10 @@ public class DependenceTests {
         } else {
             //FIXME: until done should return null to indicate that this loop will not be vectorized
             throw new Report.Error("Exact SIV Test not implemented");
-            //return null;
         }
 
         if (dependenceDistance != null) {
-            DV.addDirectionVector(new DirectionVector(dependenceDistance, pair.maxNestLevel, depth));
+            DV.addDirectionVector(new DirectionVector(dependenceDistance, pair.minNestLevel, depth));
             return true;
         }
 
@@ -91,7 +90,7 @@ public class DependenceTests {
         coeffcient = 2 * coeffcient;
         float i = (float) constantDifference / (float) coeffcient;
 
-        if (constantDifference % coeffcient == 0 || i % 1 == 0.5) {
+        if (constantDifference % coeffcient == 0 || Math.round(i) == i) {
             if (Math.abs(i) <= (upperLimit - lowerLimit)) {
                 // FIXME: the rounding can cause a wrong direction?
                 return Math.round(i);
@@ -150,7 +149,6 @@ public class DependenceTests {
         if (!GCDTest(pair.sourceSubscript, pair.sinkSubscript)) {
             return false;
         } else {
-            //FIXME:what gotta do here is this correct?
             var dvlist = new DirectionVectorSet();
             var startingDV = DirectionVector.generateStartingDV(pair.maxNestLevel);
             dvlist = MIVDirectionVectorTest(pair, startingDV, 0, dvlist);
@@ -165,7 +163,7 @@ public class DependenceTests {
             return DVlist;
         }
 
-        if (depth == pair.maxNestLevel) {
+        if (depth == pair.minNestLevel - 1) {
             //CHECKME: Merge or unite???
             //FIXME: This is unite!
             DVlist.addDirectionVector(DV);
@@ -178,8 +176,7 @@ public class DependenceTests {
         }};
 
         for (var dir : dirs) {
-            //FIXME: what is i here? -> its depth right?
-            DV.changeDirection(depth, dir);
+            DV.changeDirection(depth + 1, dir);
             DVlist = MIVDirectionVectorTest(pair, DV, depth + 1, DVlist);
         }
         return DVlist;
@@ -187,7 +184,6 @@ public class DependenceTests {
 
     private static boolean GCDTest(Subscript source, Subscript sink) {
         var gcdValue = gcdMultiple(source.getTerms(), sink.getTerms());
-        //FIXME: I think its correct now
         return (sink.getConstant().coefficient - source.getConstant().coefficient) % gcdValue == 0;
     }
 
@@ -231,7 +227,6 @@ public class DependenceTests {
 
         for (int i = 0; i < directions.size(); i++) {
             var direction = directions.get(i);
-            //FIXME: THIS
 
             var sourceTerm = source.getVariable(sr_j);
             var sinkTerm = sink.getVariable(si_j);
@@ -248,27 +243,21 @@ public class DependenceTests {
                 si_j++;
             }
 
-            if (direction.direction == DependenceDirection.Direction.LESS) {
+            var partialBound = new Bounds(0, 0);
+
+            if (direction.direction != DependenceDirection.Direction.STAR) {
                 var lowerBound = lowerLoops.get(i);
                 var upperBound = upperLoops.get(i);
-                var partialBound = calculateLessDirection(sourceCoef, sinkCoef,
-                        lowerBound, upperBound);
-                bound.leftSide += partialBound.leftSide;
-                bound.rightSide += partialBound.rightSide;
-            } else if (direction.direction == DependenceDirection.Direction.MORE) {
-                var lowerBound = lowerLoops.get(i);
-                var upperBound = upperLoops.get(i);
-                var partialBound = calculateMoreDirection(sourceCoef, sinkCoef,
-                        lowerBound, upperBound);
-                bound.leftSide += partialBound.leftSide;
-                bound.rightSide += partialBound.rightSide;
-            } else if (direction.direction == DependenceDirection.Direction.EQU) {
-                var lowerBound = lowerLoops.get(i);
-                var upperBound = upperLoops.get(i);
-                var partialBound = calculateEquDirection(sourceCoef, sinkCoef,
-                        lowerBound, upperBound);
-                bound.leftSide += partialBound.leftSide;
-                bound.rightSide += partialBound.rightSide;
+                if (direction.direction == DependenceDirection.Direction.LESS) {
+                    partialBound = calculateLessDirection(sourceCoef, sinkCoef,
+                            lowerBound, upperBound);
+                } else if (direction.direction == DependenceDirection.Direction.MORE) {
+                    partialBound = calculateMoreDirection(sourceCoef, sinkCoef,
+                            lowerBound, upperBound);
+                } else if (direction.direction == DependenceDirection.Direction.EQU) {
+                    partialBound = calculateEquDirection(sourceCoef, sinkCoef,
+                            lowerBound, upperBound);
+                }
             } else {
                 //FIXME: this loop limits
                 var sourceLowerBound = lowerLoops.get(i);
@@ -276,19 +265,18 @@ public class DependenceTests {
                 var sinkLowerBound = lowerLoops.get(i);
                 var sinkUpperBound = upperLoops.get(i);
 
-                var partialBound = calculateStarDirection(sourceCoef, sinkCoef,
+                partialBound = calculateStarDirection(sourceCoef, sinkCoef,
                         sourceLowerBound, sourceUpperBound, sinkLowerBound, sinkUpperBound);
-                bound.leftSide += partialBound.leftSide;
-                bound.rightSide += partialBound.rightSide;
             }
+
+            bound.leftSide += partialBound.leftSide;
+            bound.rightSide += partialBound.rightSide;
         }
 
         return bound;
     }
 
     private static Bounds calculateLessDirection(Integer a, Integer b, Integer L, Integer U) {
-        //FIXME: how do we take into account that it probably expect for Li to be >= 1?
-        //          could do + 1 and do -1 afterwards?
         var leftSide = -Zpos((Zneg(a) + b)) * (U - 1) + (Zneg((Zneg(a) + b)) + Zpos(a)) * L - b;
         var rightSide = Zpos((Zpos(a) + b)) * (U - 1) - (Zneg((Zpos(a) + b)) + Zneg(a)) * L - b;
 
@@ -296,8 +284,6 @@ public class DependenceTests {
     }
 
     private static Bounds calculateMoreDirection(Integer a, Integer b, Integer L, Integer U) {
-        //FIXME: how do we take into account that it probably expect for Li to be >= 1?
-        //          could do + 1 and do -1 afterwards?
         var leftSide = -Zneg(a - Zpos(b)) * (U - 1) + (Zpos((a - Zpos(b))) + Zneg(b)) * L + a;
         var rightSide = Zpos(a - Zneg(b)) * (U - 1) + (Zneg((a - Zneg(b))) + Zpos(b)) * L + a;
 
@@ -305,8 +291,6 @@ public class DependenceTests {
     }
 
     private static Bounds calculateEquDirection(Integer a, Integer b, Integer L, Integer U) {
-        //FIXME: how do we take into account that it probably expect for Li to be >= 1?
-        //          could do + 1 and do -1 afterwards?
         var leftSide = -Zneg(a - b) * U + Zpos(a - b) * L;
         var rightSide = Zpos(a - b) * U - Zneg(a - b) * L;
 
@@ -315,8 +299,6 @@ public class DependenceTests {
 
     private static Bounds calculateStarDirection(Integer a, Integer b,
                                                  Integer Lx, Integer Ux, Integer Ly, Integer Uy) {
-        //FIXME: how do we take into account that it probably expect for Li to be >= 1?
-        //          could do + 1 and do -1 afterwards?
         var leftSide = -Zneg(a) * Ux + Zpos(a) * Lx - Zpos(b) * Uy + Zneg(b) * Ly;
         var rightSide = Zpos(a) * Ux - Zneg(a) * Lx - Zneg(b) * Uy - Zpos(b) * Ly;
 
@@ -351,7 +333,6 @@ public class DependenceTests {
     }
 
     private static int Zneg(int n) {
-        //FIXME: Check if true!
         if (n > 0) {
             return 0;
         } else {
@@ -371,9 +352,9 @@ public class DependenceTests {
         Integer leftSide;
         Integer rightSide;
 
-        public Bounds(int leftSide, int rigthtSide) {
+        public Bounds(int leftSide, int rightSide) {
             this.leftSide = leftSide;
-            this.rightSide = rigthtSide;
+            this.rightSide = rightSide;
         }
     }
 
