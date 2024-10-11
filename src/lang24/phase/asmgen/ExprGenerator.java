@@ -2,6 +2,7 @@ package lang24.phase.asmgen;
 
 import lang24.common.report.Report;
 import lang24.data.asm.AsmInstr;
+import lang24.data.asm.AsmLABEL;
 import lang24.data.asm.AsmOPER;
 import lang24.data.imc.code.expr.*;
 import lang24.data.imc.visitor.ImcVisitor;
@@ -37,8 +38,6 @@ public class ExprGenerator implements ImcVisitor<MemTemp, Vector<AsmInstr>> {
             case SUB -> arg.add(new AsmOPER("sub `d0, `s0, `s1", uses, defs, jumps));
             case MUL -> arg.add(new AsmOPER("mul `d0, `s0, `s1", uses, defs, jumps));
             case DIV -> arg.add(new AsmOPER("div `d0, `s0, `s1", uses, defs, jumps));
-            // CHECKME: Does this only mod a word size?
-            //          Do you need to use remw? whats the difference?
             case MOD -> arg.add(new AsmOPER("rem `d0, `s0, `s1", uses, defs, jumps));
             case EQU -> {
                 arg.add(new AsmOPER("sub `d0, `s0, `s1", uses, defs, jumps));
@@ -84,7 +83,6 @@ public class ExprGenerator implements ImcVisitor<MemTemp, Vector<AsmInstr>> {
     }
 
     private void storeArgument(MemTemp funArg, long offset, Vector<AsmInstr> arg) {
-        // FIXME: change char and bool to 1 byte
         // arg size is always 8 bytes (BOOL | CHAR | INT | PTR)
         Vector<MemTemp> uses = new Vector<>();
         Vector<MemTemp> defs = new Vector<>();
@@ -114,8 +112,6 @@ public class ExprGenerator implements ImcVisitor<MemTemp, Vector<AsmInstr>> {
             uses.add(offsetReg);
             defs.add(dest);
 
-            //Does this mean I dest temporary in both uses and defs?
-            // Does the second one need to be d0?
             instr = "add `d0, `s0, `s1";
             arg.add(new AsmOPER(instr, uses, defs, jumps));
 
@@ -123,11 +119,10 @@ public class ExprGenerator implements ImcVisitor<MemTemp, Vector<AsmInstr>> {
             defs = new Vector<>();
             jumps = new Vector<>();
 
-            //Is this both uses only? is there any defs here?
             uses.add(funArg);
             defs.add(dest);
 
-            instr = "sd `s0, 0(`d0)"; //d0 is hand calculated SP!
+            instr = "sd `s0, 0(`d0)";
             arg.add(new AsmOPER(instr, uses, defs, jumps));
         }
     }
@@ -206,12 +201,6 @@ public class ExprGenerator implements ImcVisitor<MemTemp, Vector<AsmInstr>> {
 
         String instr = String.format("lga `d0, %s", name.label.name);
 
-        //CHECKME: Whats the limit/ when should local/global/absolute addressing be used
-        //String instr = String.format("lui `d0, %hi(%s)", name.label.name);
-        //arg.add(new AsmOper(instr, uses, defs, jumps))
-        //instr = String.format("lw `d0, %lo(%s)(`d0)", name.label.name);
-        //arg.add(new AsmOper(instr, uses, defs, jumps))
-
         Vector<LinDataChunk> chunk = new Vector<>(ImcLin.dataChunks()
                 .stream()
                 .filter(linDataChunk -> linDataChunk.label == name.label)
@@ -252,6 +241,94 @@ public class ExprGenerator implements ImcVisitor<MemTemp, Vector<AsmInstr>> {
             instr = "negw `d0, `s0";
             arg.add(new AsmOPER(instr, uses, defs, jumps));
         }
+
+        return reg;
+    }
+
+    @Override
+    public MemTemp visit(ImcVecBINOP binOp, Vector<AsmInstr> arg) {
+        // returns the temp that which is a vector holding the result
+        // If either of left or right expressions are not ImcVecMEM, you need to create constant vectors
+        Vector<MemTemp> uses = new Vector<>();
+        Vector<MemTemp> defs = new Vector<>();
+        Vector<MemLabel> jumps = new Vector<>();
+
+        MemTemp reg = new MemTemp();
+        MemTemp fst = binOp.fstExpr.accept(this, arg);
+        MemTemp snd = binOp.sndExpr.accept(this, arg);
+        boolean fstVec = false;
+        boolean sndVec = false;
+
+        var label = new AsmLABEL(new MemLabel());
+
+        if (binOp.fstExpr instanceof ImcVecMEM || binOp.fstExpr instanceof ImcVecBINOP) {
+            fstVec = true;
+        }
+        if (binOp.sndExpr instanceof ImcVecBINOP || binOp.sndExpr instanceof ImcVecMEM) {
+            sndVec = true;
+        }
+
+        String instrPostfix;
+        if (fstVec && sndVec) {
+            //VECTOR-VECTOR
+            instrPostfix = ".vv";
+            uses.add(fst);
+            uses.add(snd);
+        } else if (fstVec) {
+            //VECTOR-SCALAR
+            instrPostfix = ".vx";
+            uses.add(fst);
+            uses.add(snd);
+        } else if (sndVec) {
+            //VECTOR-SCALAR
+            instrPostfix = ".vx";
+            uses.add(snd);
+            uses.add(fst);
+        } else {
+            //SCALAR-SCALAR
+            throw new Report.Error("Scalar only not implemented yet");
+        }
+        uses.add(fst);
+        uses.add(snd);
+        defs.add(reg);
+
+        switch (binOp.oper) {
+            case ADD -> arg.add(new AsmOPER("vadd" + instrPostfix + " `d0, `s0, `s1", uses, defs, jumps));
+            case SUB -> arg.add(new AsmOPER("vsub" + instrPostfix + " `d0, `s0, `s1", uses, defs, jumps));
+            case MUL -> arg.add(new AsmOPER("vmul" + instrPostfix + " `d0, `s0, `s1", uses, defs, jumps));
+            case DIV -> arg.add(new AsmOPER("vdiv" + instrPostfix + "`d0, `s0, `s1", uses, defs, jumps));
+            case MOD -> arg.add(new AsmOPER("vrem" + instrPostfix + "`d0, `s0, `s1", uses, defs, jumps));
+            case null, default -> throw new Report.InternalError();
+        }
+        return reg;
+    }
+
+    @Override
+    public MemTemp visit(ImcVecMEM vecMem, Vector<AsmInstr> arg) {
+        Vector<MemTemp> uses = new Vector<>();
+        Vector<MemTemp> defs = new Vector<>();
+        Vector<MemLabel> jumps = new Vector<>();
+        MemTemp reg = new MemTemp();
+
+        defs.add(reg);
+        if (vecMem.end instanceof ImcCONST constant) {
+            if (constant.value != 0) {
+                Vector<MemTemp> usesSub = new Vector<>();
+                Vector<MemTemp> defsSub = new Vector<>();
+                Vector<MemLabel> jumpsSub = new Vector<>();
+                MemTemp reg2 = new MemTemp();
+
+                // New temp with start address
+                defsSub.add(reg2);
+                usesSub.add(vecMem.end.accept(this, arg));
+                usesSub.add(vecMem.addr.accept(this, arg));
+                arg.add(new AsmOPER("add `d0, `s0, `s1", usesSub, defsSub, jumpsSub));
+                uses.add(reg2);
+            } else {
+                uses.add(vecMem.addr.accept(this, arg));
+            }
+        }
+        arg.add(new AsmOPER("vle64.v `d0, 0(`s0)", uses, defs, jumps));
 
         return reg;
     }
