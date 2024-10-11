@@ -1,0 +1,41 @@
+putint(i:int):void
+putchar(c:char):void
+exit(i:int):void
+mmap(len:int, size:int):^void
+seed:int
+
+main():int=
+	{
+		i = <^[10]int>mmap(10, sizeof(^[10]int));
+		cmps = 0;
+		while (cmps < 10) : {
+			i^[cmps] = cmps;
+			cmps = cmps + 1;
+		}
+		
+		j = <^[10]int>mmap(10, sizeof(^[10]int));
+		cmps = 0;
+		while (cmps < 10) : {
+			j^[cmps] = cmps + 10;
+			cmps = cmps + 1;
+		}
+
+		cmps = 0;
+		while (cmps < 10) : {
+			putint(i^[cmps]);
+			putchar('\n');
+			cmps = cmps + 1;
+		}
+		putchar('\n');
+
+		cmps = 0;
+		while (cmps < 10) : {
+			putint(j^[cmps]);
+			putchar('\n');
+			cmps = cmps + 1;
+		}
+
+		putchar('\n');
+		exit(0);
+	}
+	{i:^[10]int cmps:int j:^[10]int}

@@ -1,0 +1,42 @@
+putint(i:int):void
+putchar(c:char):void
+exit(i:int):void
+mmap(len:int, size:int):^void
+seed:int
+
+main():int=
+	{
+		tosave = 1;
+		size = 9;
+		accum = 0;
+		array = 5;
+		i = <^^int>mmap(array, sizeof(^int));
+
+		cmps = 0;
+		while (cmps < 5) {
+			idx = 0;
+			i[cmps] = <^int>mmap(size, sizeof(int));
+			while(idx < size){
+				i[cmps][idx] = tosave;
+				idx = idx + 1;
+			}
+			tosave = tosave * 10;
+			cmps = cmps + 1;
+		}
+
+		cmps = 0;
+		while (cmps < array) {
+			idx = 0;
+			while(idx < size){
+				accum = accum + i[cmps][idx];
+				idx = idx + 1;
+			}
+			cmps = cmps + 1;
+		}
+
+		putint(accum);
+		putchar('\n');
+
+		exit(0);
+	}
+	{ i:^^int cmps:int size:int idx:int accum:int tosave:int array:int}

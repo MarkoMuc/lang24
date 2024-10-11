@@ -1,0 +1,29 @@
+exit(code:int):void
+putchar(c:char):void
+putint(n:int):void
+
+main():int={
+    	h = 12345;
+	putint(h);
+    	putchar('\n');
+
+    	h = -67890;
+    	putint(h);
+    	putchar('\n');
+    	
+    	h = 0;
+    	putint(h);
+    	putchar('\n');
+	
+    	h = 01;
+    	putint(h);
+    	putchar('\n');
+	
+    	h = 10000;
+    	putint(h);
+    	putchar('\n');
+	
+	exit(0);
+}{
+	h : int
+}

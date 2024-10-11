@@ -1,0 +1,74 @@
+exit(i:int):void
+putchar(c:char):void
+putint(i:int):void
+mmap(len:int, size:int):^void
+
+seed:int
+random():int={seed=(seed*281474976710656)%44485709377909;return seed;}
+
+abs(i:int):int=if i<0 then return -i; else return i;
+
+
+vec_add(a:^[100]int, b:^[100]int, size:int):^[100]int = {
+	i = 0;
+	c = <^[100]int>mmap(size, sizeof(^[100]int));
+	while(i < size):{
+		c^[i] = a^[i] + b^[i];
+		i = i + 1;
+	}
+	return c;
+}{
+	i:int
+	c:^[100]int
+}
+
+print_vec(a:^[100]int, size:int):void = {
+	i = 0;
+	while(i < size):{
+		if i > 0 then{
+			putchar(',');
+			putchar(' ');
+		}
+		putint(a^[i]);
+		i = i+1;
+	}
+	putchar('\n');
+
+}{
+	i:int
+}
+	
+	
+init_vec(a:^[100]int, size:int):void = {
+	i=0;
+	while (i<size):{
+		a^[i]=abs(random())%50;
+		i=i+1;
+	}
+}{
+	i:int
+}
+
+
+main():int = {
+	size = 100;
+	seed = 2024;
+	a = <^[100]int>mmap(size, sizeof(^[100]int));
+	b = <^[100]int>mmap(size, sizeof(^[100]int));
+
+	init_vec(a, size);
+	init_vec(b, size);
+
+	print_vec(a, size);
+	print_vec(b, size);
+
+	print_vec(vec_add(a, b, size), size);
+
+	exit(0);
+}{
+	a:^[100]int
+	b:^[100]int
+	size:int
+}
+
+

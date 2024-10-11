@@ -1,0 +1,36 @@
+exit(code:int):void
+putchar(c:char):void
+
+one():int = return 1;
+
+main():int={
+	d = 0;
+	h = 25;
+	l = 0; 
+
+	vfor(d; 0; 25; 1) : {
+		c[d] = c[d + 1];
+		vfor(h; 0; 25; 1) : {
+			a[h] = a[h];
+		}
+		c[d] = 1;
+	}
+
+
+	vfor(l; 0; 25; 1) : {
+		c[d] = a[d] + one();
+	}
+
+	vfor(d; 0; 25; 1) : {
+		c[d] = a[d] + b[d];
+	}
+
+	exit(0);
+}{
+	a : [25]int
+	b : [25]int
+	c : [25]int
+	d : int
+	h : int
+	l : int
+}

@@ -1,0 +1,27 @@
+putint(i:int):void
+putchar(c:char):void
+exit(i:int):void
+
+seed:int
+random():int={seed=(seed*281474976710656)%44485709377909;return seed;}
+
+abs(i:int):int=if i<0 then return -i; else return i;
+
+tab:[10]int
+test:int
+
+get():int = {
+	test = test - 100;
+	return abs(test);
+}
+
+main():int=
+	{
+		test = 1;
+		tab[0] = get();
+		putint(tab[0]);
+		putchar('\n');
+		test = 0;
+		exit(test);
+	}
+	{i:int cmps:int}

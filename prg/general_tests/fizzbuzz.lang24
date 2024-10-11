@@ -1,0 +1,44 @@
+putint(i:int):void
+getint():int
+putchar(c:char):void
+putcstr(c:^char, i:int):void
+mmap(len:int, size:int):^void
+exit(i:int):void
+
+fizz : ^char
+butt : ^char
+
+buzzing(n:int):void = {
+	if(n % 3 == 0 and
+	   n % 5 == 0) then {
+		putcstr("FizzBuzz\n", 10);
+		return none;
+	}
+
+	if(n % 3 == 0) then {
+		putcstr("Fizz\n", 6);
+		return none;
+	}
+
+	if(n % 5 == 0) then {
+		putcstr("Buzz\n", 6);
+		return none;
+	}
+
+	putint(n);
+	putchar('\n');
+	return none;
+}
+
+main():int = {
+		putcstr("Number:", 8);
+		#n = getint();
+		n = 100;
+
+		for(i = 0; i < n; i = i + 1;):{
+			buzzing(i);
+		}
+
+		exit(0);
+}
+{n:int i:int}

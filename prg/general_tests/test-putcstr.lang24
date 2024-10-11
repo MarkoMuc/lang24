@@ -1,0 +1,11 @@
+putchar(c:char):void
+exit(i:int):void
+putcstr(str:^[100]char, len:int):void
+
+main():int=
+	{
+		c = <^[100]char>"Hello WORLD FROM STRING! I'm Here too.\n";
+		putcstr(c, 40);
+		exit(0);
+	}
+	{c:^[100]char}

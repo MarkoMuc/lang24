@@ -1,0 +1,27 @@
+exit(code:int):void
+putchar(c:char):void
+getchar():char
+putint(c:int):void
+
+main():int ={
+	s.a = 11;
+	s.b = s.a + 11;
+	putint(s.a);
+	putchar('\n');
+	putint(s.b);
+	putchar('\n');
+	
+	s.d.a = 3;
+	putint(s.d.a);
+	putchar('\n');
+	
+	s.d.b = s.a + 3;
+	putint(s.d.b);
+	putchar('\n');
+	
+	exit(s.a - s.a);
+}{
+	h = (a:int, b:int)
+	t = (a:int, b:int, d:h)
+	s : t
+}
