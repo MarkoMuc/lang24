@@ -2,6 +2,9 @@ package lang24.data.datadep.deptest;
 
 import java.util.Vector;
 
+/**
+ * @author marko.muc12@gmail.com
+ */
 public class DirectionVectorSet {
     private Vector<DirectionVector> directionVectors;
 

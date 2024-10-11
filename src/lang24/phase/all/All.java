@@ -20,6 +20,12 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Vector;
 
+/**
+ * Adds function prolog, epilogue, start point, static data, etc.
+ *
+ * @author marko.muc12@gmail.com
+ */
+
 public class All extends Phase {
     private final int DATA_ALIGN = 6;
     private final int INSTR_ALIGN = 6;

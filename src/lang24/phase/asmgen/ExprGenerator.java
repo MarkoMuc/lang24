@@ -12,6 +12,9 @@ import lang24.phase.imclin.ImcLin;
 
 import java.util.Vector;
 
+/**
+ * @author marko.muc12@gmail.com
+ */
 public class ExprGenerator implements ImcVisitor<MemTemp, Vector<AsmInstr>> {
     @Override
     public MemTemp visit(ImcBINOP binOp, Vector<AsmInstr> arg) {

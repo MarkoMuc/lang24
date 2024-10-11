@@ -1,15 +1,18 @@
 package lang24.phase.asmgen;
 
-import java.util.*;
+import lang24.data.asm.AsmInstr;
+import lang24.data.asm.Code;
+import lang24.data.imc.code.stmt.ImcStmt;
+import lang24.data.lin.LinCodeChunk;
+import lang24.phase.Phase;
+import lang24.phase.imclin.ImcLin;
 
-import lang24.data.imc.code.stmt.*;
-import lang24.data.lin.*;
-import lang24.data.asm.*;
-import lang24.phase.*;
-import lang24.phase.imclin.*;
+import java.util.Vector;
 
 /**
  * Machine code generator.
+ *
+ * @author marko.muc12@gmail.com
  */
 public class AsmGen extends Phase {
 

@@ -21,6 +21,9 @@ import lang24.phase.seman.SemAn;
 import java.util.Stack;
 import java.util.Vector;
 
+/**
+ * @author marko.muc12@gmail.com
+ */
 public class ImcGenerator implements AstFullVisitor<Object, Stack<MemFrame>> {
 
     Stack<ImcGenerator.FuncContext> funcContexts = new Stack<>();

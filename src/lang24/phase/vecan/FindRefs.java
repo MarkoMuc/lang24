@@ -17,6 +17,7 @@ import java.util.Vector;
         - lower bound = 0
         - upper bound is non-negative
         - Only constants and loop increment variables
+    @author marko.muc12@gmail.com
  */
 public class FindRefs implements AstFullVisitor<ArrRef, LoopDescriptor> {
     Stack<AstStmt> currStmt = new Stack<>();

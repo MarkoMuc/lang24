@@ -1,5 +1,8 @@
 package lang24.data.datadep.deptest;
 
+/**
+ * @author marko.muc12@gmail.com
+ */
 public class DependenceDirection {
 
     public enum Direction {

@@ -10,6 +10,10 @@ import java.util.Collection;
 import java.util.Objects;
 import java.util.Vector;
 
+/**
+ * @author marko.muc12@gmail.com
+ */
+
 public class DependenceTests {
 
     public static void mergeVectorsSets(Vector<Integer> levels, DirectionVectorSet DVSet, DirectionVectorSet DV) {

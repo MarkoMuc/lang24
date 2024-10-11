@@ -11,8 +11,10 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Scanner;
 
-/*
-    Assembles and links the resulting assembly code.
+/**
+ * Assembles and links the resulting assembly code.
+ *
+ * @author marko.muc12@gmail.com
  */
 public class AsmLink extends Phase {
     private File errFile;

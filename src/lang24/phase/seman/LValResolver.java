@@ -14,6 +14,7 @@ import lang24.data.ast.visitor.AstFullVisitor;
  * Lvalue resolver.
  * 
  * @author bostjan.slivnik@fri.uni-lj.si
+ * @author marko.muc12@gmail.com
  */
 
 public class LValResolver implements AstFullVisitor<Object, Object> {

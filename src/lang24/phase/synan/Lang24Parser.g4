@@ -1,5 +1,6 @@
 parser grammar Lang24Parser;
 
+// @author marko.muc12@gmail.com
 @header {
 
 	package lang24.phase.synan;

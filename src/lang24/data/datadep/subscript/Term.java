@@ -6,6 +6,9 @@ import lang24.data.ast.tree.expr.AstAtomExpr;
 import lang24.data.ast.tree.expr.AstPfxExpr;
 import lang24.data.datadep.LoopDescriptor;
 
+/**
+ * @author marko.muc12@gmail.com
+ */
 public class Term {
     public AstDefn variable;
     public LoopDescriptor loop;

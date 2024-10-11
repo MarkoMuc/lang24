@@ -8,6 +8,9 @@ import java.util.HashMap;
 import java.util.Vector;
 import java.util.stream.Collectors;
 
+/**
+ * @author marko.muc12@gmail.com
+ */
 public class Subscript {
     private final HashMap<AstDefn, Term> termMap = new HashMap<>();
     private Term constant;

@@ -6,6 +6,7 @@ import lang24.data.asm.AsmLABEL;
 import lang24.data.asm.AsmMOVE;
 import lang24.data.asm.AsmOPER;
 import lang24.data.imc.code.expr.ImcMEM;
+import lang24.data.imc.code.expr.ImcVecMEM;
 import lang24.data.imc.code.stmt.*;
 import lang24.data.imc.visitor.ImcVisitor;
 import lang24.data.mem.MemLabel;
@@ -13,6 +14,9 @@ import lang24.data.mem.MemTemp;
 
 import java.util.Vector;
 
+/**
+ * @author marko.muc12@gmail.com
+ */
 public class StmtGenerator implements ImcVisitor<Vector<AsmInstr>, Object> {
 
     private final ExprGenerator eg = new ExprGenerator();
@@ -65,7 +69,6 @@ public class StmtGenerator implements ImcVisitor<Vector<AsmInstr>, Object> {
         return v;
     }
 
-    //TODO:here
     @Override
     public Vector<AsmInstr> visit(ImcMOVE move, Object arg) {
         Vector<AsmInstr> v = new Vector<>();
@@ -79,7 +82,6 @@ public class StmtGenerator implements ImcVisitor<Vector<AsmInstr>, Object> {
             Vector<MemLabel> jumps = new Vector<>();
             MemTemp dstTemp = mem.addr.accept(eg, v);
 
-            // CHECKME: Is it correct to use defs here, does it even matter?
             uses.add(dstTemp);
 
             v.add(new AsmOPER("sd `s0, 0(`s1)", uses, defs, jumps));
@@ -96,4 +98,27 @@ public class StmtGenerator implements ImcVisitor<Vector<AsmInstr>, Object> {
         throw new Report.InternalError();
     }
 
+    @Override
+    public Vector<AsmInstr> visit(ImcVecMOVE vecMOVE, Object arg) {
+        Vector<AsmInstr> v = new Vector<>();
+        Vector<MemTemp> defs = new Vector<>();
+        Vector<MemTemp> uses = new Vector<>();
+
+        MemTemp srcTemp = vecMOVE.src.accept(eg, v);
+        uses.add(srcTemp);
+
+
+        if (vecMOVE.dst instanceof ImcVecMEM mem) {
+            Vector<MemLabel> jumps = new Vector<>();
+            MemTemp dstTemp = mem.addr.accept(eg, v);
+            uses.add(dstTemp);
+
+            v.add(new AsmOPER("vse64.v `s0, 0(`s1)", uses, defs, jumps));
+        } else {
+            defs.add(vecMOVE.dst.accept(eg, v));
+            v.add(new AsmMOVE("vadd.vv `d0, `s0", uses, defs));
+        }
+
+        return v;
+    }
 }

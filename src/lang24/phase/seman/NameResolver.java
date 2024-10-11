@@ -1,11 +1,18 @@
 package lang24.phase.seman;
 
-import lang24.common.report.*;
-import lang24.data.ast.tree.*;
-import lang24.data.ast.tree.defn.*;
-import lang24.data.ast.tree.expr.*;
-import lang24.data.ast.tree.type.*;
-import lang24.data.ast.visitor.*;
+import lang24.common.report.Report;
+import lang24.data.ast.tree.AstNode;
+import lang24.data.ast.tree.AstNodes;
+import lang24.data.ast.tree.defn.AstDefn;
+import lang24.data.ast.tree.defn.AstFunDefn;
+import lang24.data.ast.tree.defn.AstTypDefn;
+import lang24.data.ast.tree.defn.AstVarDefn;
+import lang24.data.ast.tree.expr.AstCallExpr;
+import lang24.data.ast.tree.expr.AstCmpExpr;
+import lang24.data.ast.tree.expr.AstNameExpr;
+import lang24.data.ast.tree.type.AstNameType;
+import lang24.data.ast.tree.type.AstRecType;
+import lang24.data.ast.visitor.AstFullVisitor;
 
 /**
  * Name resolver.
@@ -15,6 +22,8 @@ import lang24.data.ast.visitor.*;
  * union component names which are connected with their definitions by type
  * resolver. The results of the name resolver are stored in
  * {@link lang24.phase.seman.SemAn#definedAt}.
+ * @author bostjan.slivnik@fri.uni-lj.si
+ * @author marko.muc12@gmail.com
  */
 
 public class NameResolver implements AstFullVisitor<Object, NameResolver.Context> {

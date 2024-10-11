@@ -6,6 +6,9 @@ import lang24.data.datadep.LoopDescriptor;
 import java.util.HashSet;
 import java.util.Vector;
 
+/**
+ * @author marko.muc12@gmail.com
+ */
 public class SubscriptPair {
     public Subscript sourceSubscript;
     public Subscript sinkSubscript;

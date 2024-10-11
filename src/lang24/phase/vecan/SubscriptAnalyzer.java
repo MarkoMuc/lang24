@@ -9,8 +9,9 @@ import lang24.data.datadep.subscript.Subscript;
 import lang24.data.datadep.subscript.Term;
 import lang24.phase.seman.SemAn;
 
-// CHECKME: Need to check what happens when there is more than 1 -symbol for constants
-
+/**
+ * @author marko.muc12@gmail.com
+ */
 public class SubscriptAnalyzer implements AstFullVisitor<Term, Subscript> {
 
     private Term previous1;

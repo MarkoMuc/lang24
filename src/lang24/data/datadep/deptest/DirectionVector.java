@@ -3,6 +3,9 @@ package lang24.data.datadep.deptest;
 import java.util.Collections;
 import java.util.Vector;
 
+/**
+ * @author marko.muc12@gmail.com
+ */
 public class DirectionVector {
     private Vector<DependenceDirection> directions;
     public int size;

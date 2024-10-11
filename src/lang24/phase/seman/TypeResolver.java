@@ -20,6 +20,7 @@ import java.util.Vector;
 
 /**
  * @author bostjan.slivnik@fri.uni-lj.si
+ * @author marko.muc12@gmail.com
  */
 
 public class TypeResolver implements AstFullVisitor<SemType, TypeResolver.Context> {

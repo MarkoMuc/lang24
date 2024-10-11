@@ -1,5 +1,7 @@
 lexer grammar Lang24Lexer;
 
+// @author marko.muc12@gmail.com
+
 @header {
 	package lang24.phase.lexan;
 	import lang24.common.report.*;

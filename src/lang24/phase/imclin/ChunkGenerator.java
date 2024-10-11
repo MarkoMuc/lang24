@@ -21,7 +21,9 @@ import lang24.phase.memory.Memory;
 
 import java.util.Vector;
 
-
+/**
+ * @author marko.muc12@gmail.com
+ */
 public class ChunkGenerator implements AstFullVisitor<Object, Object> {
 
     @Override

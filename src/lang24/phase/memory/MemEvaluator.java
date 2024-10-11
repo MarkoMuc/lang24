@@ -23,6 +23,7 @@ import java.util.Arrays;
  * Computing memory layout: stack frames and variable accesses.
  *
  * @author bostjan.slivnik@fri.uni-lj.si
+ * @author marko.muc12@gmail.com
  */
 public class MemEvaluator implements AstFullVisitor<Object, MemEvaluator.Carry> {
 

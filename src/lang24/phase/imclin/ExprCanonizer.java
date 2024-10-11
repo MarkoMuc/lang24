@@ -8,6 +8,9 @@ import lang24.data.mem.MemTemp;
 
 import java.util.Vector;
 
+/**
+ * @author marko.muc12@gmail.com
+ */
 public class ExprCanonizer implements ImcVisitor<ImcExpr, Vector<ImcStmt>> {
     @Override
     public ImcExpr visit(ImcBINOP binOp, Vector<ImcStmt> visArg) {

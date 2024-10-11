@@ -15,6 +15,7 @@ import java.util.HashSet;
 
 /**
  * Liveness analysis.
+ * @author marko.muc12@gmail.com
  */
 public class LiveAn extends Phase {
 

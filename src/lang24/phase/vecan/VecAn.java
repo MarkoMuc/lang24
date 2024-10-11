@@ -19,6 +19,10 @@ import java.util.Vector;
 import static lang24.data.datadep.deptest.DependenceTests.*;
 import static lang24.data.datadep.subscript.Partition.partition;
 
+/**
+ * @author marko.muc12@gmail.com
+ */
+
 public class VecAn extends Phase {
 
     public final static Attribute<AstNameExpr, LoopDescriptor> loopDescriptors = new Attribute<>();

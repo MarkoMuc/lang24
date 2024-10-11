@@ -9,6 +9,9 @@ import lang24.data.mem.MemTemp;
 import java.util.List;
 import java.util.Vector;
 
+/**
+ * @author marko.muc12@gmail.com
+ */
 public class StmtCanonizer implements ImcVisitor<Vector<ImcStmt>, Object> {
 
     @Override
