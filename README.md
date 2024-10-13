@@ -1,23 +1,20 @@
 # Compiler for Lang24
 
-The creator and author of Lang24's language specification is doc. dr. Boštjan Slivnik (bostjan.slivnik@fri.uni-lj.si).
+Lang24's language specification was designed and authored by Dr. Boštjan Slivnik (bostjan.slivnik@fri.uni-lj.si).
 
-This compiler was made as part of Compiler lectures at University of Ljubljana Faculty of Computer and Information
-Science.
+This compiler was developed as part of the Compiler course at the University of Ljubljana, Faculty of Computer and Information Science, under the instruction of Dr. Boštjan Slivnik. Some portions of the compiler code were also contributed by him.
 
-The lectures are taught by doc. dr. Boštjan Slivnik. Parts of the compiler code are also authored by the professor.
+## Building
+
+1. Add the ANTLR4 jar, RISC-V GNU assembler, and RISC-V GNU linker to the lib/ folder.
+2. Run make from the root directory's Makefile to build the compiler.
 
 ## Compiler
 
-Targets 64bit RISC-V architecture.
+The compiler targets the 64-bit RISC-V architecture.
 
 ## Extension
 
-The compiler also contains an extension for the RISC-V Vector extension. Vectorization is done with data dependence
-analysis.
+An additional feature of this compiler is its support for the RISC-V Vector extension. Vectorization is achieved through data dependence analysis, with both the analysis and generation of vectorized intermediate code implemented.
 
-Analysis and generating vectorized intermediate code is implemented.
-
-The extension was done as part of undergrad work under mentor Boštjan Slivnik bostjan.slivnik@fri.uni-lj.si.
-
-All code for the vector extension was authored by me (marko.muc12@gmail.com).
+This extension was developed as part of my undergraduate project under the mentorship of Dr. Boštjan Slivnik.
